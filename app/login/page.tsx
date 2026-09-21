@@ -1,19 +1,33 @@
-import { ArrowRight, ShieldCheck, Library, Sparkles, Lock } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { redirect } from "next/navigation";
-import { getChatGPTUser, chatGPTSignInPath } from "@/app/chatgpt-auth";
+import { getAppUser } from "@/lib/app-auth";
+import { supabaseConfig } from "@/lib/supabase/config";
+import { LoginForm } from "@/components/login-form";
 import { ModelDropsBrand } from "@/components/model-drops-brand";
 import { safeWorkspaceReturnTo } from "@/lib/navigation";
 export const dynamic = "force-dynamic";
 export default async function Login({
   searchParams,
 }: {
-  searchParams: Promise<{ returnTo?: string }>;
+  searchParams: Promise<{ returnTo?: string; error?: string }>;
 }) {
   const query = await searchParams;
-  return <LoginContent returnTo={safeWorkspaceReturnTo(query?.returnTo)} />;
+  return (
+    <LoginContent
+      returnTo={safeWorkspaceReturnTo(query?.returnTo)}
+      error={query?.error}
+    />
+  );
 }
-async function LoginContent({ returnTo }: { returnTo: string }) {
-  const user = await getChatGPTUser();
+async function LoginContent({
+  returnTo,
+  error,
+}: {
+  returnTo: string;
+  error?: string;
+}) {
+  const user = await getAppUser();
+  const config = supabaseConfig();
   if (user) redirect(returnTo);
   return (
     <main className="login-page">
@@ -56,46 +70,28 @@ async function LoginContent({ returnTo }: { returnTo: string }) {
         </a>
         <div className="login-card">
           <span className="eyebrow">WELCOME TO MODEL DROPS</span>
-          <h2>
-            Your world is
-            <br />
-            waiting for you.
-          </h2>
+          <h2>Your creative space.</h2>
           <p>
-            Sign in to your personal dashboard to access your character models
-            and pick up where you left off.
+            Access your models, save your creations, and pick up where you left
+            off.
           </p>
-          <a
-            href={chatGPTSignInPath(returnTo)}
-            target="_top"
-            className="login-primary"
-          >
-            <Sparkles size={19} /> Continue with ChatGPT{" "}
-            <ArrowRight size={18} />
-          </a>
-          <p className="login-account-note">
-            New here? Your Model Drops workspace is created when you sign in for
-            the first time.
-          </p>
-          <div className="login-features">
-            <div>
-              <Library size={18} />
-              <span>Your purchased models, always together</span>
-            </div>
-            <div>
-              <Sparkles size={18} />
-              <span>Create directly with the models you own</span>
-            </div>
-            <div>
-              <Lock size={18} />
-              <span>A private dashboard, just for you</span>
-            </div>
-          </div>
+          <LoginForm
+            ready={!!config}
+            google={config?.google || false}
+            returnTo={returnTo}
+            initialError={
+              error === "oauth"
+                ? "Sign-in could not be completed. Please start again in this browser."
+                : error === "recovery"
+                  ? "Your reset session has expired. Request a new password reset email."
+                  : ""
+            }
+          />
           <div className="login-security">
             <ShieldCheck size={17} />
             <p>
-              Secure sign-in with your ChatGPT account. Model Drops never sees
-              your password.
+              Your account is protected by Supabase. Passwords are never stored
+              in the Model Drops database.
             </p>
           </div>
           <p className="login-preview-note">

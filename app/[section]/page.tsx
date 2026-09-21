@@ -1,5 +1,5 @@
 import ModelDropsApp from "@/components/model-drops-app";
-import { getChatGPTUser } from "../chatgpt-auth";
+import { getAppUser } from "@/lib/app-auth";
 import { notFound, redirect } from "next/navigation";
 import {
   isWorkspaceSection,
@@ -41,7 +41,7 @@ async function ProtectedWorkspace({
   returnTo: string;
   character?: string;
 }) {
-  const user = await getChatGPTUser();
+  const user = await getAppUser();
   if (!user) redirect("/login?returnTo=" + encodeURIComponent(returnTo));
   return (
     <ModelDropsApp

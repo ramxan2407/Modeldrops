@@ -19,7 +19,7 @@ The uploaded request ends mid-way through section 32, after “Infl”. No missi
 | Payouts             | Versioned revenue rules, seller tables and integer-cent split calculator                         | Connect onboarding/KYC, reserve release, actual transfer/refund/dispute handling        |
 | Projects and media  | Persistent projects, ownership-checked images, project assignment, generation history            | Bulk operations, multi-output gallery, real video playback and editing                  |
 | Community           | Curated demo inspiration                                                                         | Opt-in publishing moderation, follow/like/review actions and public profiles            |
-| Authentication      | ChatGPT login/logout, protected personal dashboards and local test identity                      | Public email/password and Google OAuth, verification/reset/session UI                   |
+| Authentication      | Supabase email/password and Google code, signup/reset, protected personal dashboards             | Connect Supabase + Google + SMTP and verify live sessions                               |
 | Notifications       | Generation/review notifications and mark-read                                                    | Email delivery, moderation/payout/social events, preferences                            |
 | Admin               | Server-role-gated pricing/availability, concept review, counts, audit entries                    | New-model/package editors, users, providers, detailed financial dashboards              |
 | Policy              | Rights confirmation, immutable terms, reports, real-person consent fields                        | Full moderation policy enforcement, classifier integration, IP case operations          |
@@ -29,12 +29,12 @@ The uploaded request ends mid-way through section 32, after “Infl”. No missi
 
 ## Validation completed
 
-- Strict TypeScript checking.
-- 2 login return-path validation tests.
-- 21 built-worker account-isolation checks using two independent identities: purchases/licenses, projects, profiles, favorites, submissions, credits, generation ownership, cancellation, and private media.
+- Strict TypeScript checking and 4 Supabase SDK/policy tests (mock provider, no live credentials).
+- 2 login return-path validation tests and 12 built-worker auth-boundary checks, including rejection of former ChatGPT headers and forged cookies.
+- Prior version: 21 built-worker account-isolation checks using two independent ChatGPT identities: purchases/licenses, projects, profiles, favorites, submissions, credits, generation ownership, cancellation, and private media.
 - 5 isolated SQLite ledger/immutable-license invariant checks.
 - 25 isolated PostgreSQL/provider/payment tests, including real PostgreSQL schema execution via PGlite, ledger immutability, reservation/refund idempotency, license checks, signed webhook replay handling, and wrong-amount rejection.
-- 23 localhost API integration checks, including authentication, role checks, origin rejection, asynchronous completion, private media, cancellation, and project assignment.
+- Prior version: 23 localhost API integration checks, including authentication, role checks, origin rejection, asynchronous completion, private media, cancellation, and project assignment.
 - Browser checks of character claim → studio, search, WebMCP valid and invalid input, responsive layouts, asset loading, and demo completion.
 - A production Worker build; no billable provider calls or Stripe purchases executed.
 
@@ -42,7 +42,7 @@ These tests do not establish legal compliance, model consistency, operational ca
 
 ## Hosting
 
-The private Site is `appgprj_6aaf0f54170081918870cc943cf48f4a`, preserved in `.openai/hosting.json`. Hosted login uses the Sites ChatGPT authentication dispatcher. Local development uses a clearly isolated test identity. Public customer access and live purchases are separate launch work.
+The private Site is `appgprj_6aaf0f54170081918870cc943cf48f4a`, preserved in `.openai/hosting.json`. Application login now uses Supabase exclusively. The existing owner-private hosting gate still requires ChatGPT before app access; public audience activation is separate from app authentication. Supabase project, Google OAuth and SMTP configuration are still needed. See SUPABASE-SETUP.md and LAUNCH-SERVICES.md.
 
 ## Next implementation sequence
 

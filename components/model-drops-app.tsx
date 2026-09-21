@@ -747,13 +747,11 @@ export default function ModelDropsApp({
             </span>
             <Settings2 size={17} />
           </button>
-          <a
-            className="sidebar-signout"
-            href="/signout-with-chatgpt?return_to=%2Flogin"
-            target="_top"
-          >
-            <LogOut size={14} /> Sign out
-          </a>
+          <form action="/api/auth/signout" method="post">
+            <button type="submit" className="sidebar-signout">
+              <LogOut size={14} /> Sign out
+            </button>
+          </form>
         </SidebarFooter>
       </Sidebar>
       <div className="app-main">
@@ -1788,21 +1786,18 @@ export default function ModelDropsApp({
                 <div className="settings-divider" />
                 <h3>Account & security</h3>
                 <p>
-                  Signed in with ChatGPT as {account.email}. Your models, credit
-                  balance, projects, and creations belong to this account.
+                  Signed in as {account.email}. Your models, credit balance,
+                  projects, and creations belong to this account.
                 </p>
                 <Button variant="secondary" onClick={() => navigate("billing")}>
                   View credit activity <ArrowUpRight size={15} />
                 </Button>
-                <Button asChild variant="outline">
-                  <a
-                    href="/signout-with-chatgpt?return_to=%2Flogin"
-                    target="_top"
-                  >
+                <form action="/api/auth/signout" method="post">
+                  <Button type="submit" variant="outline">
                     <LogOut size={16} />
                     Sign out
-                  </a>
-                </Button>
+                  </Button>
+                </form>
               </section>
             </>
           )}

@@ -2,7 +2,7 @@
 
 ## Two deliberately separate environments
 
-The working product preview runs a Next-compatible React/TypeScript app through Vinext on Cloudflare Workers, with Drizzle migrations, D1 records, R2 private media, and authenticated Sites identity. It is useful for product review and does not call billable providers.
+The working product preview runs a Next-compatible React/TypeScript app through Vinext on Cloudflare Workers, with Drizzle migrations, D1 records, R2 private media, and verified Supabase identity (email/password or Google; connection required). It is useful for product review and does not call billable providers.
 
 The production foundation targets PostgreSQL and a dedicated Node worker. The Postgres outbox replaces an initial Redis/BullMQ dependency: enqueue and financial reservation commit in one database transaction, and workers lease jobs using `FOR UPDATE SKIP LOCKED`. Redis can be introduced for caching and dispatch without becoming the authoritative financial store. The production services are not wired into the demo endpoints.
 
@@ -36,6 +36,9 @@ flowchart LR
 The demo uses a shorter D1 outbox with an asynchronous `waitUntil` processor and an authenticated recovery endpoint. It demonstrates behavior without claiming that a `waitUntil` task is a substitute for a long-running production worker.
 
 ## Provider boundaries
+
+Higgsfield is the proposed image/video launch provider; its official API was verified as available on September 21, 2026. It is not connected to the current app. See [launch services](LAUNCH-SERVICES.md) for prerequisites and reference-model limitations. The existing adapters below are separate foundation examples.
+
 
 The `AIProvider` contract separates image, video, text, status, cancellation, cost calculation, and normalization. Only verified supported capabilities are implemented. WaveSpeed cancellation is explicitly unsupported; deleting a prediction is not assumed to stop billing. The OpenRouter adapter supports its dedicated image API and text chat endpoint, with image MIME restrictions. Video can use the WaveSpeed adapter with an approved model binding.
 

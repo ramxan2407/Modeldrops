@@ -1,7 +1,11 @@
 """Integration checks against the isolated localhost development database."""
-import json,urllib.request,urllib.error,http.cookiejar,uuid,time,concurrent.futures
+import json,urllib.request,urllib.error,http.cookiejar,uuid,time,concurrent.futures,os
 base='http://localhost:5173'
-jar=http.cookiejar.CookieJar();opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar));opener.open(base+'/signin-with-chatgpt?return_to=/').read()
+if not os.environ.get('MD_TEST_EMAIL') or not os.environ.get('MD_TEST_PASSWORD'):
+ raise SystemExit('Set MD_TEST_EMAIL and MD_TEST_PASSWORD for a confirmed Supabase development account. Never use a production account.')
+jar=http.cookiejar.CookieJar();opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
+login=urllib.request.Request(base+'/api/auth/signin', data=json.dumps({'email':os.environ['MD_TEST_EMAIL'],'password':os.environ['MD_TEST_PASSWORD']}).encode(),headers={'Origin':base,'Content-Type':'application/json'})
+opener.open(login).read()
 passed=[]
 def call(action,data=None,origin=base):
  req=urllib.request.Request(base+'/api/platform'+('?action='+action if data is None else ''),data=None if data is None else json.dumps({'action':action,'data':data}).encode(),headers={'Content-Type':'application/json','Origin':origin})

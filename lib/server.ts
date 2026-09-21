@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { getChatGPTUser } from "@/app/chatgpt-auth";
+import { getAppUser } from "@/lib/app-auth";
 import { models, packages } from "@/lib/catalog";
 export class ApiError extends Error {
   constructor(
@@ -21,7 +21,7 @@ export function bindings() {
   return e;
 }
 export async function auth() {
-  const user = await getChatGPTUser();
+  const user = await getAppUser();
   if (!user) throw new ApiError(401, "Sign in to use your workspace.");
   return user;
 }

@@ -1,25 +1,27 @@
-"""Two trusted dispatcher identities against the LOCAL built worker only.
-
-Run npm run build, then npm start -- --port 8787. The development mock intentionally
-strips identity headers, so this suite targets the built worker on loopback.
-Never expose the worker directly: hosted identity headers must come from Sites.
+"""Two separate confirmed Supabase development users against the LOCAL built worker.
+Run npm start -- --port 8787 with Supabase configured for that origin.
+This writes demo test records. Use newly created users in a test project only.
 """
-import json, time, uuid, urllib.request, urllib.error
+import json, time, uuid, urllib.request, urllib.error, os, http.cookiejar
 
 BASE = 'http://127.0.0.1:8787'
-A, B = 'test-a-' + str(uuid.uuid4()), 'test-b-' + str(uuid.uuid4())
+A, B = 'A', 'B'
+openers = {}
+for label in (A, B):
+    email, password = os.environ.get('MD_TEST_' + label + '_EMAIL'), os.environ.get('MD_TEST_' + label + '_PASSWORD')
+    if not email or not password:
+        raise SystemExit('Set MD_TEST_A_EMAIL/PASSWORD and MD_TEST_B_EMAIL/PASSWORD for two NEW confirmed Supabase development users.')
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+    opener.open(urllib.request.Request(BASE + '/api/auth/signin', data=json.dumps({'email':email,'password':password}).encode(), headers={'Origin':BASE,'Content-Type':'application/json'})).read()
+    openers[label] = opener
 passed = []
 
 def request(path, user=None, payload=None):
     headers = {'Content-Type': 'application/json', 'Origin': BASE}
-    if user:
-        headers.update({'oai-authenticated-user-id': user,
-                        'oai-authenticated-user-email': user + '@example.test',
-                        'oai-authenticated-user-full-name': 'Isolation Test'})
     req = urllib.request.Request(BASE + path, headers=headers,
                                  data=json.dumps(payload).encode() if payload else None)
     try:
-        with urllib.request.urlopen(req) as r:
+        with (openers[user].open(req) if user else urllib.request.urlopen(req)) as r:
             return r.status, r.read(), dict(r.headers)
     except urllib.error.HTTPError as e:
         return e.code, e.read(), dict(e.headers)
@@ -39,11 +41,11 @@ def check(name, condition):
     passed.append(name)
     print('PASS', name)
 
-check('Anonymous dashboard reaches sign-in', b'Continue with ChatGPT' in request('/dashboard')[1])
+check('Anonymous dashboard reaches sign-in', b'Continue with Google' in request('/dashboard')[1])
 check('Anonymous API requires authentication', api(None, 'state')[0] == 401)
 a, b = account(A), account(B)
 check('New accounts have separate empty workspaces', not a['owned'] and not b['owned'] and not a['generations'] and not b['generations'])
-check('Identity email follows authenticated account', a['email'] == A + '@example.test' and b['email'] == B + '@example.test')
+check('Identity email follows authenticated account', a['email'] == os.environ['MD_TEST_A_EMAIL'] and b['email'] == os.environ['MD_TEST_B_EMAIL'])
 check('User A can acquire a demo model', api(A, 'claim', {'characterId':'nova', 'acceptedLicense':True, 'userId':B})[0] == 200)
 a, b = account(A), account(B)
 check('Claims ignore client-supplied user ID', a['owned'] == ['nova'] and not b['owned'])
