@@ -52,3 +52,7 @@ python3 tests/user-isolation.py # requires two confirmed Supabase test users; se
 ```
 
 The integration test writes clearly named sample records into the local demo database. Never point it at a production service. PostgreSQL tests run in an isolated, in-memory PGlite instance and make no external API calls.
+
+## Manual LoRA training
+
+Train LoRA, My LoRAs, and administrator training operations are implemented. See [LoRA workflow and setup](docs/LORA-TRAINING.md) for admin access, private uploads, manual delivery, email notification configuration, and future training adapters.

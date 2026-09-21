@@ -1,4 +1,5 @@
 import ModelDropsApp from "@/components/model-drops-app";
+import { isAdmin } from "@/lib/server";
 import { getAppUser } from "@/lib/app-auth";
 import { notFound, redirect } from "next/navigation";
 import {
@@ -43,6 +44,7 @@ async function ProtectedWorkspace({
 }) {
   const user = await getAppUser();
   if (!user) redirect("/login?returnTo=" + encodeURIComponent(returnTo));
+  if (section === "admin-training" && !isAdmin(user.userId)) notFound();
   return (
     <ModelDropsApp
       key={user.userId}

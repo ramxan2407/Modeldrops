@@ -12,6 +12,9 @@ export const workspaceSections = [
   "billing",
   "settings",
   "admin",
+  "train-lora",
+  "my-loras",
+  "admin-training",
 ] as const;
 export type WorkspaceSection = (typeof workspaceSections)[number];
 export function isWorkspaceSection(value: string): value is WorkspaceSection {

@@ -16,6 +16,10 @@ export function bindings() {
     BUCKET: R2Bucket;
     ADMIN_USER_IDS?: string;
     JOB_RUNNER_SECRET?: string;
+    RESEND_API_KEY?: string;
+    LORA_EMAIL_FROM?: string;
+    LORA_ADMIN_EMAILS?: string;
+    APP_ORIGIN?: string;
   };
   if (!e.DB) throw new ApiError(503, "Workspace storage is not configured.");
   return e;

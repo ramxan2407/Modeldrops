@@ -211,3 +211,151 @@ export const audit = sqliteTable("audit_logs", {
   metadata: text("metadata").notNull(),
   createdAt: time(),
 });
+
+// Manual training is deliberately separate from paid content generation.
+export const trainingRequests = sqliteTable(
+  "training_requests",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    userEmail: text("user_email").notNull(),
+    userName: text("user_name").notNull(),
+    characterName: text("character_name").notNull(),
+    characterDescription: text("character_description").notNull().default(""),
+    characterType: text("character_type").notNull(),
+    triggerWord: text("trigger_word").notNull().default(""),
+    notes: text("notes").notNull().default(""),
+    instructions: text("instructions").notNull().default(""),
+    referencePrompt: text("reference_prompt").notNull().default(""),
+    datasetPath: text("dataset_path").notNull(),
+    imageCount: integer("image_count").notNull().default(0),
+    datasetSize: integer("dataset_size").notNull().default(0),
+    status: text("status").notNull().default("draft"),
+    revision: integer("revision").notNull().default(0),
+    eventId: text("event_id"),
+    rejectionReason: text("rejection_reason"),
+    provider: text("provider").notNull().default("manual"),
+    submittedAt: text("submitted_at"),
+    createdAt: time(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [
+    index("training_user_date").on(t.userId, t.createdAt),
+    index("training_status_date").on(t.status, t.createdAt),
+    check(
+      "training_status_valid",
+      sql`${t.status} IN ('draft','pending','approved','training','quality_check','completed','rejected')`,
+    ),
+  ],
+);
+export const trainingFiles = sqliteTable(
+  "training_files",
+  {
+    id: text("id").primaryKey(),
+    requestId: text("request_id")
+      .notNull()
+      .references(() => trainingRequests.id),
+    kind: text("kind").notNull(),
+    name: text("name").notNull(),
+    storageKey: text("storage_key").notNull().unique(),
+    mime: text("mime").notNull(),
+    size: integer("size").notNull(),
+    ready: integer("ready").notNull().default(0),
+    uploadId: text("upload_id"),
+    createdAt: time(),
+  },
+  (t) => [
+    index("training_files_request").on(t.requestId, t.kind),
+    check(
+      "training_file_kind",
+      sql`${t.kind} IN ('dataset','weights','cover')`,
+    ),
+  ],
+);
+export const trainingParts = sqliteTable(
+  "training_parts",
+  {
+    id: text("id").primaryKey(),
+    fileId: text("file_id")
+      .notNull()
+      .references(() => trainingFiles.id, { onDelete: "cascade" }),
+    partNumber: integer("part_number").notNull(),
+    etag: text("etag").notNull(),
+    size: integer("size").notNull(),
+  },
+  (t) => [uniqueIndex("training_part_unique").on(t.fileId, t.partNumber)],
+);
+export const trainedLoras = sqliteTable(
+  "trained_loras",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    requestId: text("request_id")
+      .notNull()
+      .unique()
+      .references(() => trainingRequests.id),
+    name: text("name").notNull(),
+    coverId: text("cover_id")
+      .notNull()
+      .references(() => trainingFiles.id),
+    fileId: text("file_id")
+      .notNull()
+      .references(() => trainingFiles.id),
+    triggerWord: text("trigger_word").notNull(),
+    recommendedPrompt: text("recommended_prompt").notNull(),
+    version: text("version").notNull(),
+    description: text("description").notNull(),
+    deletedAt: text("deleted_at"),
+    createdAt: time(),
+  },
+  (t) => [index("lora_user_created").on(t.userId, t.createdAt)],
+);
+export const trainingEvents = sqliteTable(
+  "training_events",
+  {
+    id: text("id").primaryKey(),
+    requestId: text("request_id")
+      .notNull()
+      .references(() => trainingRequests.id),
+    status: text("status").notNull(),
+    message: text("message").notNull(),
+    actorId: text("actor_id").notNull(),
+    createdAt: time(),
+  },
+  (t) => [index("training_events_request").on(t.requestId, t.createdAt)],
+);
+export const trainingSettings = sqliteTable(
+  "training_settings",
+  {
+    id: text("id").primaryKey(),
+    maxImageMb: integer("max_image_mb").notNull().default(10),
+  },
+  (t) => [check("image_limit_valid", sql`${t.maxImageMb} BETWEEN 1 AND 25`)],
+);
+export const trainingEmails = sqliteTable(
+  "training_emails",
+  {
+    id: text("id").primaryKey(),
+    eventId: text("event_id")
+      .notNull()
+      .references(() => trainingEvents.id),
+    recipient: text("recipient").notNull(),
+    subject: text("subject").notNull(),
+    body: text("body").notNull(),
+    status: text("status").notNull().default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    leaseUntil: integer("lease_until").notNull().default(0),
+    firstAttemptAt: integer("first_attempt_at"),
+    providerId: text("provider_id"),
+    lastError: text("last_error"),
+    createdAt: time(),
+  },
+  (t) => [
+    uniqueIndex("training_email_event_recipient").on(t.eventId, t.recipient),
+    index("training_email_pending").on(t.status, t.leaseUntil),
+  ],
+);

@@ -23,4 +23,9 @@ check('Missing origin rejected', req('/api/auth/signin', {}, {'Content-Type':'ap
 check('Unconfigured login fails closed', req('/api/auth/signin', {}, {'Origin':BASE,'Content-Type':'application/json'})[0] == 503)
 check('Password reset page requires a verified session', b'Sign-in is being set up' in req('/auth/update-password')[1])
 check('Unsolicited callback rejected', b'Sign-in could not be completed' in req('/auth/complete?code=forged&flow=forged')[1])
+for path in ['/api/lora', '/api/lora?admin=1', '/api/lora?request=forged', '/api/lora/file?id=forged', '/api/lora/zip?request=forged']:
+    check('Anonymous training route denied: ' + path, req(path)[0] == 401)
+check('Forged session cannot read training requests', req('/api/lora', headers={'Cookie':'md-login-method=supabase; md-auth=forged'})[0] == 401)
+check('Cross-origin training mutation rejected', req('/api/lora', {'action':'draft'}, {'Origin':'https://evil.test','Content-Type':'application/json'})[0] == 403)
+check('Email job requires a secret', req('/api/lora/email', {})[0] == 401)
 print(f'{len(passed)} auth boundary checks passed')

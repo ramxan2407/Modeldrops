@@ -84,6 +84,7 @@ import {
   UserDashboard,
   type PurchaseRecord,
 } from "@/components/user-dashboard";
+import LoraWorkspace from "@/components/lora-workspace";
 import { ModelDropsBrand } from "@/components/model-drops-brand";
 import { safeWorkspaceReturnTo } from "@/lib/navigation";
 import {
@@ -108,7 +109,10 @@ type Page =
   | "creators"
   | "billing"
   | "settings"
-  | "admin";
+  | "admin"
+  | "train-lora"
+  | "my-loras"
+  | "admin-training";
 type Generation = {
   id: string;
   prompt: string;
@@ -176,6 +180,8 @@ const navigation = [
   { id: "explore", label: "Explore", icon: Globe },
 ];
 const workspace = [
+  { id: "train-lora", label: "Train LoRA", icon: Sparkles },
+  { id: "my-loras", label: "My LoRAs", icon: Layers },
   { id: "characters", label: "My Characters", icon: Users },
   { id: "library", label: "My Generations", icon: Images },
   { id: "projects", label: "Projects", icon: Folder },
@@ -195,6 +201,9 @@ const titles: Record<Page, string> = {
   billing: "Credits & billing",
   settings: "Settings",
   admin: "Administration",
+  "train-lora": "Train LoRA",
+  "my-loras": "My LoRAs",
+  "admin-training": "Training administration",
 };
 async function api(action: string, data?: unknown) {
   const r = await fetch(
@@ -376,6 +385,12 @@ export default function ModelDropsApp({
       return () => clearInterval(t);
     }
   }, [account.generations, refresh]);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") void refresh();
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [refresh]);
   const navigate = useCallback((p: Page) => {
     setPage(p);
     setQuery("");
@@ -690,6 +705,15 @@ export default function ModelDropsApp({
             />
             {account.isAdmin && (
               <NavButton
+                id="admin-training"
+                label="Training requests"
+                icon={ShieldCheck}
+                page={page}
+                navigate={navigate}
+              />
+            )}
+            {account.isAdmin && (
+              <NavButton
                 id="admin"
                 label="Admin"
                 icon={LayoutDashboard}
@@ -823,6 +847,18 @@ export default function ModelDropsApp({
                 Retry
               </Button>
             </div>
+          )}
+          {(page === "train-lora" ||
+            page === "my-loras" ||
+            page === "admin-training") && (
+            <LoraWorkspace
+              view={page}
+              isAdmin={account.isAdmin}
+              onNavigate={navigate}
+              onRefresh={() => {
+                void refresh();
+              }}
+            />
           )}
           {page === "dashboard" && (
             <UserDashboard
