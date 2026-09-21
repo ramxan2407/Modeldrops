@@ -1,0 +1,102 @@
+import { env } from "cloudflare:workers";
+import { getChatGPTUser } from "@/app/chatgpt-auth";
+import { models, packages } from "@/lib/catalog";
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+export const uid = () => crypto.randomUUID();
+export function bindings() {
+  const e = env as unknown as {
+    DB: D1Database;
+    BUCKET: R2Bucket;
+    ADMIN_USER_IDS?: string;
+    JOB_RUNNER_SECRET?: string;
+  };
+  if (!e.DB) throw new ApiError(503, "Workspace storage is not configured.");
+  return e;
+}
+export async function auth() {
+  const user = await getChatGPTUser();
+  if (!user) throw new ApiError(401, "Sign in to use your workspace.");
+  return user;
+}
+export async function initialize(user: Awaited<ReturnType<typeof auth>>) {
+  const { DB } = bindings();
+  const statements = [
+    DB.prepare("INSERT OR IGNORE INTO users(id,name,email) VALUES(?,?,?)").bind(
+      user.userId,
+      user.fullName || "Creator",
+      user.email,
+    ),
+    ...models.map((m) =>
+      DB.prepare(
+        "INSERT OR IGNORE INTO ai_models(id,name,provider,type,credits,enabled,config) VALUES(?,?,?,?,?,?,?)",
+      ).bind(m.id, m.name, m.provider, m.type, m.credits, 1, JSON.stringify(m)),
+    ),
+    ...packages.map((p) =>
+      DB.prepare(
+        "INSERT OR IGNORE INTO credit_packages(id,name,price,credits) VALUES(?,?,?,?)",
+      ).bind(p.id, p.name, p.price, p.credits),
+    ),
+    DB.prepare(
+      "INSERT OR IGNORE INTO credit_transactions(id,user_id,amount,type,description,balance_before,balance_after,idempotency_key) VALUES(?,?,1840,'promotion','Welcome to Model Drops · demo credits',0,1840,?)",
+    ).bind(uid(), user.userId, `welcome:${user.userId}`),
+  ];
+  await DB.batch(statements);
+}
+export const isAdmin = (id: string) =>
+  (bindings().ADMIN_USER_IDS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .includes(id);
+export function requireAdmin(id: string) {
+  if (!isAdmin(id)) throw new ApiError(403, "Administrator access required.");
+}
+export function assertOrigin(request: Request) {
+  const origin = request.headers.get("origin");
+  if (origin && origin !== new URL(request.url).origin)
+    throw new ApiError(403, "Cross-origin request rejected.");
+  if (!request.headers.get("content-type")?.startsWith("application/json"))
+    throw new ApiError(415, "JSON is required.");
+}
+export function fail(e: unknown) {
+  if (e instanceof ApiError)
+    return Response.json({ error: e.message }, { status: e.status });
+  console.error(
+    "Platform request failed",
+    e instanceof Error ? e.message : "unknown",
+  );
+  return Response.json(
+    { error: "The operation could not be completed. Please try again." },
+    { status: 500 },
+  );
+}
+export function ledgerStatement(
+  userId: string,
+  amount: number,
+  type: string,
+  description: string,
+  key: string,
+  generationId: string | null = null,
+) {
+  return bindings()
+    .DB.prepare(
+      `INSERT OR IGNORE INTO credit_transactions(id,user_id,amount,type,generation_id,description,balance_before,balance_after,idempotency_key) SELECT ?,?,?,?,?,?,COALESCE(SUM(amount),0),COALESCE(SUM(amount),0)+?,? FROM credit_transactions WHERE user_id=?`,
+    )
+    .bind(
+      uid(),
+      userId,
+      amount,
+      type,
+      generationId,
+      description,
+      amount,
+      key,
+      userId,
+    );
+}
