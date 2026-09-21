@@ -1,4 +1,7 @@
 import { spawnSync } from "node:child_process";
+const target = process.argv[2] || "preview";
+if (!["preview", "production"].includes(target))
+  throw new Error("Choose preview or production");
 const keys = [
   "DATABASE_URL",
   "SUPABASE_URL",
@@ -21,7 +24,7 @@ for (const key of keys) {
       "env",
       "add",
       key,
-      "preview",
+      target,
       "--force",
       "--yes",
       "--sensitive",
