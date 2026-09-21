@@ -16,6 +16,7 @@ export const users = sqliteTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull(),
   role: text("role").notNull().default("user"),
+  suspended: integer("suspended").notNull().default(0),
   defaultPrivate: integer("default_private").notNull().default(1),
   createdAt: time(),
 });
@@ -359,3 +360,10 @@ export const trainingEmails = sqliteTable(
     index("training_email_pending").on(t.status, t.leaseUntil),
   ],
 );
+
+export const characterControls = sqliteTable("character_controls", {
+  id: text("id").primaryKey(),
+  enabled: integer("enabled").notNull().default(1),
+  featured: integer("featured").notNull().default(0),
+  price: integer("price").notNull().default(0),
+});

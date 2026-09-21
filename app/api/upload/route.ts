@@ -1,8 +1,8 @@
+import { sameOrigin } from "@/lib/admin/policy";
 import { auth, initialize, bindings, ApiError, fail, uid } from "@/lib/server";
 export async function POST(request: Request) {
   try {
-    const origin = request.headers.get("origin");
-    if (origin && origin !== new URL(request.url).origin)
+    if (!sameOrigin(request))
       throw new ApiError(403, "Cross-origin request rejected");
     const user = await auth();
     await initialize(user);

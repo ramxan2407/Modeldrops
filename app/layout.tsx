@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./admin.css";
 
 export const metadata: Metadata = {
   title: "Model Drops — Your next character. Your next world.",

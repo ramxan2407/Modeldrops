@@ -92,11 +92,12 @@ import {
   UserDashboard,
   type PurchaseRecord,
 } from "@/components/user-dashboard";
+import SuperAdmin from "@/components/super-admin";
 import LoraWorkspace from "@/components/lora-workspace";
 import { ModelDropsBrand } from "@/components/model-drops-brand";
 import { safeWorkspaceReturnTo } from "@/lib/navigation";
 import {
-  characters,
+  characters as defaultCharacters,
   categories,
   models as defaultModels,
   packages as defaultPackages,
@@ -155,6 +156,7 @@ type Account = {
   }[];
   notifications: { id: string; message: string; read: number }[];
   isAdmin: boolean;
+  isSuperAdmin?: boolean;
   name: string;
   email?: string;
   purchases?: {
@@ -204,7 +206,7 @@ const titles: Record<Page, string> = {
   creators: "Creator studio",
   billing: "Credits & billing",
   settings: "Settings",
-  admin: "Administration",
+  admin: "Super admin",
   "train-lora": "Train LoRA",
   "my-loras": "My LoRAs",
   "admin-training": "Training administration",
@@ -270,9 +272,11 @@ function NavButton({
 }
 function WorkspaceMoreMenu({
   isAdmin,
+  isSuperAdmin,
   onNavigate,
 }: {
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   onNavigate: (page: Page) => void;
 }) {
   const { setOpenMobile } = useSidebar();
@@ -328,10 +332,10 @@ function WorkspaceMoreMenu({
             <Settings2 size={16} />
             Account settings
           </DropdownMenuItem>
-          {isAdmin && (
+          {isSuperAdmin && (
             <DropdownMenuItem onSelect={() => navigate("admin")}>
               <ShieldCheck size={16} />
-              Administration
+              Super admin
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>
@@ -353,6 +357,11 @@ export default function ModelDropsApp({
     [query, setQuery] = useState(""),
     [category, setCategory] = useState("All characters"),
     [sort, setSort] = useState("trending");
+  const [catalog, setCatalog] =
+    useState<(Character & { enabled?: boolean })[]>(defaultCharacters);
+  const characters = catalog.filter(
+    (c) => c.enabled !== false || account.owned.includes(c.id),
+  );
   const [detail, setDetail] = useState<Character | null>(null),
     [modal, setModal] = useState<
       "credits" | "project" | "notifications" | "license" | "help" | null
@@ -388,7 +397,6 @@ export default function ModelDropsApp({
     [licenseAccepted, setLicenseAccepted] = useState(false),
     [filterOpen, setFilterOpen] = useState(false),
     [freeOnly, setFreeOnly] = useState(false),
-    [adminData, setAdminData] = useState<any>(null),
     [reference, setReference] = useState<string | null>(null),
     [purchaseLicense, setPurchaseLicense] = useState<PurchaseRecord | null>(
       null,
@@ -401,10 +409,12 @@ export default function ModelDropsApp({
       setAccount(data.account);
       setRegistry(data.models);
       setCreditPackages(data.packages);
+      setCatalog(data.characters || defaultCharacters);
       setLoadError("");
       return data.account as Account;
     } catch (e) {
-      setAccount(emptyAccount);
+      if ([401, 403].includes((e as Error & { status?: number }).status || 0))
+        setAccount(emptyAccount);
       if ((e as Error & { status?: number }).status === 401) {
         window.location.replace(
           "/login?returnTo=" +
@@ -424,6 +434,9 @@ export default function ModelDropsApp({
     const path = location.pathname.slice(1).split("/")[0];
     if (path in titles) setPage(path as Page);
     const pop = () => {
+      setQuery("");
+      setActiveProject(null);
+      setSelected(new URLSearchParams(location.search).get("character") || "");
       const p = location.pathname.slice(1).split("/")[0];
       setPage(p in titles ? (p as Page) : "dashboard");
     };
@@ -465,6 +478,12 @@ export default function ModelDropsApp({
     }, 30000);
     return () => clearInterval(timer);
   }, [refresh]);
+  useEffect(() => {
+    if (page === "settings" && !loading) {
+      setProfileName(account.name);
+      setPrivateDefault(account.defaultPrivate);
+    }
+  }, [page, loading]);
   const navigate = useCallback((p: Page) => {
     setPage(p);
     setQuery("");
@@ -519,7 +538,7 @@ export default function ModelDropsApp({
       ),
     ).catch(() => {});
     return () => life.abort();
-  }, [navigate]);
+  }, [navigate, catalog]);
   const action = async (fn: () => Promise<void>) => {
     if (busy) return;
     setBusy(true);
@@ -556,6 +575,8 @@ export default function ModelDropsApp({
     setModelId(v === "video" ? "forma-cinema" : "forma-image");
     setResolution(v === "video" ? "720" : "1024");
   };
+  const selectedUnavailable =
+    !!selected && catalog.some((c) => c.id === selected && c.enabled === false);
   const model =
     registry.find((m) => m.id === modelId) || registry[0] || defaultModels[0];
   const cost =
@@ -645,7 +666,7 @@ export default function ModelDropsApp({
         ? a.price - b.price
         : sort === "name"
           ? a.name.localeCompare(b.name)
-          : 0,
+          : Number(b.badge === "FEATURED") - Number(a.badge === "FEATURED"),
     );
   const heading = (
     title: string,
@@ -771,6 +792,7 @@ export default function ModelDropsApp({
               />
             )}
             <WorkspaceMoreMenu
+              isSuperAdmin={!!account.isSuperAdmin}
               isAdmin={account.isAdmin}
               onNavigate={navigate}
             />
@@ -1536,7 +1558,8 @@ export default function ModelDropsApp({
                       !prompt.trim() ||
                       cost > account.balance ||
                       (!!selected && !account.owned.includes(selected)) ||
-                      !model.enabled
+                      !model.enabled ||
+                      selectedUnavailable
                     }
                     onClick={generate}
                   >
@@ -1554,20 +1577,24 @@ export default function ModelDropsApp({
                   {(!prompt.trim() ||
                     (!!selected && !account.owned.includes(selected)) ||
                     cost > account.balance ||
-                    !model.enabled) && (
+                    !model.enabled ||
+                    selectedUnavailable) && (
                     <p className="generation-guidance" role="status">
-                      {!!selected && !account.owned.includes(selected)
-                        ? "Add this character to your library to continue."
-                        : !model.enabled
-                          ? "Choose an available generation model."
-                          : !prompt.trim()
-                            ? "Write a prompt above to enable generation."
-                            : "You need more demo credits or fewer outputs to continue."}
+                      {selectedUnavailable
+                        ? "This character is currently unavailable. Choose another character."
+                        : !!selected && !account.owned.includes(selected)
+                          ? "Add this character to your library to continue."
+                          : !model.enabled
+                            ? "Choose an available generation model."
+                            : !prompt.trim()
+                              ? "Write a prompt above to enable generation."
+                              : "You need more demo credits or fewer outputs to continue."}
                     </p>
                   )}
                   <p className="privacy-note">
                     <Lock size={11} /> Private by default. This is a simulated
-                    generation.
+                    generation. Results are sample images; video mode returns a
+                    storyboard preview.
                   </p>
                 </div>
                 <div className="studio-canvas">
@@ -2018,146 +2045,19 @@ export default function ModelDropsApp({
               </div>
             </>
           )}
-          {page === "admin" && (
-            <>
-              {heading(
-                "Platform overview.",
-                "Manage models and review creator submissions.",
-                <Button
-                  variant="secondary"
-                  onClick={() =>
-                    action(async () => setAdminData(await api("admin")))
-                  }
-                >
-                  Refresh dashboard
-                </Button>,
-              )}
-              {!account.isAdmin ? (
-                <Empty
-                  icon={Lock}
-                  title="Administrator access required"
-                  text="This page is restricted by server-side role checks."
-                />
-              ) : (
-                <>
-                  <Button
-                    onClick={() =>
-                      action(async () => setAdminData(await api("admin")))
-                    }
-                  >
-                    Load administration
-                  </Button>
-                  {adminData && (
-                    <>
-                      <div className="creator-metrics">
-                        {Object.entries(adminData.metrics).map(([k, v]) => (
-                          <div key={k}>
-                            <span>{k}</span>
-                            <strong>{String(v)}</strong>
-                          </div>
-                        ))}
-                      </div>
-                      {heading(
-                        "Model registry",
-                        "Changes apply to the studio without rebuilding.",
-                      )}
-                      <div className="table-wrap">
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>Model</th>
-                              <th>Provider</th>
-                              <th>Credits</th>
-                              <th>Available</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {registry.map((m) => (
-                              <tr key={m.id}>
-                                <td>{m.name}</td>
-                                <td>{m.provider}</td>
-                                <td>
-                                  <Input
-                                    type="number"
-                                    min="1"
-                                    max="10000"
-                                    defaultValue={m.credits}
-                                    onBlur={(e) =>
-                                      action(async () => {
-                                        await api("admin-model", {
-                                          id: m.id,
-                                          credits: Number(e.target.value),
-                                          enabled: m.enabled,
-                                        });
-                                        await refresh();
-                                      })
-                                    }
-                                  />
-                                </td>
-                                <td>
-                                  <Switch
-                                    checked={m.enabled}
-                                    onCheckedChange={(enabled) =>
-                                      action(async () => {
-                                        await api("admin-model", {
-                                          id: m.id,
-                                          credits: m.credits,
-                                          enabled,
-                                        });
-                                        await refresh();
-                                      })
-                                    }
-                                  />
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                      {heading("Review queue")}
-                      {adminData.listings.map((l: any) => (
-                        <div key={l.id} className="listing-row">
-                          <div>
-                            <strong>{l.name}</strong>
-                            <p>{l.description}</p>
-                          </div>
-                          <span>{l.status}</span>
-                          <Button
-                            size="sm"
-                            onClick={() =>
-                              action(async () => {
-                                await api("admin-review", {
-                                  id: l.id,
-                                  status: "rejected",
-                                });
-                                setAdminData(await api("admin"));
-                              })
-                            }
-                          >
-                            Reject
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() =>
-                              action(async () => {
-                                await api("admin-review", {
-                                  id: l.id,
-                                  status: "approved",
-                                });
-                                setAdminData(await api("admin"));
-                              })
-                            }
-                          >
-                            Approve concept
-                          </Button>
-                        </div>
-                      ))}
-                    </>
-                  )}
-                </>
-              )}
-            </>
-          )}
+          {page === "admin" &&
+            (account.isSuperAdmin ? (
+              <SuperAdmin
+                onTraining={() => navigate("admin-training")}
+                onUpdated={refresh}
+              />
+            ) : (
+              <Empty
+                icon={Lock}
+                title="Super administrator access required"
+                text="This account does not have permission to manage the platform."
+              />
+            ))}
           <footer className="page-footer">
             <Brand />
             <span>A little imagination goes a long way.</span>

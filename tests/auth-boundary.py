@@ -1,6 +1,6 @@
 """Local built-worker checks, with Supabase intentionally unconfigured."""
-import urllib.request, urllib.error, json
-BASE = 'http://127.0.0.1:8787'
+import urllib.request, urllib.error, json, os
+BASE = os.environ.get('MODEL_DROPS_TEST_ORIGIN', 'http://127.0.0.1:8787')
 passed = []
 def req(path, data=None, headers=None):
     r = urllib.request.Request(BASE + path, data=json.dumps(data).encode() if data is not None else None, headers=headers or {})
@@ -28,4 +28,10 @@ for path in ['/api/lora', '/api/lora?admin=1', '/api/lora?request=forged', '/api
 check('Forged session cannot read training requests', req('/api/lora', headers={'Cookie':'md-login-method=supabase; md-auth=forged'})[0] == 401)
 check('Cross-origin training mutation rejected', req('/api/lora', {'action':'draft'}, {'Origin':'https://evil.test','Content-Type':'application/json'})[0] == 403)
 check('Email job requires a secret', req('/api/lora/email', {})[0] == 401)
+check('Anonymous super admin data denied', req('/api/admin?section=users')[0] == 401)
+check('Forged cookie cannot access super admin', req('/api/admin?section=credits', headers={'Cookie':'md-login-method=supabase; md-auth=forged'})[0] == 401)
+check('Super admin page requires a session', b'Sign-in is being set up' in req('/admin')[1])
+for path in ['/api/platform','/api/admin','/api/lora','/api/upload']:
+    check('Missing origin rejected: ' + path, req(path, {'action':'anything'}, {'Content-Type':'application/json'})[0] == 403)
+check('Cross-origin super admin mutation rejected', req('/api/admin', {}, {'Origin':'https://evil.test','Content-Type':'application/json'})[0] == 403)
 print(f'{len(passed)} auth boundary checks passed')

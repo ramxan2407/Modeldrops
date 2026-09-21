@@ -1,3 +1,4 @@
+import { catalogFor } from "@/lib/admin/service";
 import { waitUntil } from "cloudflare:workers";
 import { z } from "zod";
 import { characters, license, models as catalogModels } from "@/lib/catalog";
@@ -9,6 +10,8 @@ import {
   uid,
   isAdmin,
   requireAdmin,
+  requireSuperAdmin,
+  isSuperAdmin,
   assertOrigin,
   fail,
   ledgerStatement,
@@ -25,7 +28,7 @@ export async function GET(request: Request) {
     const { DB } = bindings();
     const action = new URL(request.url).searchParams.get("action");
     if (action === "admin") {
-      requireAdmin(user.userId);
+      requireSuperAdmin(user.userId);
       const [users, gens, listed, rows] = await Promise.all([
         DB.prepare("SELECT COUNT(*) AS n FROM users").first<any>(),
         DB.prepare("SELECT COUNT(*) AS n FROM generations").first<any>(),
@@ -123,6 +126,7 @@ export async function GET(request: Request) {
           transactions: transactions.results,
           notifications: notifications.results,
           isAdmin: isAdmin(user.userId),
+          isSuperAdmin: isSuperAdmin(user.userId),
           listings: listings.results,
           creatorStatus: listings.results.length ? "applied" : null,
         },
@@ -135,6 +139,7 @@ export async function GET(request: Request) {
           enabled: !!m.enabled,
         })),
         packages: packages.results,
+        characters: await catalogFor(DB),
       },
       { headers: { "Cache-Control": "private, no-store" } },
     );
@@ -184,7 +189,11 @@ export async function POST(request: Request) {
         const d = z
           .object({ characterId: str(), acceptedLicense: z.literal(true) })
           .parse(data);
-        if (!characters.some((c) => c.id === d.characterId))
+        if (
+          !(await catalogFor(DB)).some(
+            (c) => c.id === d.characterId && c.enabled,
+          )
+        )
           throw new ApiError(404, "Character unavailable");
         await DB.prepare(
           "INSERT OR IGNORE INTO character_purchases(id,user_id,character_id,license_snapshot,license_version,price_cents) VALUES(?,?,?,?, 'demo-1',0)",
@@ -250,6 +259,16 @@ export async function POST(request: Request) {
         if (!m) throw new ApiError(400, "Choose an available model");
         if (m.provider !== "Demo")
           throw new ApiError(503, "Live generation is not enabled.");
+        if (
+          d.characterId &&
+          !(await catalogFor(DB)).some(
+            (c) => c.id === d.characterId && c.enabled,
+          )
+        )
+          throw new ApiError(
+            400,
+            "This character is currently unavailable. Choose another character.",
+          );
         const cfg = JSON.parse(m.config);
         if (
           !cfg.ratios.includes(d.settings.ratio) ||
@@ -448,47 +467,13 @@ export async function POST(request: Request) {
           503,
           "Payments are not connected yet. No charge was made.",
         );
-      case "admin-model": {
-        requireAdmin(id);
-        const d = z
-          .object({
-            id: str(),
-            credits: z.number().int().min(1).max(10000),
-            enabled: z.boolean(),
-          })
-          .parse(data);
-        await DB.batch([
-          DB.prepare(
-            "UPDATE ai_models SET credits=?,enabled=? WHERE id=?",
-          ).bind(d.credits, d.enabled ? 1 : 0, d.id),
-          DB.prepare(
-            "INSERT INTO audit_logs(id,actor_id,action,entity_id,metadata) VALUES(?,?,?,?,?)",
-          ).bind(uid(), id, "model.updated", d.id, JSON.stringify(d)),
-        ]);
-        break;
-      }
-      case "admin-review": {
-        requireAdmin(id);
-        const d = z
-          .object({
-            id: key,
-            status: z.enum(["approved", "rejected", "suspended"]),
-          })
-          .parse(data);
-        await DB.batch([
-          DB.prepare("UPDATE creator_listings SET status=? WHERE id=?").bind(
-            d.status,
-            d.id,
-          ),
-          DB.prepare(
-            "INSERT INTO audit_logs(id,actor_id,action,entity_id,metadata) VALUES(?,?,?,?,?)",
-          ).bind(uid(), id, "concept.reviewed", d.id, JSON.stringify(d)),
-          DB.prepare(
-            "INSERT INTO notifications(id,user_id,message) SELECT ?,user_id,? FROM creator_listings WHERE id=?",
-          ).bind(uid(), `Your character concept was ${d.status}.`, d.id),
-        ]);
-        break;
-      }
+      case "admin-model":
+      case "admin-review":
+        requireSuperAdmin(id);
+        throw new ApiError(
+          410,
+          "Use the super admin dashboard to make an audited change.",
+        );
       default:
         throw new ApiError(400, "Unknown action");
     }

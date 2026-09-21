@@ -1,3 +1,4 @@
+import { administratorIds } from "../admin/policy";
 import { z } from "zod";
 import {
   LoraError,
@@ -19,6 +20,7 @@ export type LoraBindings = {
   DB: D1Database;
   BUCKET: R2Bucket;
   ADMIN_USER_IDS?: string;
+  SUPER_ADMIN_USER_IDS?: string;
   LORA_ADMIN_EMAILS?: string;
   RESEND_API_KEY?: string;
   LORA_EMAIL_FROM?: string;
@@ -68,10 +70,7 @@ export class LoraService {
     return this.env.DB;
   }
   get admin() {
-    return (this.env.ADMIN_USER_IDS || "")
-      .split(",")
-      .map((x) => x.trim())
-      .includes(this.user.userId);
+    return administratorIds(this.env).includes(this.user.userId);
   }
   requireAdmin() {
     if (!this.admin) throw new LoraError(403, "Administrator access required.");
@@ -371,10 +370,7 @@ export class LoraService {
     ];
     const recipients = [{ id: r.user_id, email: r.user_email, message }];
     if (status === "pending") {
-      const admins = (this.env.ADMIN_USER_IDS || "")
-        .split(",")
-        .map((x) => x.trim())
-        .filter(Boolean);
+      const admins = administratorIds(this.env);
       if (admins.length) {
         const found = await this.db
           .prepare(

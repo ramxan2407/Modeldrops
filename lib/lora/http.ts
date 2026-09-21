@@ -11,7 +11,7 @@ export function loraFailure(e: unknown) {
 }
 export function sameOrigin(request: Request) {
   const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin)
+  if (origin !== new URL(request.url).origin)
     throw new LoraError(403, "Cross-origin request rejected.");
 }
 export async function boundedBytes(request: Request, max: number) {

@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { getAppUser } from "@/lib/app-auth";
+import { roleFor, sameOrigin } from "./admin/policy";
 import { models, packages } from "@/lib/catalog";
 export class ApiError extends Error {
   constructor(
@@ -15,6 +16,7 @@ export function bindings() {
     DB: D1Database;
     BUCKET: R2Bucket;
     ADMIN_USER_IDS?: string;
+    SUPER_ADMIN_USER_IDS?: string;
     JOB_RUNNER_SECRET?: string;
     RESEND_API_KEY?: string;
     LORA_EMAIL_FROM?: string;
@@ -27,6 +29,15 @@ export function bindings() {
 export async function auth() {
   const user = await getAppUser();
   if (!user) throw new ApiError(401, "Sign in to use your workspace.");
+  const state = await bindings()
+    .DB.prepare("SELECT suspended FROM users WHERE id=?")
+    .bind(user.userId)
+    .first<{ suspended: number }>();
+  if (state?.suspended)
+    throw new ApiError(
+      403,
+      "Your account is suspended. Contact Model Drops support.",
+    );
   return user;
 }
 export async function initialize(user: Awaited<ReturnType<typeof auth>>) {
@@ -53,17 +64,18 @@ export async function initialize(user: Awaited<ReturnType<typeof auth>>) {
   ];
   await DB.batch(statements);
 }
-export const isAdmin = (id: string) =>
-  (bindings().ADMIN_USER_IDS || "")
-    .split(",")
-    .map((s) => s.trim())
-    .includes(id);
+export const isSuperAdmin = (id: string) =>
+  roleFor(bindings(), id) === "super_admin";
+export const isAdmin = (id: string) => roleFor(bindings(), id) !== "user";
+export function requireSuperAdmin(id: string) {
+  if (!isSuperAdmin(id))
+    throw new ApiError(403, "Super administrator access required.");
+}
 export function requireAdmin(id: string) {
   if (!isAdmin(id)) throw new ApiError(403, "Administrator access required.");
 }
 export function assertOrigin(request: Request) {
-  const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin)
+  if (!sameOrigin(request))
     throw new ApiError(403, "Cross-origin request rejected.");
   if (!request.headers.get("content-type")?.startsWith("application/json"))
     throw new ApiError(415, "JSON is required.");
