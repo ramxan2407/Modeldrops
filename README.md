@@ -1,16 +1,23 @@
 # Model Drops
 
-An original dark-first character marketplace and AI creation studio. This repository includes a working private preview and a separate PostgreSQL production foundation. **It is not a production-ready paid marketplace yet.**
+A light-themed character marketplace and AI creation studio. This repository includes a working private preview and a separate PostgreSQL production foundation. **It is not a production-ready paid marketplace yet.**
 
-## Run the preview
+## Deploy with Vercel
+
+Import this GitHub repository into Vercel and select Next.js. The checked-in `vercel.json` selects `npm run build:vercel` automatically. Use Node 24 and configure the Supabase database, authentication, and private storage environment variables in Vercel before deploying. Secrets are intentionally excluded from this repository.
+
+See [Vercel deployment and migration](docs/VERCEL-PREVIEW.md) for the complete setup, database migration commands, and authentication redirects. The Vercel backend uses Supabase Postgres and private S3-compatible storage; the original Sites preview continues to use D1/R2.
+
+## Run the Sites preview
 
 Requires Node 22.13+ (Node 24 LTS recommended).
 
 ```sh
 npm ci
 npm run build
-node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_optimal_george_stacy.sql
-node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_ledger_guards.sql
+for migration in drizzle/*.sql; do
+  node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file "$migration"
+done
 npm run dev -- --port 5173
 ```
 

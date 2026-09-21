@@ -1,0 +1,17 @@
+.env*
+.git
+.wrangler
+.sites-runtime
+.agents
+.codex
+.next
+.vinext
+dist
+outputs
+work
+node_modules
+*.tsbuildinfo
+
+.vercel-*
+
+.github-auth

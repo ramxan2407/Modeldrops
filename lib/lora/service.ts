@@ -25,6 +25,7 @@ export type LoraBindings = {
   RESEND_API_KEY?: string;
   LORA_EMAIL_FROM?: string;
   APP_ORIGIN?: string;
+  MAX_LORA_UPLOAD_BYTES?: string;
 };
 export type LoraUser = {
   userId: string;
@@ -75,8 +76,13 @@ export class LoraService {
   requireAdmin() {
     if (!this.admin) throw new LoraError(403, "Administrator access required.");
   }
+  get maxLoraBytes() {
+    const configured = Number(this.env.MAX_LORA_UPLOAD_BYTES);
+    return Number.isSafeInteger(configured) && configured > 0 ? Math.min(configured, MAX_LORA_SIZE) : MAX_LORA_SIZE;
+  }
   async settings() {
     return {
+      maxLoraMb: this.maxLoraBytes / 1048576,
       maxImageMb:
         (
           await this.db
@@ -599,9 +605,9 @@ export class LoraService {
       !name.toLowerCase().endsWith(".safetensors") ||
       !Number.isSafeInteger(size) ||
       size < 10 ||
-      size > MAX_LORA_SIZE
+      size > this.maxLoraBytes
     )
-      throw new LoraError(400, "Use a .safetensors file up to 2 GB.");
+      throw new LoraError(400, `Use a .safetensors file up to ${this.maxLoraBytes / 1048576} MB.`);
     const count = await this.db
       .prepare(
         "SELECT COUNT(*) n FROM training_files WHERE request_id=? AND kind='weights'",

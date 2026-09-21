@@ -1,4 +1,5 @@
 "use client";
+import { uploadFile as upload } from "@/lib/upload-client";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
@@ -99,32 +100,7 @@ async function api<T = any>(action: string, data?: unknown): Promise<T> {
     throw new Error(result.error || "Something went wrong. Please try again.");
   return result;
 }
-function upload(url: string, file: Blob, onProgress: (n: number) => void) {
-  return new Promise<{ id: string }>((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", url);
-    xhr.timeout = 120000;
-    xhr.setRequestHeader("Content-Type", "application/octet-stream");
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable)
-        onProgress(Math.round((e.loaded / e.total) * 100));
-    };
-    xhr.onerror = () =>
-      reject(new Error("Upload connection lost. Try again to resume."));
-    xhr.ontimeout = () =>
-      reject(new Error("Upload timed out. Try again to resume."));
-    xhr.onload = () => {
-      try {
-        const data = JSON.parse(xhr.responseText);
-        if (xhr.status >= 200 && xhr.status < 300) resolve(data);
-        else reject(new Error(data.error || "Upload failed."));
-      } catch {
-        reject(new Error("Upload failed. Try again."));
-      }
-    };
-    xhr.send(file);
-  });
-}
+
 function Badge({ status }: { status: TrainingRequest["status"] }) {
   return (
     <span className={`lora-badge lora-status-${status}`}>
@@ -601,6 +577,7 @@ export default function LoraWorkspace({
           {detail && (
             <RequestDetail
               detail={detail}
+              maxLoraMb={state.maxLoraMb ?? 2048}
               admin={admin}
               onChange={changed}
               onClose={() => setDetail(null)}
@@ -1202,11 +1179,13 @@ function BellIcon() {
 }
 function RequestDetail({
   detail,
+  maxLoraMb,
   admin,
   onChange,
   onClose,
 }: {
   detail: Detail;
+  maxLoraMb: number;
   admin: boolean;
   onChange: () => Promise<void>;
   onClose: () => void;
@@ -1464,7 +1443,7 @@ function RequestDetail({
               />
             </Field>
             <p className="lora-muted">
-              Up to 2 GB. Uploaded securely in 8 MB chunks.
+              Up to {maxLoraMb} MB. Uploaded securely in 8 MB chunks.
             </p>
             {progress !== null && (
               <div role="status">

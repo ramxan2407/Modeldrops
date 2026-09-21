@@ -14,6 +14,7 @@ export const uid = () => crypto.randomUUID();
 export function bindings() {
   const e = env as unknown as {
     DB: D1Database;
+    DEMO_ASSET?: () => Promise<ArrayBuffer>;
     BUCKET: R2Bucket;
     ADMIN_USER_IDS?: string;
     SUPER_ADMIN_USER_IDS?: string;
@@ -22,6 +23,7 @@ export function bindings() {
     LORA_EMAIL_FROM?: string;
     LORA_ADMIN_EMAILS?: string;
     APP_ORIGIN?: string;
+    MAX_LORA_UPLOAD_BYTES?: string;
   };
   if (!e.DB) throw new ApiError(503, "Workspace storage is not configured.");
   return e;

@@ -73,17 +73,17 @@ export async function GET(request: Request) {
         .bind(user.userId)
         .all<any>(),
       DB.prepare(
-        "SELECT id,name,description,created_at AS createdAt FROM projects WHERE user_id=? ORDER BY created_at DESC",
+        "SELECT id,name,description,created_at AS \"createdAt\" FROM projects WHERE user_id=? ORDER BY created_at DESC",
       )
         .bind(user.userId)
         .all(),
       DB.prepare(
-        "SELECT id,prompt,character_id AS characterId,model_id AS modelId,status,cost,type,settings,created_at AS createdAt,project_id AS projectId,asset_key IS NOT NULL AS hasAsset FROM generations WHERE user_id=? ORDER BY created_at DESC LIMIT 100",
+        "SELECT id,prompt,character_id AS \"characterId\",model_id AS \"modelId\",status,cost,type,settings,created_at AS \"createdAt\",project_id AS \"projectId\",asset_key IS NOT NULL AS \"hasAsset\" FROM generations WHERE user_id=? ORDER BY created_at DESC LIMIT 100",
       )
         .bind(user.userId)
         .all<any>(),
       DB.prepare(
-        "SELECT id,amount,description,created_at AS createdAt,balance_after AS balanceAfter FROM credit_transactions WHERE user_id=? ORDER BY created_at DESC LIMIT 100",
+        "SELECT id,amount,description,created_at AS \"createdAt\",balance_after AS \"balanceAfter\" FROM credit_transactions WHERE user_id=? ORDER BY created_at DESC LIMIT 100",
       )
         .bind(user.userId)
         .all(),

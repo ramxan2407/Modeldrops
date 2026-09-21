@@ -1,4 +1,5 @@
 "use client";
+import { uploadFile } from "@/lib/upload-client";
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   ArrowUpRight,
@@ -1520,14 +1521,7 @@ export default function ModelDropsApp({
                                   throw new Error(
                                     "Use an image smaller than 8 MB",
                                   );
-                                const form = new FormData();
-                                form.append("file", file);
-                                const r = await fetch("/api/upload", {
-                                  method: "POST",
-                                  body: form,
-                                });
-                                const d: any = await r.json();
-                                if (!r.ok) throw new Error(d.error);
+                                const d = await uploadFile("/api/upload", file, undefined, true);
                                 setReference(d.id);
                                 toast.success("Private reference uploaded");
                               });

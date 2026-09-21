@@ -1,5 +1,6 @@
 import { auth, bindings, initialize, ApiError, fail } from "@/lib/server";
 import { LoraService } from "./service";
+import { stagedUpload } from "../upload-transfer";
 import { LoraError } from "./types";
 export async function loraService() {
   const user = await auth();
@@ -15,6 +16,8 @@ export function sameOrigin(request: Request) {
     throw new LoraError(403, "Cross-origin request rejected.");
 }
 export async function boundedBytes(request: Request, max: number) {
+  const staged = await stagedUpload(request, max);
+  if (staged) return staged;
   const reader = request.body?.getReader();
   if (!reader) throw new LoraError(400, "Upload is empty.");
   const chunks: Uint8Array[] = [];

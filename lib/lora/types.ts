@@ -83,6 +83,7 @@ export type LoraState = {
   requests: TrainingRequest[];
   loras: TrainedLora[];
   maxImageMb: number;
+  maxLoraMb?: number;
   email?: { configured: boolean; pending: number; failed: number };
 };
 export class LoraError extends Error {

@@ -1,3 +1,4 @@
+import { stagedUpload } from "@/lib/upload-transfer";
 import { sameOrigin } from "@/lib/admin/policy";
 import { auth, initialize, bindings, ApiError, fail, uid } from "@/lib/server";
 export async function POST(request: Request) {
@@ -8,8 +9,8 @@ export async function POST(request: Request) {
     await initialize(user);
     if (Number(request.headers.get("content-length")) > 9 * 1024 * 1024)
       throw new ApiError(413, "Use an image smaller than 8 MB");
-    const form = await request.formData();
-    const file = form.get("file");
+    const staged = await stagedUpload(request, 8 * 1024 * 1024);
+    const file = staged ? new File([new Uint8Array(staged)], "reference") : (await request.formData()).get("file");
     if (
       !(file instanceof File) ||
       file.size > 8 * 1024 * 1024 ||

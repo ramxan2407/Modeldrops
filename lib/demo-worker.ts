@@ -1,7 +1,7 @@
 import { bindings, uid, ledgerStatement } from "@/lib/server";
 /** Demo-only durable outbox runner. Real provider work belongs in a separate durable queue consumer. */
 export async function runDemoJob(id: string, origin: string) {
-  const { DB, BUCKET } = bindings();
+  const { DB, BUCKET, DEMO_ASSET } = bindings();
   const lease = new Date(Date.now() + 60000).toISOString();
   const claim = await DB.prepare(
     "UPDATE generation_jobs SET status='processing',lease_until=?,attempts=attempts+1 WHERE generation_id=? AND (status='queued' OR (status='processing' AND lease_until<?)) RETURNING id",
@@ -26,9 +26,11 @@ export async function runDemoJob(id: string, origin: string) {
       .bind(id)
       .first<{ status: string }>();
     if (current?.status !== "processing") return;
-    const image = await fetch(new URL("/assets/hero.png", origin));
-    if (!image.ok) throw new Error("Sample asset unavailable");
-    const bytes = await image.arrayBuffer();
+    const bytes = DEMO_ASSET ? await DEMO_ASSET() : await (async () => {
+      const image = await fetch(new URL("/assets/hero.png", origin));
+      if (!image.ok) throw new Error("Sample asset unavailable");
+      return image.arrayBuffer();
+    })();
     if (bytes.byteLength > 12 * 1024 * 1024)
       throw new Error("Sample asset too large");
     const key = `private/${g.user_id}/generations/${id}.png`;
