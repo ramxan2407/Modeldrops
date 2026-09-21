@@ -69,12 +69,6 @@ async function LoginContent({
           <ModelDropsBrand />
         </a>
         <div className="login-card">
-          <span className="eyebrow">WELCOME TO MODEL DROPS</span>
-          <h2>Your creative space.</h2>
-          <p>
-            Access your models, save your creations, and pick up where you left
-            off.
-          </p>
           <LoginForm
             ready={!!config}
             google={config?.google || false}
@@ -90,8 +84,8 @@ async function LoginContent({
           <div className="login-security">
             <ShieldCheck size={17} />
             <p>
-              Your account is protected by Supabase. Passwords are never stored
-              in the Model Drops database.
+              Your characters, projects, and training datasets stay in your
+              private workspace.
             </p>
           </div>
           <p className="login-preview-note">
@@ -100,7 +94,7 @@ async function LoginContent({
         </div>
         <div className="login-footer">
           <a href="/welcome">About Model Drops</a>
-          <span>Made for your imagination.</span>
+          <span>Your creative workspace.</span>
         </div>
       </section>
     </main>

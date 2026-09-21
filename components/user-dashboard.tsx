@@ -42,6 +42,8 @@ type Props = {
   onCreate: (c: Character, mode: "image" | "video") => void;
   onBrowse: () => void;
   onModels: () => void;
+  onTrain: () => void;
+  onLoras: () => void;
   onStudio: () => void;
   onCredits: () => void;
   onLibrary: () => void;
@@ -71,18 +73,53 @@ export function UserDashboard(p: Props) {
     <div className="user-dashboard" aria-busy={p.loading}>
       <div className="dashboard-title">
         <div>
-          <span className="eyebrow">YOUR PERSONAL CREATIVE SPACE</span>
+          <span className="eyebrow">YOUR WORKSPACE</span>
           <h1>
             {p.loading
               ? "Your dashboard."
               : `Welcome back, ${p.name.split(" ")[0]}.`}
           </h1>
-          <p>Your models. Your ideas. Pick up wherever inspiration left you.</p>
+          <p>Create something new or continue a recent project.</p>
         </div>
-        <Button className="lime-button" onClick={p.onStudio}>
-          <Plus size={17} />
-          New creation
-        </Button>
+        <span className="workspace-private">
+          <ShieldCheck size={15} />
+          Private workspace
+        </span>
+      </div>
+      <div className="dashboard-start-actions">
+        <button
+          onClick={p.onStudio}
+          className="dashboard-action-card primary-action"
+        >
+          <span className="action-icon">
+            <Sparkles size={23} />
+          </span>
+          <div>
+            <small>CREATE CONTENT</small>
+            <h2>Bring an idea to life</h2>
+            <p>
+              Choose a character, write a prompt, and create an image or video.
+            </p>
+            <strong>
+              Open studio <ArrowRight size={16} />
+            </strong>
+          </div>
+        </button>
+        <button onClick={p.onTrain} className="dashboard-action-card">
+          <span className="action-icon">
+            <Users size={23} />
+          </span>
+          <div>
+            <small>CUSTOM CHARACTER</small>
+            <h2>Train your own LoRA</h2>
+            <p>
+              Upload your references. Our team trains and delivers your model.
+            </p>
+            <strong>
+              Start training request <ArrowRight size={16} />
+            </strong>
+          </div>
+        </button>
       </div>
       <div className="dashboard-stats">
         {[
@@ -130,7 +167,7 @@ export function UserDashboard(p: Props) {
                 <p>Ready to create with, whenever you are.</p>
               </div>
               <button className="text-link" onClick={p.onBrowse}>
-                Find more models
+                Browse characters
                 <ArrowUpRight size={15} />
               </button>
             </div>
@@ -206,7 +243,7 @@ export function UserDashboard(p: Props) {
                 <span className="dashboard-empty-icon">
                   <Users size={30} />
                 </span>
-                <h3>Your next character belongs here.</h3>
+                <h3>Add your first character</h3>
                 <p>
                   Models you acquire are saved to this dashboard. Choose one,
                   then create images and videos from the same place.
@@ -226,7 +263,7 @@ export function UserDashboard(p: Props) {
                 <p>
                   {processing
                     ? `${processing} generation${processing > 1 ? "s" : ""} in progress`
-                    : "A new frame. A new direction."}
+                    : "Your latest results, ready to revisit."}
                 </p>
               </div>
               <button className="text-link" onClick={p.onLibrary}>
@@ -318,8 +355,8 @@ export function UserDashboard(p: Props) {
                   creative obsession.
                 </h3>
                 <p>
-                  A character, a prompt, a possibility. Your studio is ready
-                  when you are.
+                  Start from a text prompt or choose a character from your
+                  library.
                 </p>
                 <Button className="lime-button" onClick={p.onStudio}>
                   Start creating
@@ -327,6 +364,16 @@ export function UserDashboard(p: Props) {
                 </Button>
               </>
             )}
+          </section>
+          <section className="dashboard-lora-link">
+            <div className="dashboard-section-title">
+              <h2>Your trained LoRAs</h2>
+              <Users size={18} />
+            </div>
+            <p>Track training requests and download completed models.</p>
+            <button className="text-link" onClick={p.onLoras}>
+              Open My LoRAs <ArrowRight size={15} />
+            </button>
           </section>
           <section className="dashboard-projects">
             <div className="dashboard-section-title">

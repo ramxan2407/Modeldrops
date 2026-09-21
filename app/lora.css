@@ -1,7 +1,7 @@
 .lora-workspace {
   max-width: 1480px;
   margin: 0 auto;
-  color: #e9eee5;
+  color: #17212d;
   padding: 14px 2px 60px;
   --lora-line: rgba(221, 241, 201, 0.11);
   --lora-muted: #939d8d;
@@ -18,10 +18,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 10px !important;
+  font-size: 12px !important;
   letter-spacing: 1.8px;
   font-weight: 650;
-  color: #b9d994 !important;
+  color: #316341 !important;
   margin-bottom: 13px !important;
 }
 .lora-heading h1 {
@@ -58,25 +58,25 @@
 }
 .lora-button {
   border: 1px solid var(--lora-line);
-  background: #22271f;
+  background: #f7f9fb;
   border-radius: 8px;
   min-height: 38px;
   padding: 9px 14px;
-  color: #e1e8d9;
+  color: #17212d;
 }
 .lora-button:hover,
 .lora-icon-button:hover {
-  background: #30392a;
+  background: #ffffff;
 }
 .lora-primary {
   border-radius: 8px !important;
   min-height: 42px;
   padding: 11px 18px !important;
-  color: #15210b !important;
+  color: #263440 !important;
   background: #c7ee83 !important;
 }
 .lora-primary:hover {
-  background: #daf7a6 !important;
+  background: #c7ee83 !important;
 }
 .lora-workspace button:disabled,
 .lora-dialog button:disabled {
@@ -99,8 +99,8 @@
   border: 1px solid var(--lora-line);
   background: linear-gradient(
     130deg,
-    rgba(37, 44, 32, 0.65),
-    rgba(24, 28, 21, 0.75)
+    rgba(255, 255, 255, 0.65),
+    rgba(255, 255, 255, 0.75)
   );
   border-radius: 14px;
   padding: 25px;
@@ -126,7 +126,7 @@
   margin: 0 0 5px;
 }
 .lora-section-heading p {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--lora-muted);
   line-height: 1.6;
   margin: 0;
@@ -135,10 +135,10 @@
   font:
     11px ui-monospace,
     monospace;
-  color: #b8d597;
-  border: 1px solid #91b36733;
+  color: #316341;
+  border: 1px solid #e0e5eb33;
   border-radius: 9px;
-  background: #a0c8710a;
+  background: #eef2f50a;
   display: grid;
   place-items: center;
   width: 34px;
@@ -146,9 +146,9 @@
   flex-shrink: 0;
 }
 .lora-mini-label {
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 1.4px;
-  color: #738365;
+  color: #667085;
 }
 .lora-field {
   display: block;
@@ -162,34 +162,34 @@
   align-items: center;
   margin-bottom: 9px;
   font-weight: 500;
-  color: #d9e1d2;
+  color: #17212d;
 }
 .lora-field small {
-  font-size: 10px;
-  color: #7e8977;
+  font-size: 12px;
+  color: #667085;
   font-weight: 400;
 }
 .lora-field input:not([type="radio"]),
 .lora-field textarea,
 .lora-toolbar .lora-filter {
   width: 100%;
-  background: #141911c7;
-  border: 1px solid #b4cca01a;
+  background: #f7f9fbc7;
+  border: 1px solid #e0e5eb1a;
   border-radius: 7px;
   padding: 11px 12px;
   font: inherit;
-  color: #e5ecde;
+  color: #17212d;
   outline: none;
   transition: border-color 0.15s;
 }
 .lora-field input:focus,
 .lora-field textarea:focus,
 .lora-toolbar .lora-filter:focus {
-  border-color: #9ac66d;
+  border-color: #aacd82;
 }
 .lora-field input::placeholder,
 .lora-field textarea::placeholder {
-  color: #636f59;
+  color: #667085;
 }
 .lora-field textarea {
   resize: vertical;
@@ -205,9 +205,9 @@
   gap: 18px;
 }
 .lora-field-explainer {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.7;
-  color: #829175;
+  color: #667085;
   padding-top: 24px;
 }
 .lora-type-options {
@@ -219,52 +219,52 @@
   padding: 8px 15px;
   border: 1px solid var(--lora-line);
   border-radius: 6px;
-  color: #a2ad99;
-  font-size: 11px;
-  background: #1a2015;
+  color: #475467;
+  font-size: 12px;
+  background: #f7f9fb;
   cursor: pointer;
 }
 .lora-type-options label.selected {
-  background: #b9ec7c16;
-  color: #c7ee83;
-  border-color: #add97d70;
+  background: #c7ee8316;
+  color: #316341;
+  border-color: #aacd8270;
 }
 .lora-count {
-  font-size: 10px;
-  color: #98a08f;
+  font-size: 12px;
+  color: #667085;
   white-space: nowrap;
-  background: #13190f;
+  background: #f7f9fb;
   padding: 5px 8px;
   border-radius: 5px;
 }
 .lora-count.ready {
-  color: #c7ee83;
+  color: #316341;
 }
 .lora-dropzone {
-  border: 1px dashed #a2bb853d;
+  border: 1px dashed #e0e5eb3d;
   border-radius: 10px;
   text-align: center;
   padding: 32px 12px;
   background: radial-gradient(
     ellipse at center,
-    rgba(152, 194, 101, 0.035),
+    rgba(31, 41, 55, 0.035),
     transparent 70%
   );
 }
 .lora-dropzone.dragging {
-  border-color: #c7ee83;
-  background: #aade6720;
+  border-color: #aacd82;
+  background: #eef2f520;
 }
 .lora-upload-icon {
   width: 54px;
   height: 54px;
-  border: 1px solid #a3c87b26;
+  border: 1px solid #aacd8226;
   border-radius: 15px;
   display: grid;
   place-items: center;
   margin: 0 auto 16px;
-  color: #afce8c;
-  background: #242e1d;
+  color: #316341;
+  background: #f7f9fb;
 }
 .lora-dropzone h3 {
   font-size: 13px;
@@ -272,19 +272,19 @@
   margin: 0 0 7px;
 }
 .lora-dropzone p {
-  font-size: 11px;
-  color: #819174;
+  font-size: 12px;
+  color: #667085;
   margin-bottom: 14px;
 }
 .lora-dropzone p button {
-  color: #c7ee83;
+  color: #316341;
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
 }
 .lora-dropzone small {
-  color: #66785b;
-  font-size: 10px;
+  color: #667085;
+  font-size: 12px;
 }
 .lora-dataset-hints {
   display: flex;
@@ -292,8 +292,8 @@
   justify-content: space-between;
   gap: 10px;
   margin: 15px 0 0;
-  font-size: 10px;
-  color: #85977a;
+  font-size: 12px;
+  color: #667085;
 }
 .lora-dataset-hints > span {
   display: flex;
@@ -303,30 +303,30 @@
 .lora-tip {
   display: flex;
   gap: 10px;
-  background: #a9d67508;
-  border: 1px solid #a9d67513;
+  background: #c7ee8308;
+  border: 1px solid #aacd8213;
   border-radius: 8px;
   margin-top: 22px;
   padding: 13px;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.75;
-  color: #859878;
+  color: #667085;
 }
 .lora-tip svg {
   flex-shrink: 0;
   margin-top: 2px;
-  color: #adc68f;
+  color: #316341;
 }
 .lora-tip strong {
-  color: #b5c6a7;
+  color: #475467;
   font-weight: 500;
 }
 .lora-upload-summary {
   display: flex;
   justify-content: space-between;
   margin: 22px 0 10px;
-  font-size: 10px;
-  color: #8a9b7d;
+  font-size: 12px;
+  color: #667085;
 }
 .lora-image-grid {
   display: grid;
@@ -339,8 +339,8 @@
   min-width: 0;
   border-radius: 7px;
   overflow: hidden;
-  border: 1px solid #adce912b;
-  background: #131810;
+  border: 1px solid #e0e5eb2b;
+  background: #f7f9fb;
 }
 .lora-image-tile img {
   width: 100%;
@@ -356,7 +356,7 @@
   height: 21px;
   display: grid;
   place-items: center;
-  background: #111c;
+  background: #f7f9fbcc;
   cursor: pointer;
   color: white;
 }
@@ -367,12 +367,12 @@
   left: 6px;
   background: #0e180ed9;
   color: #d0edb3;
-  font-size: 9px;
+  font-size: 12px;
   padding: 2px 5px;
   border-radius: 4px;
 }
 .lora-image-tile.has-error {
-  border-color: #d78375;
+  border-color: #edc2bc;
 }
 .lora-image-tile [data-slot="progress"] {
   position: absolute;
@@ -390,7 +390,7 @@
   border-radius: 7px;
   padding: 9px 10px;
   margin-bottom: 10px;
-  font-size: 11px;
+  font-size: 12px;
   overflow: hidden;
 }
 .lora-upload-row label {
@@ -402,8 +402,8 @@
 }
 .lora-upload-row small {
   display: block;
-  color: #8a997f;
-  font-size: 10px;
+  color: #667085;
+  font-size: 12px;
   margin-top: 4px;
 }
 .lora-submit-bar {
@@ -417,8 +417,8 @@
   display: flex;
   align-items: flex-start;
   gap: 7px;
-  font-size: 10px;
-  color: #7e8c72;
+  font-size: 12px;
+  color: #667085;
   line-height: 1.7;
   max-width: 275px;
 }
@@ -434,11 +434,11 @@
   overflow: hidden;
   position: relative;
   padding: 26px;
-  border: 1px solid #bed59923;
+  border: 1px solid #e0e5eb23;
   border-radius: 14px;
   background:
-    radial-gradient(ellipse at 30% 0, #63833927, transparent 50%),
-    linear-gradient(160deg, #232d1caa, #171d13cc);
+    radial-gradient(ellipse at 30% 0, #eef2f527, transparent 50%),
+    linear-gradient(160deg, #f7f9fbaa, #f7f9fbcc);
   backdrop-filter: blur(20px);
 }
 .lora-journey-card h2 {
@@ -449,9 +449,9 @@
   margin: 13px 0;
 }
 .lora-journey-card > p:not(.lora-eyebrow) {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.85;
-  color: #90a080;
+  color: #667085;
 }
 .lora-orbit-art {
   position: relative;
@@ -460,16 +460,16 @@
   margin: 0 auto 17px;
   display: grid;
   place-items: center;
-  color: #c7ee83;
+  color: #316341;
 }
 .lora-orbit-art > div {
   position: absolute;
-  border: 1px solid #afdb7738;
+  border: 1px solid #aacd8238;
   transform: rotate(-24deg);
   width: 116px;
   height: 77px;
   border-radius: 50%;
-  background: radial-gradient(ellipse, #95c5670a, transparent);
+  background: radial-gradient(ellipse, #eef2f50a, transparent);
 }
 .lora-orbit-art > div:nth-child(2) {
   transform: rotate(37deg);
@@ -490,8 +490,8 @@
   position: absolute;
   right: 0;
   top: 19px;
-  background: #1d2915;
-  border: 1px solid #8cae5966;
+  background: #f7f9fb;
+  border: 1px solid #e0e5eb66;
   border-radius: 50%;
   width: 31px;
   height: 31px;
@@ -521,18 +521,18 @@
   gap: 11px;
   position: relative;
   padding-bottom: 23px;
-  color: #91a080;
-  font-size: 11px;
+  color: #667085;
+  font-size: 12px;
   line-height: 1.5;
 }
 .lora-steps li > span {
   width: 22px;
   height: 22px;
-  background: #1b2416;
-  border: 1px solid #9ab97936;
+  background: #f7f9fb;
+  border: 1px solid #e0e5eb36;
   display: grid;
   place-items: center;
-  font-size: 9px;
+  font-size: 12px;
   border-radius: 50%;
   position: relative;
   z-index: 1;
@@ -545,33 +545,33 @@
   top: 21px;
   width: 1px;
   height: calc(100% - 20px);
-  background: #a4bc8326;
+  background: #eef2f526;
 }
 .lora-steps li small {
   display: block;
-  font-size: 9px;
+  font-size: 12px;
   line-height: 1.6;
-  color: #617552;
+  color: #667085;
   margin-top: 4px;
 }
 .lora-steps li:last-child {
   padding-bottom: 0;
 }
 .lora-steps li.is-active {
-  color: #d1eab7;
+  color: #316341;
 }
 .lora-steps li.is-active > span {
-  border-color: #b6e780;
-  box-shadow: 0 0 12px #a8d27412;
-  color: #c7ee83;
+  border-color: #aacd82;
+  box-shadow: 0 0 12px #18223012;
+  color: #316341;
 }
 .lora-aside-note {
   display: flex;
   gap: 9px;
   line-height: 1.7;
-  font-size: 10px;
-  color: #869978;
-  background: #adc68f09;
+  font-size: 12px;
+  color: #667085;
+  background: #eef2f509;
   border-radius: 7px;
   padding: 12px;
   margin-top: 25px;
@@ -584,20 +584,20 @@
   display: flex;
   gap: 12px;
   padding: 21px 8px;
-  color: #9bb184;
+  color: #316341;
 }
 .lora-private-card > svg {
   flex-shrink: 0;
 }
 .lora-private-card h3 {
-  font-size: 11px;
-  color: #bbcaac;
+  font-size: 12px;
+  color: #475467;
   margin-bottom: 6px;
 }
 .lora-private-card p {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.8;
-  color: #758768;
+  color: #667085;
 }
 .lora-stats {
   display: grid;
@@ -607,7 +607,7 @@
 }
 .lora-stats > div {
   border: 1px solid var(--lora-line);
-  background: linear-gradient(130deg, #27311e77, #1b221666);
+  background: linear-gradient(130deg, #ffffff77, #f7f9fb66);
   border-radius: 12px;
   padding: 21px;
   display: grid;
@@ -616,7 +616,7 @@
   align-items: center;
 }
 .lora-stats svg {
-  color: #a8c18d;
+  color: #316341;
   grid-area: 1/2/3/3;
 }
 .lora-stats strong {
@@ -625,24 +625,24 @@
   line-height: 1;
 }
 .lora-stats span {
-  font-size: 11px;
-  color: #879a78;
+  font-size: 12px;
+  color: #667085;
 }
 .lora-library {
   margin-bottom: 34px;
 }
 .lora-library > .lora-section-heading > span {
-  font-size: 11px;
-  color: #7b8e6c;
+  font-size: 12px;
+  color: #667085;
 }
 .lora-library-empty {
-  border: 1px dashed #acc18c30;
+  border: 1px dashed #e0e5eb30;
   border-radius: 13px;
   padding: 33px 28px;
   display: flex;
   gap: 25px;
   align-items: center;
-  background: linear-gradient(120deg, #3a47241c, transparent);
+  background: linear-gradient(120deg, #ffffff1c, transparent);
 }
 .lora-library-empty h3 {
   font-size: 17px;
@@ -651,7 +651,7 @@
 }
 .lora-library-empty p {
   font-size: 12px;
-  color: #879b76;
+  color: #667085;
   line-height: 1.7;
   max-width: 460px;
 }
@@ -659,20 +659,20 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
-  color: #c7ee83;
+  font-size: 12px;
+  color: #316341;
   margin-top: 15px;
   cursor: pointer;
 }
 .lora-mini-art {
   width: 89px;
   height: 91px;
-  border: 1px solid #a9d37830;
+  border: 1px solid #aacd8230;
   border-radius: 17px;
   display: grid;
   place-items: center;
-  color: #b3d294;
-  background: #2b3b1e55;
+  color: #316341;
+  background: #ffffff55;
   position: relative;
   flex-shrink: 0;
 }
@@ -680,7 +680,7 @@
   position: absolute;
   top: 13px;
   right: 10px;
-  color: #e1f4c7;
+  color: #316341;
 }
 .lora-cards {
   display: grid;
@@ -691,7 +691,7 @@
   border: 1px solid var(--lora-line);
   border-radius: 12px;
   overflow: hidden;
-  background: #1d2617;
+  background: #f7f9fb;
 }
 .lora-cover {
   display: block;
@@ -720,9 +720,9 @@
   padding: 17px;
 }
 .lora-model-body > small {
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 1.2px;
-  color: #8ea479;
+  color: #316341;
 }
 .lora-model-body h3 {
   font-size: 18px;
@@ -730,25 +730,25 @@
 }
 .lora-trigger {
   width: 100%;
-  border: 1px solid #c1dba220;
-  background: #111b0d;
+  border: 1px solid #e0e5eb20;
+  background: #f7f9fb;
   border-radius: 6px;
   padding: 8px 9px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  color: #b8d599;
+  color: #316341;
   cursor: pointer;
 }
 .lora-trigger code {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 11px;
+  font-size: 12px;
 }
 .lora-model-body > p {
-  font-size: 10px;
-  color: #788d69;
+  font-size: 12px;
+  color: #667085;
   margin: 13px 0;
 }
 .lora-card-actions {
@@ -764,8 +764,8 @@
   height: 36px;
   border: 1px solid var(--lora-line);
   border-radius: 7px;
-  color: #a9be96;
-  background: #182212;
+  color: #475467;
+  background: #f7f9fb;
   flex-shrink: 0;
 }
 .lora-toolbar {
@@ -781,8 +781,8 @@
   border: 1px solid var(--lora-line);
   border-radius: 7px;
   padding: 9px 12px;
-  color: #6b805b;
-  background: #121a0f;
+  color: #667085;
+  background: #f7f9fb;
   min-width: 0;
 }
 .lora-search input {
@@ -791,14 +791,14 @@
   border: 0;
   min-width: 0;
   width: 100%;
-  font-size: 11px;
-  color: #d7e6c9;
+  font-size: 12px;
+  color: #17212d;
 }
 .lora-toolbar .lora-filter {
   width: auto;
-  font-size: 11px;
+  font-size: 12px;
   padding-right: 28px;
-  color: #a7b897;
+  color: #475467;
 }
 .lora-table-wrap {
   overflow: auto;
@@ -807,22 +807,22 @@
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  font-size: 11px;
+  font-size: 12px;
   white-space: nowrap;
 }
 .lora-table th {
-  font-size: 9px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: #758967;
+  color: #667085;
   font-weight: 500;
   padding: 12px 14px;
   border-bottom: 1px solid var(--lora-line);
 }
 .lora-table td {
   padding: 18px 14px;
-  color: #a9b79d;
-  border-bottom: 1px solid #a7bd8e10;
+  color: #475467;
+  border-bottom: 1px solid #e0e5eb10;
 }
 .lora-table tr:last-child td {
   border: 0;
@@ -832,30 +832,30 @@
   padding-left: 0;
 }
 .lora-table strong {
-  color: #e1ead8;
+  color: #17212d;
   font-weight: 500;
 }
 .lora-table code,
 .lora-table td small {
   display: block;
-  color: #6e825f;
-  font-size: 9px;
+  color: #667085;
+  font-size: 12px;
   margin-top: 5px;
 }
 .lora-table-action {
-  font-size: 10px;
-  color: #c7ee83;
+  font-size: 12px;
+  color: #316341;
 }
 .lora-badge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  border: 1px solid #a3bb8033;
-  background: #35451f33;
-  color: #bbcf99;
+  border: 1px solid #e0e5eb33;
+  background: #ffffff33;
+  color: #316341;
   border-radius: 5px;
   padding: 5px 7px;
-  font-size: 9px;
+  font-size: 12px;
   white-space: nowrap;
 }
 .lora-badge i {
@@ -865,46 +865,46 @@
   background: currentColor;
 }
 .lora-status-pending {
-  color: #dcbd81;
-  background: #54432022;
-  border-color: #8f753d44;
+  color: #a13b31;
+  background: #fff1ee22;
+  border-color: #edc2bc44;
 }
 .lora-status-training {
-  color: #abb9ee;
-  background: #333f7622;
-  border-color: #636fb34d;
+  color: #365bad;
+  background: #eff4ff22;
+  border-color: #e0e5eb4d;
 }
 .lora-status-quality_check {
-  color: #d1afe9;
-  background: #66457922;
-  border-color: #9770b23d;
+  color: #7452a4;
+  background: #f2edfa22;
+  border-color: #e0e5eb3d;
 }
 .lora-status-completed {
-  color: #c7ee83;
-  background: #223712cc;
-  border-color: #91b56755;
+  color: #316341;
+  background: #f7f9fbcc;
+  border-color: #e0e5eb55;
 }
 .lora-status-rejected {
-  color: #e6a698;
-  background: #7c3b2622;
-  border-color: #9f645144;
+  color: #a13b31;
+  background: #fff1ee22;
+  border-color: #edc2bc44;
 }
 .lora-status-draft {
-  color: #a2ac99;
-  background: #43493b33;
-  border-color: #7e877133;
+  color: #475467;
+  background: #ffffff33;
+  border-color: #e0e5eb33;
 }
 .lora-admin-footer {
   display: flex;
   gap: 10px;
   align-items: center;
   margin-top: 22px;
-  font-size: 11px;
-  color: #7c8f6c;
+  font-size: 12px;
+  color: #667085;
 }
 .lora-admin-footer > span {
   margin-left: auto;
-  color: #acc192;
+  color: #316341;
 }
 .lora-empty {
   text-align: center;
@@ -913,15 +913,15 @@
   gap: 16px;
   align-items: center;
   padding: 80px 20px;
-  color: #a0b48e;
+  color: #475467;
 }
 .lora-empty h2,
 .lora-empty h3 {
-  color: #dce8d1;
+  color: #17212d;
 }
 .lora-empty p {
   font-size: 12px;
-  color: #879b76;
+  color: #667085;
 }
 .lora-empty-small {
   padding: 30px;
@@ -930,7 +930,7 @@
 .lora-notice,
 .lora-error {
   padding: 15px;
-  border: 1px solid #a1ba7936;
+  border: 1px solid #e0e5eb36;
   border-radius: 8px;
   font-size: 12px;
   line-height: 1.7;
@@ -938,27 +938,27 @@
   justify-content: space-between;
   gap: 14px;
   margin-bottom: 16px;
-  color: #aec493;
-  background: #3a492322;
+  color: #316341;
+  background: #ffffff22;
 }
 .lora-notice button {
-  color: #c7ee83;
+  color: #316341;
   text-decoration: underline;
   cursor: pointer;
 }
 .lora-error {
   display: block;
-  background: #70372d22;
-  color: #e6b0a2;
-  border-color: #ad6c5944;
+  background: #fff1ee22;
+  color: #a13b31;
+  border-color: #edc2bc44;
 }
 .lora-dialog {
   --lora-line: rgba(221, 241, 201, 0.11);
   --lora-muted: #939d8d;
   --lora-lime: #c7ee83;
-  background: #1b2218 !important;
-  border: 1px solid #3c4831 !important;
-  color: #e0ead7 !important;
+  background: #f7f9fb !important;
+  border: 1px solid #e0e5eb !important;
+  color: #17212d !important;
   border-radius: 16px !important;
   width: calc(100% - 28px) !important;
   max-width: 790px !important;
@@ -974,7 +974,7 @@
 }
 .lora-dialog [data-slot="dialog-description"] {
   font-size: 12px;
-  color: #94a486;
+  color: #667085;
   line-height: 1.7;
 }
 .lora-dialog .lora-eyebrow {
@@ -991,8 +991,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 10px;
-  color: #7e916c;
+  font-size: 12px;
+  color: #667085;
   margin-top: -5px;
   overflow-wrap: anywhere;
 }
@@ -1007,7 +1007,7 @@
 }
 .lora-detail-progress .lora-steps li {
   flex-direction: column;
-  font-size: 10px;
+  font-size: 12px;
   padding: 0;
   gap: 9px;
 }
@@ -1021,8 +1021,8 @@
   height: 1px;
 }
 .lora-detail-text h3 {
-  color: #a7bc94;
-  font-size: 10px;
+  color: #475467;
+  font-size: 12px;
   margin-bottom: 5px;
 }
 .lora-detail-text p,
@@ -1030,7 +1030,7 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   font-size: 12px;
-  color: #c6d4bc;
+  color: #475467;
   line-height: 1.8;
 }
 .lora-dialog .lora-rule {
@@ -1052,21 +1052,21 @@
 }
 .lora-delivery-form {
   padding: 22px;
-  border: 1px solid #bedb9555;
+  border: 1px solid #e0e5eb55;
   border-radius: 12px;
-  background: #8dad5709;
+  background: #eef2f509;
   margin-top: 10px;
 }
 .lora-delivery-form .lora-section-heading {
   margin-bottom: 20px;
 }
 .lora-dialog .lora-field input[type="file"] {
-  font-size: 11px;
-  color: #a4b790;
+  font-size: 12px;
+  color: #475467;
 }
 .lora-field input[type="file"]::file-selector-button {
-  background: #354629;
-  color: #d6e5c7;
+  background: #ffffff;
+  color: #17212d;
   border: 0;
   padding: 7px 9px;
   border-radius: 4px;
@@ -1076,12 +1076,12 @@
 .lora-dialog [data-slot="progress"] {
   width: 100%;
   height: 6px;
-  accent-color: #c7ee83;
+  accent-color: #376741;
 }
 .lora-dialog [data-slot="progress"] + span {
   display: block;
-  font-size: 10px;
-  color: #a6bf90;
+  font-size: 12px;
+  color: #316341;
   margin: 6px 0 16px;
 }
 .lora-review-actions {
@@ -1092,20 +1092,20 @@
   margin-top: 8px;
 }
 .lora-danger {
-  background: #6f332329;
-  color: #e2a191;
-  border: 1px solid #97614c66;
+  background: #fff1ee29;
+  color: #a13b31;
+  border: 1px solid #edc2bc66;
   padding: 10px 14px;
   border-radius: 7px;
   min-height: 38px;
 }
 .lora-danger:hover {
-  background: #944d333f;
+  background: #fff1ee3f;
 }
 .lora-reject {
   width: 100%;
   padding: 15px;
-  border: 1px solid #8e5a4644;
+  border: 1px solid #edc2bc44;
   border-radius: 9px;
 }
 .lora-timeline {
@@ -1124,31 +1124,31 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #829e61;
+  background: #eef2f5;
   flex-shrink: 0;
   margin-top: 5px;
 }
 .lora-timeline strong {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
 }
 .lora-timeline p {
-  font-size: 11px;
-  color: #8da37b;
+  font-size: 12px;
+  color: #667085;
   line-height: 1.7;
   margin: 4px 0;
 }
 .lora-timeline small {
-  font-size: 9px;
-  color: #697e58;
+  font-size: 12px;
+  color: #667085;
 }
 .lora-settings {
   max-width: 480px !important;
 }
 .lora-muted {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.8;
-  color: #8d9f7f;
+  color: #667085;
   margin-bottom: 12px;
 }
 .lora-tags {
@@ -1157,11 +1157,11 @@
   flex-wrap: wrap;
 }
 .lora-tags span {
-  font-size: 10px;
+  font-size: 12px;
   padding: 6px 9px;
   border: 1px solid var(--lora-line);
   border-radius: 5px;
-  color: #8c9f7c;
+  color: #667085;
 }
 .lora-actions {
   display: flex;
@@ -1173,17 +1173,17 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
-  color: #aec394;
+  font-size: 12px;
+  color: #316341;
   cursor: pointer;
 }
 .lora-delivered {
   display: flex;
   gap: 22px;
-  border: 1px solid #a4c6773b;
+  border: 1px solid #aacd823b;
   padding: 17px;
   border-radius: 11px;
-  background: #82a5490c;
+  background: #eef2f50c;
 }
 .lora-delivered > img {
   width: 124px;
@@ -1199,18 +1199,18 @@
   margin: 9px 0;
 }
 .lora-delivered p {
-  font-size: 10px;
-  color: #94a880;
+  font-size: 12px;
+  color: #667085;
   margin-bottom: 18px;
 }
 .lora-copy-block {
   padding: 14px;
-  background: #11180d;
-  border: 1px solid #aecf8633;
+  background: #f7f9fb;
+  border: 1px solid #e0e5eb33;
   border-radius: 7px;
   font-size: 12px;
   line-height: 1.8;
-  color: #c7dcad;
+  color: #316341;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -1319,16 +1319,16 @@
     font-size: 14px;
   }
   .lora-section-heading p {
-    font-size: 10px;
+    font-size: 12px;
   }
   .lora-count {
-    font-size: 8px;
+    font-size: 12px;
     padding: 4px;
   }
   .lora-number {
     width: 28px;
     height: 32px;
-    font-size: 10px;
+    font-size: 12px;
   }
   .lora-field-row {
     grid-template-columns: 1fr;
@@ -1342,11 +1342,11 @@
     gap: 6px;
   }
   .lora-type-options label {
-    font-size: 10px;
+    font-size: 12px;
     padding: 8px 13px;
   }
   .lora-dataset-hints {
-    font-size: 9px;
+    font-size: 12px;
     gap: 9px;
   }
   .lora-dropzone {
@@ -1369,7 +1369,7 @@
     font-size: 25px;
   }
   .lora-stats span {
-    font-size: 9px;
+    font-size: 12px;
   }
   .lora-library-empty {
     padding: 22px 18px;
@@ -1394,7 +1394,7 @@
     line-height: 1.5;
   }
   .lora-library-empty p {
-    font-size: 10px;
+    font-size: 12px;
   }
   .lora-toolbar {
     flex-wrap: wrap;
@@ -1416,7 +1416,7 @@
     flex-direction: column;
   }
   .lora-detail-progress .lora-steps li {
-    font-size: 8px;
+    font-size: 12px;
   }
   .lora-detail-images {
     grid-template-columns: repeat(3, 1fr);
@@ -1432,7 +1432,7 @@
     height: 190px;
   }
   .lora-request-id {
-    font-size: 9px;
+    font-size: 12px;
   }
   .lora-cards {
     grid-template-columns: 1fr;
@@ -1452,11 +1452,356 @@
 }
 
 .lora-type-options label:has(:focus-visible) {
-  outline: 2px solid #c7ee83;
+  outline: 2px solid #aacd82;
   outline-offset: 3px;
 }
 /* Keep scrollable datasets from collapsing inside the modal's grid tracks. */
 .lora-dialog {
   grid-auto-rows: max-content;
   align-content: start;
+}
+
+/* Light theme shares the app's surface and type hierarchy. */
+.lora-workspace,
+.lora-dialog {
+  --lora-line: #e0e5eb;
+  --lora-muted: #667085;
+  --lora-lime: #426b34;
+  color: #253141;
+}
+.lora-panel {
+  background: #fff;
+  border-color: #e0e5eb;
+  box-shadow: 0 2px 7px #17212d03;
+  backdrop-filter: none;
+}
+.lora-heading h1 {
+  color: #182531;
+  font-size: 34px;
+  letter-spacing: -1.1px;
+}
+.lora-heading p {
+  font-size: 15px;
+}
+.lora-heading .lora-eyebrow,
+.lora-eyebrow {
+  color: #5e7c48 !important;
+  font-size: 12px !important;
+}
+.lora-section-heading h2 {
+  font-size: 18px;
+  color: #24313e;
+}
+.lora-section-heading p {
+  font-size: 14px;
+}
+.lora-number {
+  background: #f0f5e9;
+  color: #57723d;
+  border-color: #dde7cf;
+}
+.lora-field {
+  font-size: 14px;
+}
+.lora-field > span {
+  color: #344054;
+  font-weight: 500;
+}
+.lora-field input:not([type="radio"]),
+.lora-field textarea {
+  background: #fff;
+  color: #273442;
+  border-color: #d7dee5;
+  font-size: 14px;
+  padding: 12px;
+}
+.lora-field input::placeholder,
+.lora-field textarea::placeholder {
+  color: #8a94a0;
+}
+.lora-type-options label {
+  font-size: 13px;
+  color: #667085;
+  background: #fff;
+  padding: 9px 15px;
+  border-color: #dfe5eb;
+}
+.lora-type-options label.selected {
+  background: #eff6e5;
+  color: #395f32;
+  border-color: #abc78c;
+}
+.lora-button,
+.lora-icon-button {
+  background: #fff;
+  color: #425266;
+  border-color: #dce3e9;
+  font-size: 13px;
+}
+.lora-button:hover,
+.lora-icon-button:hover {
+  background: #f3f6f8;
+  color: #263440;
+}
+.lora-primary {
+  font-size: 14px;
+  min-height: 44px;
+}
+.lora-dropzone {
+  background: #fafcf8;
+  border: 1.5px dashed #c0d1af;
+  padding: 35px 16px;
+}
+.lora-dropzone h3 {
+  font-size: 16px;
+  color: #3b4d36;
+}
+.lora-dropzone p {
+  font-size: 14px;
+  color: #798372;
+}
+.lora-dropzone p button {
+  color: #476b32;
+}
+.lora-dropzone small {
+  color: #788471;
+}
+.lora-upload-icon {
+  background: #edf4e3;
+  border-color: #d8e5c5;
+  color: #6a8c48;
+}
+.lora-journey-card {
+  background: linear-gradient(145deg, #f2f7eb, #fff 70%);
+  border-color: #dce6d1;
+}
+.lora-journey-card h2 {
+  color: #294033;
+  font-size: 26px;
+}
+.lora-journey-card > p:not(.lora-eyebrow) {
+  color: #687964;
+  font-size: 14px;
+}
+.lora-journey-card h3 {
+  color: #334a35;
+  font-size: 14px;
+}
+.lora-orbit-art {
+  color: #648647;
+}
+.lora-orbit-art > div {
+  border-color: #a1bd844d;
+  background: none;
+}
+.lora-orbit-spark {
+  background: #f6faef;
+  border-color: #b9d29c;
+}
+.lora-steps li {
+  color: #63735c;
+  font-size: 13px;
+}
+.lora-steps li small {
+  color: #7c8875;
+  font-size: 12px;
+}
+.lora-steps li > span {
+  background: #f6f9f2;
+  border-color: #cdddc0;
+  color: #637c4d;
+}
+.lora-steps li.is-active {
+  color: #355d30;
+}
+.lora-steps li.is-active > span {
+  color: #355d30;
+  background: #ebf4dd;
+  border-color: #9abb78;
+}
+.lora-steps li:not(:last-child):before {
+  background: #dce6d1;
+}
+.lora-aside-note {
+  color: #6c7d60;
+  background: #f1f6e9;
+}
+.lora-private-card h3 {
+  color: #4e6642;
+}
+.lora-private-card p {
+  color: #788571;
+}
+.lora-stats > div {
+  background: #fff;
+  border-color: #e0e5eb;
+}
+.lora-stats strong {
+  color: #24313e;
+}
+.lora-stats span {
+  color: #667085;
+  font-size: 13px;
+}
+.lora-stats svg {
+  color: #789957;
+}
+.lora-model-card {
+  background: #fff;
+}
+.lora-trigger {
+  color: #486c35;
+  background: #f5f9ef;
+  border-color: #dde7cf;
+}
+.lora-model-body h3 {
+  color: #253141;
+}
+.lora-toolbar .lora-filter,
+.lora-search {
+  background: #fff;
+  border-color: #dce3e9;
+  color: #697586;
+}
+.lora-search input {
+  color: #344054;
+  font-size: 14px;
+}
+.lora-table {
+  font-size: 13px;
+}
+.lora-table th {
+  color: #6e7a89;
+  background: #f7f9fb;
+  font-size: 12px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.lora-table td {
+  color: #596678;
+}
+.lora-table strong {
+  color: #283747;
+}
+.lora-table-action {
+  font-size: 13px;
+  color: #436a32;
+}
+.lora-badge {
+  font-size: 12px;
+  padding: 5px 8px;
+}
+.lora-status-pending {
+  background: #fff8e6;
+  color: #896524;
+  border-color: #eddfb8;
+}
+.lora-status-approved,
+.lora-status-completed {
+  background: #eff7e7;
+  color: #486d31;
+  border-color: #d7e7c4;
+}
+.lora-status-training {
+  background: #eff4ff;
+  color: #4b67a4;
+  border-color: #d6e1fa;
+}
+.lora-status-quality_check {
+  background: #f4effc;
+  color: #76549c;
+  border-color: #e1d5f2;
+}
+.lora-status-rejected,
+.lora-danger,
+.lora-error {
+  background: #fff2ee;
+  color: #a24938;
+  border-color: #edcfc5;
+}
+.lora-status-draft {
+  background: #f3f5f7;
+  color: #687384;
+  border-color: #e0e5eb;
+}
+.lora-dialog {
+  background: #fff !important;
+  color: #253141 !important;
+  border-color: #dce3e9 !important;
+}
+.lora-dialog [data-slot="dialog-description"] {
+  color: #697586;
+  font-size: 14px;
+}
+.lora-detail-text p,
+.lora-preserve {
+  color: #536273;
+  font-size: 14px;
+}
+.lora-copy-block {
+  color: #426039;
+  background: #f5f8f0;
+  border-color: #dfe7d4;
+}
+.lora-delivered,
+.lora-delivery-form {
+  background: #fafcf8;
+  border-color: #dbe6d0;
+}
+.lora-notice {
+  color: #5d7051;
+  background: #f4f8ee;
+  border-color: #dce6d1;
+}
+.lora-count.ready {
+  color: #486c35;
+}
+.lora-submit-bar p,
+.lora-dataset-hints {
+  color: #6d7b63;
+  font-size: 12px;
+}
+.lora-tip {
+  background: #f5f8f0;
+  color: #718064;
+  border-color: #e7eddd;
+  font-size: 13px;
+}
+.lora-tip strong {
+  color: #516d3f;
+}
+@media (max-width: 540px) {
+  .lora-heading h1 {
+    font-size: 28px;
+  }
+  .lora-field-row {
+    grid-template-columns: 1fr;
+  }
+  .lora-section-heading {
+    align-items: flex-start;
+  }
+  .lora-section-heading h2 {
+    font-size: 17px;
+  }
+  .lora-section-heading p {
+    font-size: 13px;
+  }
+  .lora-count {
+    font-size: 12px;
+  }
+  .lora-detail-progress .lora-steps {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .lora-detail-progress .lora-steps li {
+    flex-direction: row;
+    align-items: center;
+    font-size: 13px;
+  }
+  .lora-detail-progress .lora-steps li:before {
+    display: none;
+  }
+  .lora-table-wrap {
+    max-width: 100%;
+  }
 }

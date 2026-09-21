@@ -1,4 +1,5 @@
 "use client";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, type FormEvent } from "react";
 import { ArrowRight, LoaderCircle, Mail, Eye, EyeOff } from "lucide-react";
 type Mode = "signin" | "signup" | "reset" | "password";
@@ -68,24 +69,43 @@ export function LoginForm({
   return (
     <div className="auth-options">
       {!recovery && (
-        <div className="auth-tabs" aria-label="Account access">
-          <button
-            type="button"
-            className={mode === "signin" || mode === "reset" ? "active" : ""}
-            onClick={() => change("signin")}
-            disabled={busy}
-          >
-            Sign in
-          </button>
-          <button
-            type="button"
-            className={mode === "signup" ? "active" : ""}
-            onClick={() => change("signup")}
-            disabled={busy}
-          >
-            Create account
-          </button>
+        <div className="auth-heading">
+          <span className="eyebrow">MODEL DROPS STUDIO</span>
+          <h2>
+            {mode === "signup"
+              ? "Create your account"
+              : mode === "reset"
+                ? "Reset your password"
+                : "Welcome back"}
+          </h2>
+          <p>
+            {mode === "signup"
+              ? "One workspace for your characters, creations, and custom LoRAs."
+              : mode === "reset"
+                ? "Enter your email to get a password reset link."
+                : "Sign in to continue where you left off."}
+          </p>
         </div>
+      )}
+      {!recovery && mode !== "reset" && (
+        <Tabs value={mode} onValueChange={(value) => change(value as Mode)}>
+          <TabsList className="auth-tabs" aria-label="Account access">
+            <TabsTrigger
+              value="signin"
+              className={mode === "signin" ? "active" : ""}
+              disabled={busy}
+            >
+              Sign in
+            </TabsTrigger>
+            <TabsTrigger
+              value="signup"
+              className={mode === "signup" ? "active" : ""}
+              disabled={busy}
+            >
+              Create account
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       )}
       {!ready && (
         <p className="auth-notice" role="status">
@@ -168,6 +188,7 @@ export function LoginForm({
               <button
                 type="button"
                 aria-label={visible ? "Hide password" : "Show password"}
+                disabled={!ready || busy}
                 onClick={() => setVisible(!visible)}
               >
                 {visible ? <EyeOff size={17} /> : <Eye size={17} />}

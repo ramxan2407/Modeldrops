@@ -827,12 +827,10 @@ function TrainingForm({
             <Sparkles size={14} />
             CUSTOM CHARACTER TRAINING
           </p>
-          <h1>
-            Make it uniquely yours<span className="lora-heading-dot">.</span>
-          </h1>
+          <h1>Train a character LoRA</h1>
           <p>
-            A consistent character. Endless possibilities. Let’s train your
-            LoRA.
+            Upload your references. Our team reviews, trains, and delivers your
+            model.
           </p>
         </div>
         <button className="lora-button" onClick={onLibrary} disabled={busy}>

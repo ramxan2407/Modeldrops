@@ -50,6 +50,14 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -173,24 +181,20 @@ const emptyAccount: Account = {
   defaultPrivate: true,
 };
 const navigation = [
-  { id: "dashboard", label: "My Dashboard", icon: LayoutDashboard },
-  { id: "discover", label: "Discover", icon: Compass },
-  { id: "studio", label: "AI Studio", icon: Sparkles },
-  { id: "marketplace", label: "Marketplace", icon: ShoppingBag },
-  { id: "explore", label: "Explore", icon: Globe },
+  { id: "dashboard", label: "Overview", icon: LayoutDashboard },
+  { id: "studio", label: "Create content", icon: Sparkles },
+  { id: "train-lora", label: "Train LoRA", icon: Upload },
 ];
 const workspace = [
-  { id: "train-lora", label: "Train LoRA", icon: Sparkles },
-  { id: "my-loras", label: "My LoRAs", icon: Layers },
   { id: "characters", label: "My Characters", icon: Users },
-  { id: "library", label: "My Generations", icon: Images },
+  { id: "my-loras", label: "My LoRAs", icon: Layers },
+  { id: "library", label: "Creations", icon: Images },
   { id: "projects", label: "Projects", icon: Folder },
-  { id: "favorites", label: "Favorites", icon: Heart },
 ];
 const titles: Record<Page, string> = {
-  dashboard: "My Dashboard",
+  dashboard: "Overview",
   discover: "Discover",
-  studio: "AI Studio",
+  studio: "Create content",
   marketplace: "Character marketplace",
   characters: "My Characters",
   explore: "Explore",
@@ -260,8 +264,78 @@ function NavButton({
       >
         <Icon size={18} />
         <span>{label}</span>
-        {id === "studio" && <span className="nav-new">NEW</span>}
       </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
+function WorkspaceMoreMenu({
+  isAdmin,
+  onNavigate,
+}: {
+  isAdmin: boolean;
+  onNavigate: (page: Page) => void;
+}) {
+  const { setOpenMobile } = useSidebar();
+  const navigate = (page: Page) => {
+    setOpenMobile(false);
+    onNavigate(page);
+  };
+  return (
+    <SidebarMenuItem>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <SidebarMenuButton className="nav-button">
+            <MoreHorizontal size={18} />
+            <span>More tools</span>
+            <ChevronDown size={14} />
+          </SidebarMenuButton>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          side="right"
+          align="end"
+          className="workspace-more-menu"
+        >
+          <DropdownMenuLabel>Discover</DropdownMenuLabel>
+          {[
+            { id: "discover", label: "Discover", icon: Compass },
+            {
+              id: "marketplace",
+              label: "Marketplace",
+              icon: ShoppingBag,
+            },
+            {
+              id: "explore",
+              label: "Explore inspiration",
+              icon: Globe,
+            },
+            { id: "favorites", label: "Favorites", icon: Heart },
+          ].map((n) => (
+            <DropdownMenuItem
+              key={n.id}
+              onSelect={() => navigate(n.id as Page)}
+            >
+              <n.icon size={16} />
+              {n.label}
+            </DropdownMenuItem>
+          ))}
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel>Manage</DropdownMenuLabel>
+          <DropdownMenuItem onSelect={() => navigate("creators")}>
+            <Layers size={16} />
+            Creator studio
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => navigate("settings")}>
+            <Settings2 size={16} />
+            Account settings
+          </DropdownMenuItem>
+          {isAdmin && (
+            <DropdownMenuItem onSelect={() => navigate("admin")}>
+              <ShieldCheck size={16} />
+              Administration
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </SidebarMenuItem>
   );
 }
@@ -674,15 +748,6 @@ export default function ModelDropsApp({
           </button>
         </SidebarHeader>
         <SidebarContent>
-          <Button
-            className="new-creation"
-            onClick={() => {
-              navigate("studio");
-              setPrompt("");
-            }}
-          >
-            <Plus size={17} /> Create something <span>⌘ J</span>
-          </Button>
           <SidebarMenu>
             {navigation.map((n) => (
               <NavButton key={n.id} {...n} page={page} navigate={navigate} />
@@ -696,13 +761,6 @@ export default function ModelDropsApp({
           </SidebarMenu>
           <div className="nav-divider" />
           <SidebarMenu>
-            <NavButton
-              id="creators"
-              label="Creator studio"
-              icon={Layers}
-              page={page}
-              navigate={navigate}
-            />
             {account.isAdmin && (
               <NavButton
                 id="admin-training"
@@ -712,15 +770,10 @@ export default function ModelDropsApp({
                 navigate={navigate}
               />
             )}
-            {account.isAdmin && (
-              <NavButton
-                id="admin"
-                label="Admin"
-                icon={LayoutDashboard}
-                page={page}
-                navigate={navigate}
-              />
-            )}
+            <WorkspaceMoreMenu
+              isAdmin={account.isAdmin}
+              onNavigate={navigate}
+            />
           </SidebarMenu>
           <div className="creator-invite">
             <div className="invite-icon">
@@ -802,8 +855,10 @@ export default function ModelDropsApp({
                       "favorites",
                       "explore",
                     ].includes(page)
-                  )
+                  ) {
                     setPage("marketplace");
+                    history.pushState({}, "", "/marketplace");
+                  }
                 }}
                 placeholder="Search characters, inspiration…"
                 aria-label="Search characters"
@@ -875,6 +930,8 @@ export default function ModelDropsApp({
               }}
               onBrowse={() => navigate("marketplace")}
               onModels={() => navigate("characters")}
+              onTrain={() => navigate("train-lora")}
+              onLoras={() => navigate("my-loras")}
               onStudio={() => navigate("studio")}
               onCredits={() => setModal("credits")}
               onLibrary={() => navigate("library")}
@@ -1197,8 +1254,8 @@ export default function ModelDropsApp({
             <>
               <div className="studio-heading">
                 <div>
-                  <p className="eyebrow">IMAGINATION, IN MOTION</p>
-                  <h1>Your creation studio.</h1>
+                  <p className="eyebrow">CREATE CONTENT</p>
+                  <h1>Create an image or video.</h1>
                 </div>
                 <span className="demo-pill">Demo generation</span>
               </div>
@@ -1233,7 +1290,9 @@ export default function ModelDropsApp({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">No character</SelectItem>
+                        <SelectItem value="none">
+                          Start from a prompt
+                        </SelectItem>
                         {characters.map((c) => (
                           <SelectItem key={c.id} value={c.id}>
                             {c.name}
@@ -1492,6 +1551,20 @@ export default function ModelDropsApp({
                       {cost}
                     </span>
                   </Button>
+                  {(!prompt.trim() ||
+                    (!!selected && !account.owned.includes(selected)) ||
+                    cost > account.balance ||
+                    !model.enabled) && (
+                    <p className="generation-guidance" role="status">
+                      {!!selected && !account.owned.includes(selected)
+                        ? "Add this character to your library to continue."
+                        : !model.enabled
+                          ? "Choose an available generation model."
+                          : !prompt.trim()
+                            ? "Write a prompt above to enable generation."
+                            : "You need more demo credits or fewer outputs to continue."}
+                    </p>
+                  )}
                   <p className="privacy-note">
                     <Lock size={11} /> Private by default. This is a simulated
                     generation.
@@ -2556,7 +2629,7 @@ export default function ModelDropsApp({
           )}
         </DialogContent>
       </Dialog>
-      <Toaster theme="dark" position="bottom-right" richColors />
+      <Toaster theme="light" position="bottom-right" richColors />
     </SidebarProvider>
   );
 }
