@@ -97,7 +97,9 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Toaster, toast } from "sonner";
+import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
+import { ThemeToggle } from "@/components/theme-provider";
 import {
   UserDashboard,
   type PurchaseRecord,
@@ -993,6 +995,7 @@ export default function ModelDropsApp({
             <strong>{titles[page]}</strong>
           </div>
           <div className="top-actions">
+            <ThemeToggle />
             <div className="search-field">
               <Search size={15} />
               <input
@@ -2806,7 +2809,7 @@ export default function ModelDropsApp({
           )}
         </DialogContent>
       </Dialog>
-      <Toaster theme="light" position="bottom-right" richColors />
+      <Toaster position="bottom-right" richColors />
     </SidebarProvider>
   );
 }

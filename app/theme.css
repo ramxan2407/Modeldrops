@@ -1,0 +1,106 @@
+/* The root class also controls native inputs and light-dark() colors across every screen. */
+:root {
+  --popover-foreground: var(--foreground);
+  --radius: 12px;
+}
+:root.dark {
+  color-scheme: dark;
+  --background: #10171f;
+  --foreground: #e7edf3;
+  --card: #19222c;
+  --popover: #19222c;
+  --primary: #c7ee83;
+  --sidebar: #131b24;
+  --border: #34424f;
+}
+.dark ::selection {
+  background: #c7ee83;
+  color: #183019;
+}
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid light-dark(#dce3e9, #34424f);
+  border-radius: 12px;
+  background: light-dark(#fff, #19222c);
+  color: light-dark(#3b5142, #c7ee83);
+}
+.theme-toggle:hover {
+  background: light-dark(#eff5e8, #243124);
+}
+.theme-toggle-floating {
+  position: fixed;
+  bottom: max(22px, env(safe-area-inset-bottom));
+  right: max(22px, env(safe-area-inset-right));
+  z-index: 45;
+  box-shadow: 0 4px 20px #0002;
+}
+/* Workspace screens share a header; public/auth/error screens keep the floating control. */
+body:has(.topbar) .theme-toggle-floating {
+  display: none;
+}
+.dark .lime-button,
+.dark .lora-primary,
+.dark .login-primary,
+.dark .new-creation {
+  color: #183019 !important;
+}
+.dark .topbar {
+  background: #131b24ed;
+}
+.dark .search-field {
+  background: #19222c;
+}
+.dark .studio-canvas {
+  background: radial-gradient(ellipse at 50% 40%, #1c2931, #10171f);
+}
+.dark [data-slot="dialog-overlay"],
+.dark [data-slot="alert-dialog-overlay"] {
+  background: #0009;
+}
+.dark .model-drops-sidebar [data-slot="sidebar-inner"] {
+  background: #131b24;
+}
+.dark .nav-button[data-active="true"] {
+  background: #263527 !important;
+  color: #c7ee83 !important;
+}
+.dark .login-page,
+.dark .login-form-panel {
+  background: #10171f;
+}
+.dark [data-sonner-toast] {
+  color: var(--foreground);
+  border-color: var(--border);
+}
+@media (max-width: 600px) {
+  .top-actions .search-field {
+    display: none;
+  }
+  .top-actions {
+    gap: 8px;
+  }
+  .top-actions .theme-toggle {
+    width: 40px;
+    height: 40px;
+  }
+}
+.dark .verified,
+.dark .popular,
+.dark .editorial-promo,
+.dark .editorial-promo:hover {
+  color: #183019;
+}
+.dark .editorial-promo h3,
+.dark .editorial-promo p {
+  color: #183019;
+}
+.dark .lora-workspace,
+.dark .lora-dialog {
+  --lora-lime: #c7ee83;
+}

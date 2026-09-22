@@ -1,10 +1,10 @@
 .lora-workspace {
   max-width: 1480px;
   margin: 0 auto;
-  color: #17212d;
+  color: light-dark(#17212d, #e7edf3);
   padding: 14px 2px 60px;
   --lora-line: rgba(221, 241, 201, 0.11);
-  --lora-muted: #939d8d;
+  --lora-muted: light-dark(#939d8d, #95a5b5);
   --lora-lime: #c7ee83;
 }
 .lora-heading {
@@ -21,7 +21,7 @@
   font-size: 12px !important;
   letter-spacing: 1.8px;
   font-weight: 650;
-  color: #316341 !important;
+  color: light-dark(#316341, #afd989) !important;
   margin-bottom: 13px !important;
 }
 .lora-heading h1 {
@@ -58,15 +58,15 @@
 }
 .lora-button {
   border: 1px solid var(--lora-line);
-  background: #f7f9fb;
+  background: light-dark(#f7f9fb, #131b24);
   border-radius: 8px;
   min-height: 38px;
   padding: 9px 14px;
-  color: #17212d;
+  color: light-dark(#17212d, #e7edf3);
 }
 .lora-button:hover,
 .lora-icon-button:hover {
-  background: #ffffff;
+  background: light-dark(#ffffff, #19222c);
 }
 .lora-primary {
   border-radius: 8px !important;
@@ -135,10 +135,10 @@
   font:
     11px ui-monospace,
     monospace;
-  color: #316341;
-  border: 1px solid #e0e5eb33;
+  color: light-dark(#316341, #afd989);
+  border: 1px solid light-dark(#e0e5eb33, #34424f33);
   border-radius: 9px;
-  background: #eef2f50a;
+  background: light-dark(#eef2f50a, #222d380a);
   display: grid;
   place-items: center;
   width: 34px;
@@ -148,7 +148,7 @@
 .lora-mini-label {
   font-size: 12px;
   letter-spacing: 1.4px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
 }
 .lora-field {
   display: block;
@@ -162,34 +162,34 @@
   align-items: center;
   margin-bottom: 9px;
   font-weight: 500;
-  color: #17212d;
+  color: light-dark(#17212d, #e7edf3);
 }
 .lora-field small {
   font-size: 12px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
   font-weight: 400;
 }
 .lora-field input:not([type="radio"]),
 .lora-field textarea,
 .lora-toolbar .lora-filter {
   width: 100%;
-  background: #f7f9fbc7;
-  border: 1px solid #e0e5eb1a;
+  background: light-dark(#f7f9fbc7, #131b24c7);
+  border: 1px solid light-dark(#e0e5eb1a, #34424f1a);
   border-radius: 7px;
   padding: 11px 12px;
   font: inherit;
-  color: #17212d;
+  color: light-dark(#17212d, #e7edf3);
   outline: none;
   transition: border-color 0.15s;
 }
 .lora-field input:focus,
 .lora-field textarea:focus,
 .lora-toolbar .lora-filter:focus {
-  border-color: #aacd82;
+  border-color: light-dark(#aacd82, #647e50);
 }
 .lora-field input::placeholder,
 .lora-field textarea::placeholder {
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
 }
 .lora-field textarea {
   resize: vertical;
@@ -207,7 +207,7 @@
 .lora-field-explainer {
   font-size: 12px;
   line-height: 1.7;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
   padding-top: 24px;
 }
 .lora-type-options {
@@ -219,29 +219,29 @@
   padding: 8px 15px;
   border: 1px solid var(--lora-line);
   border-radius: 6px;
-  color: #475467;
+  color: light-dark(#475467, #b4c0cb);
   font-size: 12px;
-  background: #f7f9fb;
+  background: light-dark(#f7f9fb, #131b24);
   cursor: pointer;
 }
 .lora-type-options label.selected {
   background: #c7ee8316;
-  color: #316341;
-  border-color: #aacd8270;
+  color: light-dark(#316341, #afd989);
+  border-color: light-dark(#aacd8270, #647e5070);
 }
 .lora-count {
   font-size: 12px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
   white-space: nowrap;
-  background: #f7f9fb;
+  background: light-dark(#f7f9fb, #131b24);
   padding: 5px 8px;
   border-radius: 5px;
 }
 .lora-count.ready {
-  color: #316341;
+  color: light-dark(#316341, #afd989);
 }
 .lora-dropzone {
-  border: 1px dashed #e0e5eb3d;
+  border: 1px dashed light-dark(#e0e5eb3d, #34424f3d);
   border-radius: 10px;
   text-align: center;
   padding: 32px 12px;
@@ -252,19 +252,19 @@
   );
 }
 .lora-dropzone.dragging {
-  border-color: #aacd82;
-  background: #eef2f520;
+  border-color: light-dark(#aacd82, #647e50);
+  background: light-dark(#eef2f520, #222d3820);
 }
 .lora-upload-icon {
   width: 54px;
   height: 54px;
-  border: 1px solid #aacd8226;
+  border: 1px solid light-dark(#aacd8226, #647e5026);
   border-radius: 15px;
   display: grid;
   place-items: center;
   margin: 0 auto 16px;
-  color: #316341;
-  background: #f7f9fb;
+  color: light-dark(#316341, #afd989);
+  background: light-dark(#f7f9fb, #131b24);
 }
 .lora-dropzone h3 {
   font-size: 13px;
@@ -273,17 +273,17 @@
 }
 .lora-dropzone p {
   font-size: 12px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
   margin-bottom: 14px;
 }
 .lora-dropzone p button {
-  color: #316341;
+  color: light-dark(#316341, #afd989);
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
 }
 .lora-dropzone small {
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
   font-size: 12px;
 }
 .lora-dataset-hints {
@@ -293,7 +293,7 @@
   gap: 10px;
   margin: 15px 0 0;
   font-size: 12px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
 }
 .lora-dataset-hints > span {
   display: flex;
@@ -304,21 +304,21 @@
   display: flex;
   gap: 10px;
   background: #c7ee8308;
-  border: 1px solid #aacd8213;
+  border: 1px solid light-dark(#aacd8213, #647e5013);
   border-radius: 8px;
   margin-top: 22px;
   padding: 13px;
   font-size: 12px;
   line-height: 1.75;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
 }
 .lora-tip svg {
   flex-shrink: 0;
   margin-top: 2px;
-  color: #316341;
+  color: light-dark(#316341, #afd989);
 }
 .lora-tip strong {
-  color: #475467;
+  color: light-dark(#475467, #b4c0cb);
   font-weight: 500;
 }
 .lora-upload-summary {
@@ -326,7 +326,7 @@
   justify-content: space-between;
   margin: 22px 0 10px;
   font-size: 12px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
 }
 .lora-image-grid {
   display: grid;
@@ -339,8 +339,8 @@
   min-width: 0;
   border-radius: 7px;
   overflow: hidden;
-  border: 1px solid #e0e5eb2b;
-  background: #f7f9fb;
+  border: 1px solid light-dark(#e0e5eb2b, #34424f2b);
+  background: light-dark(#f7f9fb, #131b24);
 }
 .lora-image-tile img {
   width: 100%;
@@ -356,9 +356,9 @@
   height: 21px;
   display: grid;
   place-items: center;
-  background: #f7f9fbcc;
+  background: light-dark(#f7f9fbcc, #131b24cc);
   cursor: pointer;
-  color: white;
+  color: #ffffff;
 }
 .lora-image-label,
 .lora-image-check {
@@ -372,7 +372,7 @@
   border-radius: 4px;
 }
 .lora-image-tile.has-error {
-  border-color: #edc2bc;
+  border-color: light-dark(#edc2bc, #34424f);
 }
 .lora-image-tile [data-slot="progress"] {
   position: absolute;
@@ -402,7 +402,7 @@
 }
 .lora-upload-row small {
   display: block;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
   font-size: 12px;
   margin-top: 4px;
 }
@@ -418,7 +418,7 @@
   align-items: flex-start;
   gap: 7px;
   font-size: 12px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
   line-height: 1.7;
   max-width: 275px;
 }
@@ -434,11 +434,11 @@
   overflow: hidden;
   position: relative;
   padding: 26px;
-  border: 1px solid #e0e5eb23;
+  border: 1px solid light-dark(#e0e5eb23, #34424f23);
   border-radius: 14px;
   background:
-    radial-gradient(ellipse at 30% 0, #eef2f527, transparent 50%),
-    linear-gradient(160deg, #f7f9fbaa, #f7f9fbcc);
+    radial-gradient(ellipse at 30% 0, light-dark(#eef2f527, #222d3827), transparent 50%),
+    linear-gradient(160deg, light-dark(#f7f9fbaa, #131b24aa), light-dark(#f7f9fbcc, #131b24cc));
   backdrop-filter: blur(20px);
 }
 .lora-journey-card h2 {
@@ -451,7 +451,7 @@
 .lora-journey-card > p:not(.lora-eyebrow) {
   font-size: 12px;
   line-height: 1.85;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
 }
 .lora-orbit-art {
   position: relative;
@@ -460,16 +460,16 @@
   margin: 0 auto 17px;
   display: grid;
   place-items: center;
-  color: #316341;
+  color: light-dark(#316341, #afd989);
 }
 .lora-orbit-art > div {
   position: absolute;
-  border: 1px solid #aacd8238;
+  border: 1px solid light-dark(#aacd8238, #647e5038);
   transform: rotate(-24deg);
   width: 116px;
   height: 77px;
   border-radius: 50%;
-  background: radial-gradient(ellipse, #eef2f50a, transparent);
+  background: radial-gradient(ellipse, light-dark(#eef2f50a, #222d380a), transparent);
 }
 .lora-orbit-art > div:nth-child(2) {
   transform: rotate(37deg);
@@ -490,8 +490,8 @@
   position: absolute;
   right: 0;
   top: 19px;
-  background: #f7f9fb;
-  border: 1px solid #e0e5eb66;
+  background: light-dark(#f7f9fb, #131b24);
+  border: 1px solid light-dark(#e0e5eb66, #34424f66);
   border-radius: 50%;
   width: 31px;
   height: 31px;
@@ -521,15 +521,15 @@
   gap: 11px;
   position: relative;
   padding-bottom: 23px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
   font-size: 12px;
   line-height: 1.5;
 }
 .lora-steps li > span {
   width: 22px;
   height: 22px;
-  background: #f7f9fb;
-  border: 1px solid #e0e5eb36;
+  background: light-dark(#f7f9fb, #131b24);
+  border: 1px solid light-dark(#e0e5eb36, #34424f36);
   display: grid;
   place-items: center;
   font-size: 12px;
@@ -545,33 +545,33 @@
   top: 21px;
   width: 1px;
   height: calc(100% - 20px);
-  background: #eef2f526;
+  background: light-dark(#eef2f526, #222d3826);
 }
 .lora-steps li small {
   display: block;
   font-size: 12px;
   line-height: 1.6;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
   margin-top: 4px;
 }
 .lora-steps li:last-child {
   padding-bottom: 0;
 }
 .lora-steps li.is-active {
-  color: #316341;
+  color: light-dark(#316341, #afd989);
 }
 .lora-steps li.is-active > span {
-  border-color: #aacd82;
+  border-color: light-dark(#aacd82, #647e50);
   box-shadow: 0 0 12px #18223012;
-  color: #316341;
+  color: light-dark(#316341, #afd989);
 }
 .lora-aside-note {
   display: flex;
   gap: 9px;
   line-height: 1.7;
   font-size: 12px;
-  color: #667085;
-  background: #eef2f509;
+  color: light-dark(#667085, #b4c0cb);
+  background: light-dark(#eef2f509, #222d3809);
   border-radius: 7px;
   padding: 12px;
   margin-top: 25px;
@@ -584,20 +584,20 @@
   display: flex;
   gap: 12px;
   padding: 21px 8px;
-  color: #316341;
+  color: light-dark(#316341, #afd989);
 }
 .lora-private-card > svg {
   flex-shrink: 0;
 }
 .lora-private-card h3 {
   font-size: 12px;
-  color: #475467;
+  color: light-dark(#475467, #b4c0cb);
   margin-bottom: 6px;
 }
 .lora-private-card p {
   font-size: 12px;
   line-height: 1.8;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
 }
 .lora-stats {
   display: grid;
@@ -607,7 +607,7 @@
 }
 .lora-stats > div {
   border: 1px solid var(--lora-line);
-  background: linear-gradient(130deg, #ffffff77, #f7f9fb66);
+  background: linear-gradient(130deg, light-dark(#ffffff77, #19222c77), light-dark(#f7f9fb66, #131b2466));
   border-radius: 12px;
   padding: 21px;
   display: grid;
@@ -616,7 +616,7 @@
   align-items: center;
 }
 .lora-stats svg {
-  color: #316341;
+  color: light-dark(#316341, #afd989);
   grid-area: 1/2/3/3;
 }
 .lora-stats strong {
@@ -626,23 +626,23 @@
 }
 .lora-stats span {
   font-size: 12px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
 }
 .lora-library {
   margin-bottom: 34px;
 }
 .lora-library > .lora-section-heading > span {
   font-size: 12px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
 }
 .lora-library-empty {
-  border: 1px dashed #e0e5eb30;
+  border: 1px dashed light-dark(#e0e5eb30, #34424f30);
   border-radius: 13px;
   padding: 33px 28px;
   display: flex;
   gap: 25px;
   align-items: center;
-  background: linear-gradient(120deg, #ffffff1c, transparent);
+  background: linear-gradient(120deg, light-dark(#ffffff1c, #19222c1c), transparent);
 }
 .lora-library-empty h3 {
   font-size: 17px;
@@ -651,7 +651,7 @@
 }
 .lora-library-empty p {
   font-size: 12px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
   line-height: 1.7;
   max-width: 460px;
 }
@@ -660,19 +660,19 @@
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #316341;
+  color: light-dark(#316341, #afd989);
   margin-top: 15px;
   cursor: pointer;
 }
 .lora-mini-art {
   width: 89px;
   height: 91px;
-  border: 1px solid #aacd8230;
+  border: 1px solid light-dark(#aacd8230, #647e5030);
   border-radius: 17px;
   display: grid;
   place-items: center;
-  color: #316341;
-  background: #ffffff55;
+  color: light-dark(#316341, #afd989);
+  background: light-dark(#ffffff55, #19222c55);
   position: relative;
   flex-shrink: 0;
 }
@@ -680,7 +680,7 @@
   position: absolute;
   top: 13px;
   right: 10px;
-  color: #316341;
+  color: light-dark(#316341, #afd989);
 }
 .lora-cards {
   display: grid;
@@ -691,7 +691,7 @@
   border: 1px solid var(--lora-line);
   border-radius: 12px;
   overflow: hidden;
-  background: #f7f9fb;
+  background: light-dark(#f7f9fb, #131b24);
 }
 .lora-cover {
   display: block;
@@ -722,7 +722,7 @@
 .lora-model-body > small {
   font-size: 12px;
   letter-spacing: 1.2px;
-  color: #316341;
+  color: light-dark(#316341, #afd989);
 }
 .lora-model-body h3 {
   font-size: 18px;
@@ -730,15 +730,15 @@
 }
 .lora-trigger {
   width: 100%;
-  border: 1px solid #e0e5eb20;
-  background: #f7f9fb;
+  border: 1px solid light-dark(#e0e5eb20, #34424f20);
+  background: light-dark(#f7f9fb, #131b24);
   border-radius: 6px;
   padding: 8px 9px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  color: #316341;
+  color: light-dark(#316341, #afd989);
   cursor: pointer;
 }
 .lora-trigger code {
@@ -748,7 +748,7 @@
 }
 .lora-model-body > p {
   font-size: 12px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
   margin: 13px 0;
 }
 .lora-card-actions {
@@ -764,8 +764,8 @@
   height: 36px;
   border: 1px solid var(--lora-line);
   border-radius: 7px;
-  color: #475467;
-  background: #f7f9fb;
+  color: light-dark(#475467, #b4c0cb);
+  background: light-dark(#f7f9fb, #131b24);
   flex-shrink: 0;
 }
 .lora-toolbar {
@@ -781,8 +781,8 @@
   border: 1px solid var(--lora-line);
   border-radius: 7px;
   padding: 9px 12px;
-  color: #667085;
-  background: #f7f9fb;
+  color: light-dark(#667085, #b4c0cb);
+  background: light-dark(#f7f9fb, #131b24);
   min-width: 0;
 }
 .lora-search input {
@@ -792,13 +792,13 @@
   min-width: 0;
   width: 100%;
   font-size: 12px;
-  color: #17212d;
+  color: light-dark(#17212d, #e7edf3);
 }
 .lora-toolbar .lora-filter {
   width: auto;
   font-size: 12px;
   padding-right: 28px;
-  color: #475467;
+  color: light-dark(#475467, #b4c0cb);
 }
 .lora-table-wrap {
   overflow: auto;
@@ -814,15 +814,15 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
   font-weight: 500;
   padding: 12px 14px;
   border-bottom: 1px solid var(--lora-line);
 }
 .lora-table td {
   padding: 18px 14px;
-  color: #475467;
-  border-bottom: 1px solid #e0e5eb10;
+  color: light-dark(#475467, #b4c0cb);
+  border-bottom: 1px solid light-dark(#e0e5eb10, #34424f10);
 }
 .lora-table tr:last-child td {
   border: 0;
@@ -832,27 +832,27 @@
   padding-left: 0;
 }
 .lora-table strong {
-  color: #17212d;
+  color: light-dark(#17212d, #e7edf3);
   font-weight: 500;
 }
 .lora-table code,
 .lora-table td small {
   display: block;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
   font-size: 12px;
   margin-top: 5px;
 }
 .lora-table-action {
   font-size: 12px;
-  color: #316341;
+  color: light-dark(#316341, #afd989);
 }
 .lora-badge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  border: 1px solid #e0e5eb33;
-  background: #ffffff33;
-  color: #316341;
+  border: 1px solid light-dark(#e0e5eb33, #34424f33);
+  background: light-dark(#ffffff33, #19222c33);
+  color: light-dark(#316341, #afd989);
   border-radius: 5px;
   padding: 5px 7px;
   font-size: 12px;
@@ -865,34 +865,34 @@
   background: currentColor;
 }
 .lora-status-pending {
-  color: #a13b31;
-  background: #fff1ee22;
-  border-color: #edc2bc44;
+  color: light-dark(#a13b31, #f0a498);
+  background: light-dark(#fff1ee22, #131b2422);
+  border-color: light-dark(#edc2bc44, #34424f44);
 }
 .lora-status-training {
-  color: #365bad;
-  background: #eff4ff22;
-  border-color: #e0e5eb4d;
+  color: light-dark(#365bad, #aac8ff);
+  background: light-dark(#eff4ff22, #131b2422);
+  border-color: light-dark(#e0e5eb4d, #34424f4d);
 }
 .lora-status-quality_check {
-  color: #7452a4;
-  background: #f2edfa22;
-  border-color: #e0e5eb3d;
+  color: light-dark(#7452a4, #d1b2ef);
+  background: light-dark(#f2edfa22, #222d3822);
+  border-color: light-dark(#e0e5eb3d, #34424f3d);
 }
 .lora-status-completed {
-  color: #316341;
-  background: #f7f9fbcc;
-  border-color: #e0e5eb55;
+  color: light-dark(#316341, #afd989);
+  background: light-dark(#f7f9fbcc, #131b24cc);
+  border-color: light-dark(#e0e5eb55, #34424f55);
 }
 .lora-status-rejected {
-  color: #a13b31;
-  background: #fff1ee22;
-  border-color: #edc2bc44;
+  color: light-dark(#a13b31, #f0a498);
+  background: light-dark(#fff1ee22, #131b2422);
+  border-color: light-dark(#edc2bc44, #34424f44);
 }
 .lora-status-draft {
-  color: #475467;
-  background: #ffffff33;
-  border-color: #e0e5eb33;
+  color: light-dark(#475467, #b4c0cb);
+  background: light-dark(#ffffff33, #19222c33);
+  border-color: light-dark(#e0e5eb33, #34424f33);
 }
 .lora-admin-footer {
   display: flex;
@@ -900,11 +900,11 @@
   align-items: center;
   margin-top: 22px;
   font-size: 12px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
 }
 .lora-admin-footer > span {
   margin-left: auto;
-  color: #316341;
+  color: light-dark(#316341, #afd989);
 }
 .lora-empty {
   text-align: center;
@@ -913,15 +913,15 @@
   gap: 16px;
   align-items: center;
   padding: 80px 20px;
-  color: #475467;
+  color: light-dark(#475467, #b4c0cb);
 }
 .lora-empty h2,
 .lora-empty h3 {
-  color: #17212d;
+  color: light-dark(#17212d, #e7edf3);
 }
 .lora-empty p {
   font-size: 12px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
 }
 .lora-empty-small {
   padding: 30px;
@@ -930,7 +930,7 @@
 .lora-notice,
 .lora-error {
   padding: 15px;
-  border: 1px solid #e0e5eb36;
+  border: 1px solid light-dark(#e0e5eb36, #34424f36);
   border-radius: 8px;
   font-size: 12px;
   line-height: 1.7;
@@ -938,27 +938,27 @@
   justify-content: space-between;
   gap: 14px;
   margin-bottom: 16px;
-  color: #316341;
-  background: #ffffff22;
+  color: light-dark(#316341, #afd989);
+  background: light-dark(#ffffff22, #19222c22);
 }
 .lora-notice button {
-  color: #316341;
+  color: light-dark(#316341, #afd989);
   text-decoration: underline;
   cursor: pointer;
 }
 .lora-error {
   display: block;
-  background: #fff1ee22;
-  color: #a13b31;
-  border-color: #edc2bc44;
+  background: light-dark(#fff1ee22, #131b2422);
+  color: light-dark(#a13b31, #f0a498);
+  border-color: light-dark(#edc2bc44, #34424f44);
 }
 .lora-dialog {
   --lora-line: rgba(221, 241, 201, 0.11);
-  --lora-muted: #939d8d;
+  --lora-muted: light-dark(#939d8d, #95a5b5);
   --lora-lime: #c7ee83;
-  background: #f7f9fb !important;
-  border: 1px solid #e0e5eb !important;
-  color: #17212d !important;
+  background: light-dark(#f7f9fb, #131b24) !important;
+  border: 1px solid light-dark(#e0e5eb, #34424f) !important;
+  color: light-dark(#17212d, #e7edf3) !important;
   border-radius: 16px !important;
   width: calc(100% - 28px) !important;
   max-width: 790px !important;
@@ -974,7 +974,7 @@
 }
 .lora-dialog [data-slot="dialog-description"] {
   font-size: 12px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
   line-height: 1.7;
 }
 .lora-dialog .lora-eyebrow {
@@ -992,7 +992,7 @@
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
   margin-top: -5px;
   overflow-wrap: anywhere;
 }
@@ -1021,7 +1021,7 @@
   height: 1px;
 }
 .lora-detail-text h3 {
-  color: #475467;
+  color: light-dark(#475467, #b4c0cb);
   font-size: 12px;
   margin-bottom: 5px;
 }
@@ -1030,7 +1030,7 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   font-size: 12px;
-  color: #475467;
+  color: light-dark(#475467, #b4c0cb);
   line-height: 1.8;
 }
 .lora-dialog .lora-rule {
@@ -1052,9 +1052,9 @@
 }
 .lora-delivery-form {
   padding: 22px;
-  border: 1px solid #e0e5eb55;
+  border: 1px solid light-dark(#e0e5eb55, #34424f55);
   border-radius: 12px;
-  background: #eef2f509;
+  background: light-dark(#eef2f509, #222d3809);
   margin-top: 10px;
 }
 .lora-delivery-form .lora-section-heading {
@@ -1062,11 +1062,11 @@
 }
 .lora-dialog .lora-field input[type="file"] {
   font-size: 12px;
-  color: #475467;
+  color: light-dark(#475467, #b4c0cb);
 }
 .lora-field input[type="file"]::file-selector-button {
-  background: #ffffff;
-  color: #17212d;
+  background: light-dark(#ffffff, #19222c);
+  color: light-dark(#17212d, #e7edf3);
   border: 0;
   padding: 7px 9px;
   border-radius: 4px;
@@ -1081,7 +1081,7 @@
 .lora-dialog [data-slot="progress"] + span {
   display: block;
   font-size: 12px;
-  color: #316341;
+  color: light-dark(#316341, #afd989);
   margin: 6px 0 16px;
 }
 .lora-review-actions {
@@ -1092,20 +1092,20 @@
   margin-top: 8px;
 }
 .lora-danger {
-  background: #fff1ee29;
-  color: #a13b31;
-  border: 1px solid #edc2bc66;
+  background: light-dark(#fff1ee29, #131b2429);
+  color: light-dark(#a13b31, #f0a498);
+  border: 1px solid light-dark(#edc2bc66, #34424f66);
   padding: 10px 14px;
   border-radius: 7px;
   min-height: 38px;
 }
 .lora-danger:hover {
-  background: #fff1ee3f;
+  background: light-dark(#fff1ee3f, #131b243f);
 }
 .lora-reject {
   width: 100%;
   padding: 15px;
-  border: 1px solid #edc2bc44;
+  border: 1px solid light-dark(#edc2bc44, #34424f44);
   border-radius: 9px;
 }
 .lora-timeline {
@@ -1124,7 +1124,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #eef2f5;
+  background: light-dark(#eef2f5, #222d38);
   flex-shrink: 0;
   margin-top: 5px;
 }
@@ -1134,13 +1134,13 @@
 }
 .lora-timeline p {
   font-size: 12px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
   line-height: 1.7;
   margin: 4px 0;
 }
 .lora-timeline small {
   font-size: 12px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
 }
 .lora-settings {
   max-width: 480px !important;
@@ -1148,7 +1148,7 @@
 .lora-muted {
   font-size: 12px;
   line-height: 1.8;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
   margin-bottom: 12px;
 }
 .lora-tags {
@@ -1161,7 +1161,7 @@
   padding: 6px 9px;
   border: 1px solid var(--lora-line);
   border-radius: 5px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
 }
 .lora-actions {
   display: flex;
@@ -1174,16 +1174,16 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: #316341;
+  color: light-dark(#316341, #afd989);
   cursor: pointer;
 }
 .lora-delivered {
   display: flex;
   gap: 22px;
-  border: 1px solid #aacd823b;
+  border: 1px solid light-dark(#aacd823b, #647e503b);
   padding: 17px;
   border-radius: 11px;
-  background: #eef2f50c;
+  background: light-dark(#eef2f50c, #222d380c);
 }
 .lora-delivered > img {
   width: 124px;
@@ -1200,17 +1200,17 @@
 }
 .lora-delivered p {
   font-size: 12px;
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
   margin-bottom: 18px;
 }
 .lora-copy-block {
   padding: 14px;
-  background: #f7f9fb;
-  border: 1px solid #e0e5eb33;
+  background: light-dark(#f7f9fb, #131b24);
+  border: 1px solid light-dark(#e0e5eb33, #34424f33);
   border-radius: 7px;
   font-size: 12px;
   line-height: 1.8;
-  color: #316341;
+  color: light-dark(#316341, #afd989);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -1452,7 +1452,7 @@
 }
 
 .lora-type-options label:has(:focus-visible) {
-  outline: 2px solid #aacd82;
+  outline: 2px solid light-dark(#aacd82, #647e50);
   outline-offset: 3px;
 }
 /* Keep scrollable datasets from collapsing inside the modal's grid tracks. */
@@ -1464,19 +1464,19 @@
 /* Light theme shares the app's surface and type hierarchy. */
 .lora-workspace,
 .lora-dialog {
-  --lora-line: #e0e5eb;
-  --lora-muted: #667085;
+  --lora-line: light-dark(#e0e5eb, #34424f);
+  --lora-muted: light-dark(#667085, #b4c0cb);
   --lora-lime: #426b34;
-  color: #253141;
+  color: light-dark(#253141, #e7edf3);
 }
 .lora-panel {
-  background: #fff;
-  border-color: #e0e5eb;
+  background: light-dark(#fff, #19222c);
+  border-color: light-dark(#e0e5eb, #34424f);
   box-shadow: 0 2px 7px #17212d03;
   backdrop-filter: none;
 }
 .lora-heading h1 {
-  color: #182531;
+  color: light-dark(#182531, #e7edf3);
   font-size: 34px;
   letter-spacing: -1.1px;
 }
@@ -1485,290 +1485,290 @@
 }
 .lora-heading .lora-eyebrow,
 .lora-eyebrow {
-  color: #5e7c48 !important;
+  color: light-dark(#5e7c48, #afd989) !important;
   font-size: 12px !important;
 }
 .lora-section-heading h2 {
   font-size: 18px;
-  color: #24313e;
+  color: light-dark(#24313e, #e7edf3);
 }
 .lora-section-heading p {
   font-size: 14px;
 }
 .lora-number {
-  background: #f0f5e9;
-  color: #57723d;
-  border-color: #dde7cf;
+  background: light-dark(#f0f5e9, #222d38);
+  color: light-dark(#57723d, #afd989);
+  border-color: light-dark(#dde7cf, #34424f);
 }
 .lora-field {
   font-size: 14px;
 }
 .lora-field > span {
-  color: #344054;
+  color: light-dark(#344054, #e7edf3);
   font-weight: 500;
 }
 .lora-field input:not([type="radio"]),
 .lora-field textarea {
-  background: #fff;
-  color: #273442;
-  border-color: #d7dee5;
+  background: light-dark(#fff, #19222c);
+  color: light-dark(#273442, #e7edf3);
+  border-color: light-dark(#d7dee5, #34424f);
   font-size: 14px;
   padding: 12px;
 }
 .lora-field input::placeholder,
 .lora-field textarea::placeholder {
-  color: #8a94a0;
+  color: light-dark(#8a94a0, #95a5b5);
 }
 .lora-type-options label {
   font-size: 13px;
-  color: #667085;
-  background: #fff;
+  color: light-dark(#667085, #b4c0cb);
+  background: light-dark(#fff, #19222c);
   padding: 9px 15px;
-  border-color: #dfe5eb;
+  border-color: light-dark(#dfe5eb, #34424f);
 }
 .lora-type-options label.selected {
-  background: #eff6e5;
-  color: #395f32;
-  border-color: #abc78c;
+  background: light-dark(#eff6e5, #222d38);
+  color: light-dark(#395f32, #e7edf3);
+  border-color: light-dark(#abc78c, #647e50);
 }
 .lora-button,
 .lora-icon-button {
-  background: #fff;
-  color: #425266;
-  border-color: #dce3e9;
+  background: light-dark(#fff, #19222c);
+  color: light-dark(#425266, #b4c0cb);
+  border-color: light-dark(#dce3e9, #34424f);
   font-size: 13px;
 }
 .lora-button:hover,
 .lora-icon-button:hover {
-  background: #f3f6f8;
-  color: #263440;
+  background: light-dark(#f3f6f8, #131b24);
+  color: light-dark(#263440, #e7edf3);
 }
 .lora-primary {
   font-size: 14px;
   min-height: 44px;
 }
 .lora-dropzone {
-  background: #fafcf8;
-  border: 1.5px dashed #c0d1af;
+  background: light-dark(#fafcf8, #131b24);
+  border: 1.5px dashed light-dark(#c0d1af, #34424f);
   padding: 35px 16px;
 }
 .lora-dropzone h3 {
   font-size: 16px;
-  color: #3b4d36;
+  color: light-dark(#3b4d36, #e7edf3);
 }
 .lora-dropzone p {
   font-size: 14px;
-  color: #798372;
+  color: light-dark(#798372, #b4c0cb);
 }
 .lora-dropzone p button {
-  color: #476b32;
+  color: light-dark(#476b32, #afd989);
 }
 .lora-dropzone small {
-  color: #788471;
+  color: light-dark(#788471, #b4c0cb);
 }
 .lora-upload-icon {
-  background: #edf4e3;
-  border-color: #d8e5c5;
-  color: #6a8c48;
+  background: light-dark(#edf4e3, #222d38);
+  border-color: light-dark(#d8e5c5, #34424f);
+  color: light-dark(#6a8c48, #afd989);
 }
 .lora-journey-card {
-  background: linear-gradient(145deg, #f2f7eb, #fff 70%);
-  border-color: #dce6d1;
+  background: linear-gradient(145deg, light-dark(#f2f7eb, #222d38), light-dark(#fff, #19222c) 70%);
+  border-color: light-dark(#dce6d1, #34424f);
 }
 .lora-journey-card h2 {
-  color: #294033;
+  color: light-dark(#294033, #e7edf3);
   font-size: 26px;
 }
 .lora-journey-card > p:not(.lora-eyebrow) {
-  color: #687964;
+  color: light-dark(#687964, #b4c0cb);
   font-size: 14px;
 }
 .lora-journey-card h3 {
-  color: #334a35;
+  color: light-dark(#334a35, #e7edf3);
   font-size: 14px;
 }
 .lora-orbit-art {
-  color: #648647;
+  color: light-dark(#648647, #afd989);
 }
 .lora-orbit-art > div {
-  border-color: #a1bd844d;
+  border-color: light-dark(#a1bd844d, #647e504d);
   background: none;
 }
 .lora-orbit-spark {
-  background: #f6faef;
-  border-color: #b9d29c;
+  background: light-dark(#f6faef, #131b24);
+  border-color: light-dark(#b9d29c, #34424f);
 }
 .lora-steps li {
-  color: #63735c;
+  color: light-dark(#63735c, #b4c0cb);
   font-size: 13px;
 }
 .lora-steps li small {
-  color: #7c8875;
+  color: light-dark(#7c8875, #b4c0cb);
   font-size: 12px;
 }
 .lora-steps li > span {
-  background: #f6f9f2;
-  border-color: #cdddc0;
-  color: #637c4d;
+  background: light-dark(#f6f9f2, #131b24);
+  border-color: light-dark(#cdddc0, #34424f);
+  color: light-dark(#637c4d, #b4c0cb);
 }
 .lora-steps li.is-active {
-  color: #355d30;
+  color: light-dark(#355d30, #e7edf3);
 }
 .lora-steps li.is-active > span {
-  color: #355d30;
-  background: #ebf4dd;
-  border-color: #9abb78;
+  color: light-dark(#355d30, #e7edf3);
+  background: light-dark(#ebf4dd, #243124);
+  border-color: light-dark(#9abb78, #647e50);
 }
 .lora-steps li:not(:last-child):before {
-  background: #dce6d1;
+  background: light-dark(#dce6d1, #243124);
 }
 .lora-aside-note {
-  color: #6c7d60;
-  background: #f1f6e9;
+  color: light-dark(#6c7d60, #b4c0cb);
+  background: light-dark(#f1f6e9, #222d38);
 }
 .lora-private-card h3 {
-  color: #4e6642;
+  color: light-dark(#4e6642, #b4c0cb);
 }
 .lora-private-card p {
-  color: #788571;
+  color: light-dark(#788571, #b4c0cb);
 }
 .lora-stats > div {
-  background: #fff;
-  border-color: #e0e5eb;
+  background: light-dark(#fff, #19222c);
+  border-color: light-dark(#e0e5eb, #34424f);
 }
 .lora-stats strong {
-  color: #24313e;
+  color: light-dark(#24313e, #e7edf3);
 }
 .lora-stats span {
-  color: #667085;
+  color: light-dark(#667085, #b4c0cb);
   font-size: 13px;
 }
 .lora-stats svg {
-  color: #789957;
+  color: light-dark(#789957, #afd989);
 }
 .lora-model-card {
-  background: #fff;
+  background: light-dark(#fff, #19222c);
 }
 .lora-trigger {
-  color: #486c35;
-  background: #f5f9ef;
-  border-color: #dde7cf;
+  color: light-dark(#486c35, #afd989);
+  background: light-dark(#f5f9ef, #131b24);
+  border-color: light-dark(#dde7cf, #34424f);
 }
 .lora-model-body h3 {
-  color: #253141;
+  color: light-dark(#253141, #e7edf3);
 }
 .lora-toolbar .lora-filter,
 .lora-search {
-  background: #fff;
-  border-color: #dce3e9;
-  color: #697586;
+  background: light-dark(#fff, #19222c);
+  border-color: light-dark(#dce3e9, #34424f);
+  color: light-dark(#697586, #b4c0cb);
 }
 .lora-search input {
-  color: #344054;
+  color: light-dark(#344054, #e7edf3);
   font-size: 14px;
 }
 .lora-table {
   font-size: 13px;
 }
 .lora-table th {
-  color: #6e7a89;
-  background: #f7f9fb;
+  color: light-dark(#6e7a89, #b4c0cb);
+  background: light-dark(#f7f9fb, #131b24);
   font-size: 12px;
   text-transform: none;
   letter-spacing: 0;
 }
 .lora-table td {
-  color: #596678;
+  color: light-dark(#596678, #b4c0cb);
 }
 .lora-table strong {
-  color: #283747;
+  color: light-dark(#283747, #e7edf3);
 }
 .lora-table-action {
   font-size: 13px;
-  color: #436a32;
+  color: light-dark(#436a32, #afd989);
 }
 .lora-badge {
   font-size: 12px;
   padding: 5px 8px;
 }
 .lora-status-pending {
-  background: #fff8e6;
-  color: #896524;
-  border-color: #eddfb8;
+  background: light-dark(#fff8e6, #332d20);
+  color: light-dark(#896524, #e1c181);
+  border-color: light-dark(#eddfb8, #34424f);
 }
 .lora-status-approved,
 .lora-status-completed {
-  background: #eff7e7;
-  color: #486d31;
-  border-color: #d7e7c4;
+  background: light-dark(#eff7e7, #222d38);
+  color: light-dark(#486d31, #afd989);
+  border-color: light-dark(#d7e7c4, #34424f);
 }
 .lora-status-training {
-  background: #eff4ff;
-  color: #4b67a4;
-  border-color: #d6e1fa;
+  background: light-dark(#eff4ff, #131b24);
+  color: light-dark(#4b67a4, #aac8ff);
+  border-color: light-dark(#d6e1fa, #34424f);
 }
 .lora-status-quality_check {
-  background: #f4effc;
-  color: #76549c;
-  border-color: #e1d5f2;
+  background: light-dark(#f4effc, #131b24);
+  color: light-dark(#76549c, #d1b2ef);
+  border-color: light-dark(#e1d5f2, #34424f);
 }
 .lora-status-rejected,
 .lora-danger,
 .lora-error {
-  background: #fff2ee;
-  color: #a24938;
-  border-color: #edcfc5;
+  background: light-dark(#fff2ee, #131b24);
+  color: light-dark(#a24938, #f0a498);
+  border-color: light-dark(#edcfc5, #34424f);
 }
 .lora-status-draft {
-  background: #f3f5f7;
-  color: #687384;
-  border-color: #e0e5eb;
+  background: light-dark(#f3f5f7, #131b24);
+  color: light-dark(#687384, #b4c0cb);
+  border-color: light-dark(#e0e5eb, #34424f);
 }
 .lora-dialog {
-  background: #fff !important;
-  color: #253141 !important;
-  border-color: #dce3e9 !important;
+  background: light-dark(#fff, #19222c) !important;
+  color: light-dark(#253141, #e7edf3) !important;
+  border-color: light-dark(#dce3e9, #34424f) !important;
 }
 .lora-dialog [data-slot="dialog-description"] {
-  color: #697586;
+  color: light-dark(#697586, #b4c0cb);
   font-size: 14px;
 }
 .lora-detail-text p,
 .lora-preserve {
-  color: #536273;
+  color: light-dark(#536273, #b4c0cb);
   font-size: 14px;
 }
 .lora-copy-block {
-  color: #426039;
-  background: #f5f8f0;
-  border-color: #dfe7d4;
+  color: light-dark(#426039, #b4c0cb);
+  background: light-dark(#f5f8f0, #131b24);
+  border-color: light-dark(#dfe7d4, #34424f);
 }
 .lora-delivered,
 .lora-delivery-form {
-  background: #fafcf8;
-  border-color: #dbe6d0;
+  background: light-dark(#fafcf8, #131b24);
+  border-color: light-dark(#dbe6d0, #34424f);
 }
 .lora-notice {
-  color: #5d7051;
-  background: #f4f8ee;
-  border-color: #dce6d1;
+  color: light-dark(#5d7051, #b4c0cb);
+  background: light-dark(#f4f8ee, #222d38);
+  border-color: light-dark(#dce6d1, #34424f);
 }
 .lora-count.ready {
-  color: #486c35;
+  color: light-dark(#486c35, #afd989);
 }
 .lora-submit-bar p,
 .lora-dataset-hints {
-  color: #6d7b63;
+  color: light-dark(#6d7b63, #b4c0cb);
   font-size: 12px;
 }
 .lora-tip {
-  background: #f5f8f0;
-  color: #718064;
-  border-color: #e7eddd;
+  background: light-dark(#f5f8f0, #131b24);
+  color: light-dark(#718064, #b4c0cb);
+  border-color: light-dark(#e7eddd, #34424f);
   font-size: 13px;
 }
 .lora-tip strong {
-  color: #516d3f;
+  color: light-dark(#516d3f, #b4c0cb);
 }
 @media (max-width: 540px) {
   .lora-heading h1 {
