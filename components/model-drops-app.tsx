@@ -1,4 +1,7 @@
 "use client";
+import { GenerationControls } from "@/components/generation-controls";
+import { defaultHiggsfieldOptions, optionsFor } from "@/lib/higgsfield/options";
+import { calculateCredits, generationSettings } from "@/lib/pricing";
 import { uploadFile } from "@/lib/upload-client";
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
@@ -136,6 +139,7 @@ type Generation = {
   settings: string;
   projectId?: string;
   live?: boolean;
+  outputs?: { id: string; url: string; mime: string }[];
   error?: string;
 };
 type Project = {
@@ -404,6 +408,7 @@ export default function ModelDropsApp({
     [purchaseLicense, setPurchaseLicense] = useState<PurchaseRecord | null>(
       null,
     );
+  const [higgsOptions, setHiggsOptions] = useState(defaultHiggsfieldOptions);
   const idempotency = useRef<string | null>(null),
     searchRef = useRef<HTMLInputElement>(null);
   const refresh = useCallback(async () => {
@@ -574,7 +579,8 @@ export default function ModelDropsApp({
   };
   const changeMode = (v: string) => {
     setMode(v);
-    if (v === "video" && !["16:9", "9:16"].includes(ratio)) setRatio("16:9");
+    if (v === "video" && !["1:1", "16:9", "9:16"].includes(ratio))
+      setRatio("16:9");
     const next = registry.find((m) => m.type === v && m.enabled);
     if (next) {
       setModelId(next.id);
@@ -596,18 +602,49 @@ export default function ModelDropsApp({
     if (!next.resolutions.includes(resolution))
       setResolution(next.resolutions[0]);
     if (next.provider === "Higgsfield") {
-      setOutputs("1");
+      if (next.type === "video" || !["1", "4"].includes(outputs))
+        setOutputs("1");
       setNegative("");
       setReference(null);
       setSelected("");
       if (next.type === "video") setSeed("");
     }
-  }, [registry, modelId, mode, ratio, resolution]);
-  const cost =
-    model.credits *
-    Number(outputs) *
-    (resolution === "2048" || resolution === "1080" ? 2 : 1) *
-    (mode === "video" ? Number(duration) / 5 : 1);
+  }, [registry, modelId, mode, ratio, resolution, outputs]);
+  const requestedSettings = {
+    ratio,
+    resolution,
+    outputs: Number(outputs),
+    negative,
+    seed: seed ? Number(seed) : null,
+    duration: Number(duration),
+    ...(liveModel ? optionsFor(mode, higgsOptions) : {}),
+  };
+  const parsedSettings = generationSettings.safeParse(requestedSettings);
+  const settingsError = !parsedSettings.success
+    ? parsedSettings.error.issues[0].path[0] === "styleId"
+      ? "Enter a valid style UUID, or leave it blank."
+      : "Check your advanced settings and shot prompts. All values must be within the displayed limits."
+    : liveModel &&
+        mode === "image" &&
+        seed &&
+        (Number(seed) < 1 || Number(seed) > 1000000)
+      ? "Seed must be an integer from 1 to 1,000,000."
+      : liveModel &&
+          mode === "video" &&
+          higgsOptions.multiShots &&
+          higgsOptions.shots.length > 0 &&
+          higgsOptions.shots.reduce((sum, shot) => sum + shot.duration, 0) !==
+            Number(duration)
+        ? "Shot durations must add up to the total video duration."
+        : "";
+  const cost = parsedSettings.success
+    ? calculateCredits(model.credits, mode, parsedSettings.data)
+    : Math.ceil(
+        model.credits *
+          Number(outputs) *
+          (["1080", "2048"].includes(resolution) ? 2 : 1) *
+          (mode === "video" ? Number(duration) / 5 : 1),
+      );
   useEffect(() => {
     idempotency.current = null;
   }, [
@@ -621,6 +658,7 @@ export default function ModelDropsApp({
     seed,
     duration,
     reference,
+    higgsOptions,
   ]);
   const generate = () =>
     action(async () => {
@@ -630,14 +668,7 @@ export default function ModelDropsApp({
         characterId: selected || null,
         modelId,
         prompt,
-        settings: {
-          ratio,
-          resolution,
-          outputs: Number(outputs),
-          negative,
-          seed: seed ? Number(seed) : null,
-          duration: Number(duration),
-        },
+        settings: requestedSettings,
         reference,
       });
       idempotency.current = null;
@@ -669,6 +700,7 @@ export default function ModelDropsApp({
       setNegative(s.negative || "");
       setSeed(s.seed === null ? "" : String(s.seed));
       setDuration(String(s.duration || 5));
+      setHiggsOptions({ ...defaultHiggsfieldOptions, ...s });
     } catch {}
     setAsset(null);
     navigate("studio");
@@ -1300,8 +1332,12 @@ export default function ModelDropsApp({
             <>
               <div className="studio-heading">
                 <div>
-                  <p className="eyebrow">CREATE CONTENT</p>
-                  <h1>Create an image or video.</h1>
+                  <p className="eyebrow">MODEL DROPS STUDIO</p>
+                  <h1>Your vision. In full detail.</h1>
+                  <p className="studio-subtitle">
+                    Choose your model, fine-tune your frame, and make something
+                    original.
+                  </p>
                 </div>
                 <span className="demo-pill">
                   {liveModel
@@ -1325,83 +1361,89 @@ export default function ModelDropsApp({
               </Tabs>
               <div className="studio-layout">
                 <div className="studio-controls">
-                  <div className="control-group">
-                    <label>
-                      <span>01</span> Your character{" "}
-                      <button onClick={() => navigate("marketplace")}>
-                        Browse <ArrowUpRight size={12} />
-                      </button>
-                    </label>
-                    <Select
-                      disabled={liveModel}
-                      value={selected || "none"}
-                      onValueChange={(v) => setSelected(v === "none" ? "" : v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">
-                          Start from a prompt
-                        </SelectItem>
-                        {characters.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.name}
-                            {account.owned.includes(c.id)
-                              ? " · In your library"
-                              : " · Preview only"}
+                  {!liveModel && (
+                    <div className="control-group">
+                      <label>
+                        <span>01</span> Your character{" "}
+                        <button onClick={() => navigate("marketplace")}>
+                          Browse <ArrowUpRight size={12} />
+                        </button>
+                      </label>
+                      <Select
+                        disabled={liveModel}
+                        value={selected || "none"}
+                        onValueChange={(v) =>
+                          setSelected(v === "none" ? "" : v)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">
+                            Start from a prompt
                           </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {liveModel && (
-                      <small className="field-note">
-                        Prompt-based generation. Character references and custom
-                        LoRAs are not supported by these models.
-                      </small>
-                    )}
-                    {selected && (
-                      <div className="selected-character">
-                        <img
-                          src={characters.find((c) => c.id === selected)?.image}
-                          style={{
-                            objectPosition: characters.find(
-                              (c) => c.id === selected,
-                            )?.position,
-                          }}
-                          alt="Selected character"
-                        />
-                        <div>
-                          <strong>
-                            {characters.find((c) => c.id === selected)?.name}
-                          </strong>
-                          <span>
-                            {account.owned.includes(selected)
-                              ? "In your library"
-                              : "Add to library to generate"}
-                          </span>
-                        </div>
-                        {account.owned.includes(selected) ? (
-                          <ShieldCheck size={18} />
-                        ) : (
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() =>
-                              setDetail(
-                                characters.find((c) => c.id === selected)!,
-                              )
+                          {characters.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.name}
+                              {account.owned.includes(c.id)
+                                ? " · In your library"
+                                : " · Preview only"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {liveModel && (
+                        <small className="field-note">
+                          Prompt-based generation. Character references and
+                          custom LoRAs are not supported by these models.
+                        </small>
+                      )}
+                      {selected && (
+                        <div className="selected-character">
+                          <img
+                            src={
+                              characters.find((c) => c.id === selected)?.image
                             }
-                          >
-                            Add
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="control-group">
+                            style={{
+                              objectPosition: characters.find(
+                                (c) => c.id === selected,
+                              )?.position,
+                            }}
+                            alt="Selected character"
+                          />
+                          <div>
+                            <strong>
+                              {characters.find((c) => c.id === selected)?.name}
+                            </strong>
+                            <span>
+                              {account.owned.includes(selected)
+                                ? "In your library"
+                                : "Add to library to generate"}
+                            </span>
+                          </div>
+                          {account.owned.includes(selected) ? (
+                            <ShieldCheck size={18} />
+                          ) : (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() =>
+                                setDetail(
+                                  characters.find((c) => c.id === selected)!,
+                                )
+                              }
+                            >
+                              Add
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="control-group studio-model-group">
                     <label>
-                      <span>02</span> Generation model
+                      <span>{liveModel ? "01" : "02"}</span> Generation model
                     </label>
                     <Select value={modelId} onValueChange={setModelId}>
                       <SelectTrigger>
@@ -1426,8 +1468,8 @@ export default function ModelDropsApp({
                   </div>
                   <div className="control-group">
                     <label htmlFor="prompt">
-                      <span>03</span> Describe your vision{" "}
-                      <Sparkles size={14} />
+                      <span>{liveModel ? "02" : "03"}</span> Describe your
+                      vision <Sparkles size={14} />
                     </label>
                     <Textarea
                       id="prompt"
@@ -1451,83 +1493,105 @@ export default function ModelDropsApp({
                           )
                         }
                       >
-                        <Sparkles size={12} /> Enhance prompt
+                        <Sparkles size={12} /> Add cinematic detail
                       </button>
                       <span>{prompt.length}/4000</span>
                     </div>
                   </div>
-                  <div className="control-grid">
-                    <Field label="Aspect ratio">
-                      <Select value={ratio} onValueChange={setRatio}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {model.ratios.map((r) => (
-                            <SelectItem key={r} value={r}>
-                              {r}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </Field>
-                    <Field label="Resolution">
-                      <Select value={resolution} onValueChange={setResolution}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {model.resolutions.map((r) => (
-                            <SelectItem key={r} value={r}>
-                              {liveModel && mode === "video"
-                                ? "Standard (provider default)"
-                                : `${r}${liveModel || mode === "video" ? "p" : " px"}`}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </Field>
-                    <Field label="Outputs">
-                      <Select value={outputs} onValueChange={setOutputs}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(liveModel ? ["1"] : ["1", "2", "4"]).map((v) => (
-                            <SelectItem key={v} value={v}>
-                              {v}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </Field>
-                    {mode === "video" ? (
-                      <Field label="Duration">
-                        <Select value={duration} onValueChange={setDuration}>
+                  {liveModel ? (
+                    <GenerationControls
+                      type={mode}
+                      ratios={model.ratios}
+                      ratio={ratio}
+                      resolution={resolution}
+                      outputs={outputs}
+                      seed={seed}
+                      duration={duration}
+                      options={higgsOptions}
+                      setRatio={setRatio}
+                      setResolution={setResolution}
+                      setOutputs={setOutputs}
+                      setSeed={setSeed}
+                      setDuration={setDuration}
+                      onOptions={setHiggsOptions}
+                    />
+                  ) : (
+                    <div className="control-grid">
+                      <Field label="Aspect ratio">
+                        <Select value={ratio} onValueChange={setRatio}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="5">5 seconds</SelectItem>
-                            <SelectItem value="10">10 seconds</SelectItem>
+                            {model.ratios.map((r) => (
+                              <SelectItem key={r} value={r}>
+                                {r}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </Field>
-                    ) : (
-                      <Field label="Seed">
-                        <Input
-                          type="number"
-                          value={seed}
-                          onChange={(e) => setSeed(e.target.value)}
-                          placeholder={
-                            liveModel ? "Random (1–1,000,000)" : "Random"
-                          }
-                          min={liveModel ? 1 : 0}
-                          max={liveModel ? 1000000 : 4294967295}
-                        />
+                      <Field label="Resolution">
+                        <Select
+                          value={resolution}
+                          onValueChange={setResolution}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {model.resolutions.map((r) => (
+                              <SelectItem key={r} value={r}>
+                                {liveModel && mode === "video"
+                                  ? "Standard (provider default)"
+                                  : `${r}${liveModel || mode === "video" ? "p" : " px"}`}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </Field>
-                    )}
-                  </div>
+                      <Field label="Outputs">
+                        <Select value={outputs} onValueChange={setOutputs}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(liveModel ? ["1"] : ["1", "2", "4"]).map((v) => (
+                              <SelectItem key={v} value={v}>
+                                {v}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                      {mode === "video" ? (
+                        <Field label="Duration">
+                          <Select value={duration} onValueChange={setDuration}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="5">5 seconds</SelectItem>
+                              <SelectItem value="10">10 seconds</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </Field>
+                      ) : (
+                        <Field label="Seed">
+                          <Input
+                            type="number"
+                            value={seed}
+                            onChange={(e) => setSeed(e.target.value)}
+                            placeholder={
+                              liveModel ? "Random (1–1,000,000)" : "Random"
+                            }
+                            min={liveModel ? 1 : 0}
+                            max={liveModel ? 1000000 : 4294967295}
+                          />
+                        </Field>
+                      )}
+                    </div>
+                  )}
                   {!liveModel && (
                     <button
                       className="advanced-toggle"
@@ -1598,6 +1662,7 @@ export default function ModelDropsApp({
                     className="lime-button generate-button"
                     disabled={
                       busy ||
+                      !!settingsError ||
                       !prompt.trim() ||
                       cost > account.balance ||
                       (!!selected && !account.owned.includes(selected)) ||
@@ -1617,6 +1682,14 @@ export default function ModelDropsApp({
                       {cost}
                     </span>
                   </Button>
+                  {settingsError && (
+                    <p
+                      className="generation-guidance settings-error"
+                      role="alert"
+                    >
+                      {settingsError}
+                    </p>
+                  )}
                   {(!prompt.trim() ||
                     (!!selected && !account.owned.includes(selected)) ||
                     cost > account.balance ||
@@ -1678,7 +1751,9 @@ export default function ModelDropsApp({
                         starts with a first frame.
                       </h3>
                       <p>
-                        Choose a character, describe your vision,
+                        {liveModel
+                          ? "Describe your vision, choose your frame,"
+                          : "Choose a character, describe your vision,"}
                         <br />
                         and make something only you could imagine.
                       </p>
@@ -1690,14 +1765,25 @@ export default function ModelDropsApp({
                           <Video size={13} /> Video
                         </span>
                         <span>
-                          <Users size={13} /> Your character
+                          {liveModel ? (
+                            <>
+                              <SlidersHorizontal size={13} /> {ratio} ·{" "}
+                              {mode === "image"
+                                ? `${resolution}p`
+                                : `${duration}s`}
+                            </>
+                          ) : (
+                            <>
+                              <Users size={13} /> Your character
+                            </>
+                          )}
                         </span>
                       </div>
                     </div>
                   )}
                   <div className="canvas-footer">
-                    <ShieldCheck size={13} /> Your character stays yours. Model
-                    assets stay protected.
+                    <ShieldCheck size={13} /> Your creations are saved privately
+                    to your workspace.
                   </div>
                 </div>
               </div>
@@ -2477,7 +2563,24 @@ export default function ModelDropsApp({
                 {asset.live ? "Generated with Higgsfield" : "Simulated output"}{" "}
                 · Private to you
               </DialogDescription>
-              {asset.image && asset.live && asset.type === "video" ? (
+              {asset.type === "image" && (asset.outputs?.length || 0) > 1 ? (
+                <div className="batch-results">
+                  {asset.outputs!.map((output, index) => (
+                    <figure key={output.id}>
+                      <img
+                        src={output.url}
+                        alt={`${asset.prompt} — image ${index + 1}`}
+                      />
+                      <figcaption>
+                        <span>Image {index + 1}</span>
+                        <a href={`${output.url}&download=1`} download>
+                          <Download size={14} /> Download
+                        </a>
+                      </figcaption>
+                    </figure>
+                  ))}
+                </div>
+              ) : asset.image && asset.live && asset.type === "video" ? (
                 <video
                   className="asset-preview"
                   src={asset.image}
@@ -2508,7 +2611,7 @@ export default function ModelDropsApp({
                 <Button className="lime-button" onClick={() => remix(asset)}>
                   <RefreshCw size={15} /> Remix
                 </Button>
-                {asset.image && (
+                {asset.image && (asset.outputs?.length || 0) <= 1 && (
                   <Button asChild variant="secondary">
                     <a href={`/api/media?id=${asset.id}&download=1`} download>
                       <Download size={15} />{" "}
@@ -2674,6 +2777,7 @@ function GenerationCard({
         <span className="generation-type">
           {g.type === "video" ? <Video size={12} /> : <ImageIcon size={12} />}{" "}
           {g.live ? "HIGGSFIELD" : "DEMO"}
+          {(g.outputs?.length || 0) > 1 ? ` · ${g.outputs!.length} IMAGES` : ""}
         </span>
       </button>
       <div>

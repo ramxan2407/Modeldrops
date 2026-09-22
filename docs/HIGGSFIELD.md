@@ -1,6 +1,15 @@
 # Higgsfield content generation
 
-The live workspace supports Soul 2 images and Kling 3.0 Standard silent videos through Higgsfield's server-side API. Initial support is one output per job, text prompts, three aspect ratios, 720p/1080p Soul images, and 5/10 second Standard video. The video endpoint controls its native resolution; the UI labels it Standard. Negative prompts, image references, character catalog conditioning, and custom LoRA weights are intentionally rejected instead of silently ignored.
+The live workspace supports Soul 2 images and Kling 3.0 Standard videos through Higgsfield's server-side API. Controls are specific to each model:
+
+| Model              | Supported controls                                                                                                                                                            |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Soul 2             | 720p/1080p; 1:1, 16:9, 9:16, 4:3, 3:4, 2:3, 3:2; one or four images; prompt enhancement; optional seed 1–1,000,000; optional style UUID                                       |
+| Kling 3.0 Standard | 1:1, 16:9, 9:16; 3–15 seconds; sound on/off; prompt guidance 0–1 in 0.01 increments; automatic multiple shots or up to six explicit shot prompts; existing element references |
+
+Kling's endpoint controls its native resolution; there is no selectable resolution parameter. Explicit shot durations must sum to the total duration. Style UUIDs and element references must already exist at the provider; this UI does not create them. Negative prompts, image uploads, character catalog conditioning, and custom LoRA weights are not supported on these endpoints. Changing settings updates the displayed credit cost using the same calculator as the server. Existing database model rows use the current canonical capability definition while preserving administrator pricing and enabled state.
+
+Four-image batches reserve four times the single-image credits and provider estimate. The worker saves one file per invocation to respect function time limits, resumes partial deliveries without another paid submission, and marks the generation complete only after all outputs are stored. Each output has a separate owner-authorized preview/download; files cannot be accessed before completion or through another generation ID.
 
 ## Activation
 

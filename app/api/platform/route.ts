@@ -110,6 +110,11 @@ export async function GET(request: Request) {
         .bind(user.userId)
         .all(),
     ]);
+    const assets = await DB.prepare(
+      "SELECT id,generation_id,mime FROM generation_assets WHERE user_id=? AND generation_id IN (SELECT id FROM generations WHERE user_id=? AND status='completed' ORDER BY created_at DESC LIMIT 100) ORDER BY id",
+    )
+      .bind(user.userId, user.userId)
+      .all<{ id: string; generation_id: string; mime: string }>();
     const liveEnabled = higgsfieldEnabled(bindings());
     for (const g of generations.results
       .filter(
@@ -141,6 +146,13 @@ export async function GET(request: Request) {
             ...g,
             image: hasAsset ? `/api/media?id=${g.id}` : "",
             live: !!higgsfieldModel(g.modelId),
+            outputs: assets.results
+              .filter((asset) => asset.generation_id === g.id)
+              .map((asset) => ({
+                id: asset.id,
+                mime: asset.mime,
+                url: `/api/media?id=${g.id}&asset=${encodeURIComponent(asset.id)}`,
+              })),
           })),
           transactions: transactions.results,
           notifications: notifications.results,
@@ -158,6 +170,7 @@ export async function GET(request: Request) {
             name:
               catalogModels.find((catalogModel) => catalogModel.id === m.id)
                 ?.name ?? m.name,
+            ...(higgsfieldModel(m.id) || {}),
             credits: m.credits,
             enabled: !!m.enabled,
           })),
@@ -311,7 +324,7 @@ export async function POST(request: Request) {
             400,
             "This character is currently unavailable. Choose another character.",
           );
-        const cfg = JSON.parse(m.config);
+        const cfg = higgsfieldModel(m.id) || JSON.parse(m.config);
         if (
           !cfg.ratios.includes(d.settings.ratio) ||
           !cfg.resolutions.includes(d.settings.resolution)

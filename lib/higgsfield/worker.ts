@@ -110,19 +110,57 @@ export async function runGenerationJob(id: string, origin: string) {
       return;
     }
     if (result.status !== "completed") return;
-    const url =
-      g.type === "video" ? result.video?.url : result.images?.[0]?.url;
-    if (!url || (g.type === "image" && result.images?.length !== 1))
+    const expected =
+      g.type === "video" ? 1 : Number(JSON.parse(p.input_json).batch_size || 1);
+    const urls =
+      g.type === "video"
+        ? [result.video?.url]
+        : result.images?.map((image) => image.url);
+    if (!urls || urls.length !== expected || urls.some((url) => !url))
       throw new Error("Provider returned unexpected outputs.");
-    const file = await downloadOutput(url, g.type, env);
-    const storageKey = `private/${g.user_id}/generations/${id}.${file.extension}`;
-    await BUCKET.put(storageKey, file.bytes, {
-      httpMetadata: { contentType: file.mime },
-    });
-    await DB.batch([
-      DB.prepare(
+    // Save one output per invocation so a four-image batch stays within function limits.
+    // Existing files survive retries, without repeating the paid submission.
+    const saved = await DB.prepare(
+      "SELECT id,storage_key FROM generation_assets WHERE generation_id=? AND user_id=?",
+    )
+      .bind(id, g.user_id)
+      .all<{ id: string; storage_key: string }>();
+    const assetIds = urls.map((_, index) =>
+      index === 0 ? id : `${id}:${index}`,
+    );
+    const missing = assetIds.findIndex(
+      (assetId) => !saved.results.some((asset) => asset.id === assetId),
+    );
+    if (missing !== -1) {
+      const file = await downloadOutput(urls[missing]!, g.type, env);
+      const key = `private/${g.user_id}/generations/${id}/${missing}.${file.extension}`;
+      await BUCKET.put(key, file.bytes, {
+        httpMetadata: { contentType: file.mime },
+      });
+      await DB.prepare(
         "INSERT OR IGNORE INTO generation_assets(id,user_id,generation_id,storage_key,mime,size) VALUES(?,?,?,?,?,?)",
-      ).bind(id, g.user_id, id, storageKey, file.mime, file.bytes.byteLength),
+      )
+        .bind(
+          assetIds[missing],
+          g.user_id,
+          id,
+          key,
+          file.mime,
+          file.bytes.byteLength,
+        )
+        .run();
+      saved.results.push({ id: assetIds[missing], storage_key: key });
+    }
+    if (
+      !assetIds.every((assetId) =>
+        saved.results.some((asset) => asset.id === assetId),
+      )
+    )
+      return;
+    const storageKey = saved.results.find(
+      (asset) => asset.id === id,
+    )!.storage_key;
+    await DB.batch([
       DB.prepare(
         "UPDATE generations SET status='completed',asset_key=?,error=NULL,updated_at=? WHERE id=? AND status='processing'",
       ).bind(storageKey, new Date().toISOString(), id),

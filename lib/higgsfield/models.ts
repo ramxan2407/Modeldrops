@@ -1,3 +1,5 @@
+import { z } from "zod";
+import { generationSettings } from "../pricing";
 import { credentialsFor } from "./credentials.mjs";
 export const higgsfieldModels = [
   {
@@ -8,7 +10,7 @@ export const higgsfieldModels = [
     credits: 12,
     time: "Usually under a minute",
     description: "Generate an image from a prompt",
-    ratios: ["1:1", "16:9", "9:16"],
+    ratios: ["1:1", "16:9", "9:16", "4:3", "3:4", "2:3", "3:2"],
     resolutions: ["720", "1080"],
     enabled: true,
     endpoint: "higgsfield-ai/soul/v2/standard",
@@ -20,9 +22,9 @@ export const higgsfieldModels = [
     type: "video",
     credits: 120,
     time: "Several minutes",
-    description: "Generate a silent video from a prompt",
+    description: "Create video with optional sound and multiple shots",
     ratios: ["1:1", "16:9", "9:16"],
-    resolutions: ["720"],
+    resolutions: ["standard"],
     enabled: true,
     endpoint: "kling-video/v3.0/std/text-to-video",
   },
@@ -43,17 +45,11 @@ export const higgsfieldEnabled = (env: HiggsfieldEnvironment) =>
 export function generationInput(
   modelId: string,
   prompt: string,
-  settings: {
-    outputs: number;
-    ratio: string;
-    resolution: string;
-    negative: string;
-    seed: number | null;
-    duration: number;
-  },
+  settings: z.infer<typeof generationSettings>,
   characterId?: string | null,
   reference?: string | null,
 ) {
+  settings = generationSettings.parse(settings);
   const model = higgsfieldModel(modelId);
   if (!model) throw new Error("Unsupported Higgsfield model.");
   if (characterId || reference)
@@ -61,12 +57,12 @@ export function generationInput(
       "This model supports prompts only. Clear the character and reference image to continue.",
     );
   if (
-    settings.outputs !== 1 ||
+    !(model.type === "image" ? [1, 4] : [1]).includes(settings.outputs) ||
     !model.ratios.includes(settings.ratio) ||
     !model.resolutions.includes(settings.resolution)
   )
     throw new Error(
-      "Choose one output and a supported aspect ratio and resolution.",
+      "Choose a supported output count, aspect ratio and resolution.",
     );
   if (settings.negative)
     throw new Error("Negative prompts are not supported by this model.");
@@ -80,34 +76,43 @@ export function generationInput(
       throw new Error("Soul 2 seeds must be between 1 and 1,000,000.");
     return {
       prompt,
-      batch_size: 1,
+      batch_size: settings.outputs,
       resolution: settings.resolution + "p",
       aspect_ratio: settings.ratio,
       seed: settings.seed,
-      enhance_prompt: true,
+      enhance_prompt: settings.enhancePrompt ?? true,
+      ...(settings.styleId ? { style_id: settings.styleId } : {}),
     };
   }
-  if (settings.seed !== null || ![5, 10].includes(settings.duration))
-    throw new Error("Choose a 5 or 10 second video without a seed.");
+  if (settings.seed !== null)
+    throw new Error("Kling does not support a seed on this endpoint.");
+  if (settings.shots?.length && !settings.multiShots)
+    throw new Error("Enable multiple shots to use a shot list.");
+  if (
+    settings.shots?.length &&
+    settings.shots.reduce((sum, shot) => sum + shot.duration, 0) !==
+      settings.duration
+  )
+    throw new Error("Shot durations must add up to the total video duration.");
   return {
     prompt,
     duration: settings.duration,
     aspect_ratio: settings.ratio,
-    sound: "off",
-    multi_shots: false,
-    cfg_scale: 0.5,
+    sound: settings.sound ? "on" : "off",
+    multi_shots: settings.multiShots ?? false,
+    cfg_scale: settings.cfgScale ?? 0.5,
+    ...(settings.shots?.length ? { multi_prompt: settings.shots } : {}),
+    ...(settings.elements?.length ? { elements: settings.elements } : {}),
   };
 }
 
 // Conservative reservation at published undiscounted rates, not customer pricing.
 export function providerReserve(
   modelId: string,
-  settings: { resolution: string; duration: number },
+  settings: { resolution: string; duration: number; outputs?: number },
 ) {
   return modelId === "higgsfield-soul-2"
-    ? settings.resolution === "1080"
-      ? 5700
-      : 3200
+    ? (settings.resolution === "1080" ? 5700 : 3200) * (settings.outputs ?? 1)
     : settings.duration * 84000;
 }
 export function dailyLimit(env: HiggsfieldEnvironment) {

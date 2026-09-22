@@ -1,12 +1,29 @@
 import { z } from "zod";
 export const generationSettings = z
   .object({
-    ratio: z.enum(["1:1", "16:9", "9:16", "4:5"]),
-    resolution: z.enum(["720", "1080", "1024", "2048"]),
+    ratio: z.enum(["1:1", "16:9", "9:16", "4:5", "4:3", "3:4", "2:3", "3:2"]),
+    resolution: z.enum(["720", "1080", "1024", "2048", "standard"]),
     outputs: z.union([z.literal(1), z.literal(2), z.literal(4)]),
     negative: z.string().max(1000).default(""),
     seed: z.number().int().min(0).max(4294967295).nullable(),
-    duration: z.union([z.literal(5), z.literal(10)]),
+    duration: z.number().int().min(3).max(15),
+    enhancePrompt: z.boolean().optional(),
+    styleId: z.union([z.literal(""), z.string().uuid()]).optional(),
+    sound: z.boolean().optional(),
+    cfgScale: z.number().min(0).max(1).multipleOf(0.01).optional(),
+    multiShots: z.boolean().optional(),
+    shots: z
+      .array(
+        z
+          .object({
+            prompt: z.string().trim().min(1).max(512),
+            duration: z.number().int().min(1).max(15),
+          })
+          .strict(),
+      )
+      .max(6)
+      .optional(),
+    elements: z.array(z.string().trim().min(1).max(200)).max(20).optional(),
   })
   .strict();
 export function calculateCredits(

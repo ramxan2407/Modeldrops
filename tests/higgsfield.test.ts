@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { fixture, png } from "./helpers/lora-fixture";
 import { postgresFixture } from "./helpers/postgres-fixture";
 import { credentialsFor } from "../lib/higgsfield/credentials.mjs";
-import { generationInput } from "../lib/higgsfield/models";
+import { providerReserve, generationInput } from "../lib/higgsfield/models";
 import { downloadOutput } from "../lib/higgsfield/client";
 await test("Higgsfield accepts the complete copied credential and legacy split fields", () => {
   assert.equal(
@@ -48,7 +48,8 @@ const settings = {
   negative: "",
   seed: null,
   duration: 5,
-};
+} as const;
+const videoSettings = { ...settings, resolution: "standard" } as const;
 await test("Higgsfield model schemas reject unsupported references and ignored controls", () => {
   assert.throws(() =>
     generationInput("higgsfield-soul-2", "test", settings, "nova"),
@@ -60,16 +61,22 @@ await test("Higgsfield model schemas reject unsupported references and ignored c
     generationInput("higgsfield-soul-2", "test", { ...settings, seed: 0 }),
   );
   assert.throws(() =>
-    generationInput("higgsfield-kling-3", "test", { ...settings, seed: 8 }),
+    generationInput("higgsfield-kling-3", "test", {
+      ...videoSettings,
+      seed: 8,
+    }),
   );
-  assert.deepEqual(generationInput("higgsfield-kling-3", "test", settings), {
-    prompt: "test",
-    duration: 5,
-    aspect_ratio: "1:1",
-    sound: "off",
-    multi_shots: false,
-    cfg_scale: 0.5,
-  });
+  assert.deepEqual(
+    generationInput("higgsfield-kling-3", "test", videoSettings),
+    {
+      prompt: "test",
+      duration: 5,
+      aspect_ratio: "1:1",
+      sound: "off",
+      multi_shots: false,
+      cfg_scale: 0.5,
+    },
+  );
 });
 await test("output ingestion rejects foreign hosts, redirects, excessive sizes and MIME spoofing", async () => {
   const env = {};
@@ -163,6 +170,7 @@ for (const backend of ["sqlite", "postgres"]) {
       submitFailure = "",
       storageFailure = false;
     const videoRequests = new Set<string>();
+    const batchSizes = new Map<string, number>();
     const mediaTypes = new Map<string, string>();
     const originalPut = runtime.env.BUCKET.put.bind(runtime.env.BUCKET);
     const originalGet = runtime.env.BUCKET.get.bind(runtime.env.BUCKET);
@@ -203,6 +211,10 @@ for (const backend of ["sqlite", "postgres"]) {
         if (submitFailure === "rejected")
           return new Response("{}", { status: 403 });
         const request_id = crypto.randomUUID();
+        batchSizes.set(
+          request_id,
+          JSON.parse(options!.body as string).batch_size || 1,
+        );
         if (address.includes("kling-video")) videoRequests.add(request_id);
         return Response.json({ request_id, status: "queued" });
       }
@@ -216,7 +228,12 @@ for (const backend of ["sqlite", "postgres"]) {
             : undefined,
         images:
           outcome === "completed" && !videoRequests.has(request_id!)
-            ? [{ url: "https://images.higgs.ai/output.png" }]
+            ? Array.from(
+                { length: batchSizes.get(request_id!) || 1 },
+                (_, index) => ({
+                  url: `https://images.higgs.ai/output-${index}.png`,
+                }),
+              )
             : undefined,
       });
     };
@@ -387,7 +404,11 @@ for (const backend of ["sqlite", "postgres"]) {
       submitFailure = "";
       outcome = "completed";
       const video = await (
-        await post("generate", { ...payload(), modelId: "higgsfield-kling-3" })
+        await post("generate", {
+          ...payload(),
+          modelId: "higgsfield-kling-3",
+          settings: videoSettings,
+        })
       ).json();
       await drain();
       await tick(video.id);
@@ -398,6 +419,86 @@ for (const backend of ["sqlite", "postgres"]) {
       assert.equal(download.headers.get("content-type"), "video/mp4");
       assert.match(download.headers.get("content-disposition")!, /\.mp4/);
       assert.equal(await balance(), 856);
+      const batchStart = await post("generate", {
+        ...payload(),
+        settings: { ...settings, outputs: 4, ratio: "3:2", resolution: "1080" },
+      });
+      assert.equal(batchStart.status, 202);
+      const batch = await batchStart.json();
+      await drain();
+      const submittedBeforeDelivery = submissions;
+      await tick(batch.id);
+      assert.equal(
+        (
+          await media.GET(
+            new Request(
+              `http://test.local/api/media?id=${batch.id}&asset=${batch.id}`,
+            ),
+          )
+        ).status,
+        404,
+        "Partial batch is not published",
+      );
+      storageFailure = true;
+      await tick(batch.id);
+      storageFailure = false;
+      for (let i = 0; i < 4; i++) await tick(batch.id);
+      assert.equal(
+        submissions,
+        submittedBeforeDelivery,
+        "Batch retry never submits again",
+      );
+      assert.equal(
+        await balance(),
+        760,
+        "Four 1080p images cost four times the single-image price",
+      );
+      const batchState = await (
+        await api.GET(
+          new Request("http://test.local/api/platform?action=state"),
+        )
+      ).json();
+      const delivered = batchState.account.generations.find(
+        (g: any) => g.id === batch.id,
+      );
+      assert.equal(delivered.status, "completed");
+      assert.equal(delivered.outputs.length, 4);
+      for (const output of delivered.outputs) {
+        assert.equal(
+          (
+            await media.GET(
+              new Request(`http://test.local${output.url}&download=1`),
+            )
+          ).status,
+          200,
+        );
+        assert.equal(
+          (
+            await media.GET(
+              new Request(
+                `http://test.local/api/media?id=${job.id}&asset=${encodeURIComponent(output.id)}`,
+              ),
+            )
+          ).status,
+          404,
+          "Asset must belong to the requested generation",
+        );
+      }
+      runtime.user.userId = "bob";
+      assert.equal(
+        (
+          await media.GET(
+            new Request(`http://test.local${delivered.outputs[3].url}`),
+          )
+        ).status,
+        404,
+      );
+      runtime.user.userId = "alice";
+      assert.deepEqual(
+        batchState.models.find((m: any) => m.id === "higgsfield-kling-3")
+          .resolutions,
+        ["standard"],
+      );
       const scheduler = await vite.ssrLoadModule("/app/api/jobs/route.ts");
       assert.equal(
         (await scheduler.GET(new Request("http://test.local/api/jobs"))).status,
@@ -441,3 +542,78 @@ for (const backend of ["sqlite", "postgres"]) {
     }
   });
 }
+
+await test("all published Soul and Kling controls map to provider inputs", () => {
+  for (const ratio of [
+    "1:1",
+    "16:9",
+    "9:16",
+    "4:3",
+    "3:4",
+    "2:3",
+    "3:2",
+  ] as const) {
+    const input = generationInput("higgsfield-soul-2", "test", {
+      ...settings,
+      ratio,
+      outputs: 4,
+      enhancePrompt: false,
+      seed: 1000000,
+      styleId: "11111111-1111-4111-8111-111111111111",
+    });
+    assert.equal(input.aspect_ratio, ratio);
+    assert("batch_size" in input);
+    assert.equal(input.batch_size, 4);
+    assert.equal(input.enhance_prompt, false);
+    assert.equal(input.style_id, "11111111-1111-4111-8111-111111111111");
+  }
+  assert.equal(
+    providerReserve("higgsfield-soul-2", {
+      resolution: "1080",
+      duration: 5,
+      outputs: 4,
+    }),
+    22800,
+  );
+  assert.throws(() =>
+    generationInput("higgsfield-soul-2", "test", {
+      ...settings,
+      styleId: "invalid",
+    }),
+  );
+  for (const duration of [3, 15]) {
+    const input = generationInput("higgsfield-kling-3", "test", {
+      ...videoSettings,
+      duration,
+      sound: true,
+      cfgScale: 0.71,
+      multiShots: true,
+      shots: [
+        { prompt: "Opening", duration: 1 },
+        { prompt: "Closing", duration: duration - 1 },
+      ],
+      elements: ["existing-reference"],
+    });
+    assert("duration" in input);
+    assert.equal(input.duration, duration);
+    assert.equal(input.sound, "on");
+    assert.equal(input.cfg_scale, 0.71);
+    assert.equal(input.multi_prompt?.length, 2);
+    assert.deepEqual(input.elements, ["existing-reference"]);
+    assert(!("resolution" in input));
+  }
+  for (const patch of [
+    { duration: 16 },
+    { cfgScale: 1.1 },
+    { cfgScale: 0.001 },
+    { resolution: "720" as const },
+    { multiShots: true, shots: [{ prompt: "Shot", duration: 3 }] },
+    { multiShots: false, shots: [{ prompt: "Shot", duration: 5 }] },
+  ])
+    assert.throws(() =>
+      generationInput("higgsfield-kling-3", "test", {
+        ...videoSettings,
+        ...patch,
+      }),
+    );
+});
