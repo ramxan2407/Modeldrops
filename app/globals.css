@@ -197,8 +197,8 @@ button:hover {
   color: light-dark(#475467, #b3b3b3);
 }
 .nav-button[data-active="true"] {
-  background: light-dark(#ffffff, #111111) !important;
-  color: light-dark(#316341, #afd989) !important;
+  background: light-dark(#ffffff, #111111);
+  color: light-dark(#316341, #afd989);
 }
 .nav-button[data-active="true"]:before {
   content: "";
@@ -1124,8 +1124,8 @@ h1 {
   color: light-dark(#667085, #b3b3b3);
 }
 .studio-tabs [data-state="active"] {
-  background: light-dark(#ffffff, #111111) !important;
-  color: light-dark(#316341, #afd989) !important;
+  background: light-dark(#ffffff, #111111);
+  color: light-dark(#316341, #afd989);
 }
 .studio-layout {
   display: grid;
@@ -1802,12 +1802,12 @@ td input {
   backdrop-filter: blur(7px);
 }
 [data-slot="dialog-content"] {
-  border-color: light-dark(#e0e5eb, #2a2a2a) !important;
-  background: light-dark(#f7f9fb, #090909) !important;
-  border-radius: 15px !important;
+  border-color: light-dark(#e0e5eb, #2a2a2a);
+  background: light-dark(#f7f9fb, #090909);
+  border-radius: 15px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 25px 100px #18223099 !important;
+  box-shadow: 0 25px 100px #18223099;
 }
 [data-slot="dialog-close"] {
   z-index: 10;

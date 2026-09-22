@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./admin.css";
 import "./theme.css";
+import "./design-system.css";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
