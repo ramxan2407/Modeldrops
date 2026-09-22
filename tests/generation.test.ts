@@ -788,6 +788,15 @@ await test("WaveSpeed input mapping covers sizes, formats, batches, audio pricin
     generationInput("wavespeed-qwen-image-edit", "test", settings, "character"),
   );
 });
+await test("verified WaveSpeed CDN output is accepted without forwarding API credentials",async()=>{
+  const result=await downloadOutput('https://d2h7xmz5gqybh9.cloudfront.net/output/image.png','image',{},async(_url,options)=>{
+    assert.equal(options?.headers,undefined);
+    assert.equal(options?.redirect,'error');
+    return new Response(png,{headers:{'Content-Type':'image/png'}});
+  });
+  assert.equal(result.mime,'image/png');
+  await assert.rejects(()=>downloadOutput('https://another-distribution.cloudfront.net/output/image.png','image',{}),/host/);
+});
 await test("WaveSpeed protocol distinguishes rejections, uncertain submissions and terminal failures", async () => {
   const env = { WAVESPEED_API_KEY: "test-key" };
   for (const status of [400, 401, 402, 403, 404, 422, 429])

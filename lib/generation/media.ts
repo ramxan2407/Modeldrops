@@ -9,6 +9,7 @@ export async function downloadOutput(
   const hosts = new Set([
     "cloudflare-static.wavespeed.ai",
     "static.wavespeed.ai",
+    "d2h7xmz5gqybh9.cloudfront.net",
     ...(env.WAVESPEED_OUTPUT_HOSTS || "")
       .split(",")
       .map((h) => h.trim())
