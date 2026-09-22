@@ -1,3 +1,4 @@
+import { inspirationPrompt } from "./inspiration";
 export const workspaceSections = [
   "dashboard",
   "discover",
@@ -35,14 +36,15 @@ export function safeWorkspaceReturnTo(value: unknown): string {
       !isWorkspaceSection(url.pathname.slice(1))
     )
       return "/dashboard";
-    // Preserve only the optional character selection; never forward arbitrary redirects.
+    // Only a character ID and curated Studio inspiration may cross sign-in.
+    const params = new URLSearchParams();
     const character = url.searchParams.get("character");
-    return (
-      url.pathname +
-      (character && /^[a-z0-9-]{1,80}$/.test(character)
-        ? "?character=" + encodeURIComponent(character)
-        : "")
-    );
+    if (character && /^[a-z0-9-]{1,80}$/.test(character))
+      params.set("character", character);
+    const inspiration = url.searchParams.get("inspiration");
+    if (url.pathname === "/studio" && inspirationPrompt(inspiration))
+      params.set("inspiration", inspiration!);
+    return url.pathname + (params.size ? "?" + params.toString() : "");
   } catch {
     return "/dashboard";
   }

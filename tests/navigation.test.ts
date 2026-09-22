@@ -29,3 +29,28 @@ test("login preserves a valid studio character without forwarding arbitrary para
     "/studio",
   );
 });
+
+test("welcome inspiration survives login only for known Studio presets", () => {
+  assert.equal(
+    safeWorkspaceReturnTo(
+      "/studio?inspiration=nova.editorial&redirect=https://evil.test",
+    ),
+    "/studio?inspiration=nova.editorial",
+  );
+  assert.equal(
+    safeWorkspaceReturnTo("/studio?inspiration=nova.unknown"),
+    "/studio",
+  );
+  assert.equal(
+    safeWorkspaceReturnTo("/studio?inspiration=unknown.cinematic"),
+    "/studio",
+  );
+  assert.equal(
+    safeWorkspaceReturnTo("/billing?inspiration=nova.editorial"),
+    "/billing",
+  );
+  assert.equal(
+    safeWorkspaceReturnTo("/studio?inspiration=nova.editorial.extra"),
+    "/studio",
+  );
+});

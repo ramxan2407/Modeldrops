@@ -363,9 +363,11 @@ function WorkspaceMoreMenu({
 export default function ModelDropsApp({
   initialPage = "dashboard",
   initialCharacter,
+  initialPrompt = "",
 }: {
   initialPage?: Page;
   initialCharacter?: string;
+  initialPrompt?: string;
 }) {
   const [page, setPage] = useState<Page>(initialPage),
     [account, setAccount] = useState<Account>(emptyAccount),
@@ -391,7 +393,7 @@ export default function ModelDropsApp({
     ),
     [mode, setMode] = useState("image"),
     [modelId, setModelId] = useState("forma-image"),
-    [prompt, setPrompt] = useState(""),
+    [prompt, setPrompt] = useState(initialPrompt),
     [negative, setNegative] = useState(""),
     [ratio, setRatio] = useState("16:9"),
     [resolution, setResolution] = useState("1024"),

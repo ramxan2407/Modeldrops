@@ -1,3 +1,4 @@
+import { inspirationPrompt } from "@/lib/inspiration";
 import ModelDropsApp from "@/components/model-drops-app";
 import { isAdmin, isSuperAdmin } from "@/lib/server";
 import { getAppUser } from "@/lib/app-auth";
@@ -13,23 +14,27 @@ export default async function Section({
   searchParams,
 }: {
   params: Promise<{ section: string }>;
-  searchParams: Promise<{ character?: string }>;
+  searchParams: Promise<{ character?: string; inspiration?: string }>;
 }) {
   const { section } = await params;
   const query = await searchParams;
   if (!isWorkspaceSection(section)) notFound();
+  const search = new URLSearchParams();
+  if (typeof query.character === "string")
+    search.set("character", query.character);
+  if (typeof query.inspiration === "string")
+    search.set("inspiration", query.inspiration);
   const returnTo = safeWorkspaceReturnTo(
-    "/" +
-      section +
-      (query.character
-        ? "?character=" + encodeURIComponent(query.character)
-        : ""),
+    "/" + section + "?" + search.toString(),
   );
   return (
     <ProtectedWorkspace
       section={section}
       returnTo={returnTo}
       character={query.character}
+      prompt={
+        section === "studio" ? (inspirationPrompt(query.inspiration) ?? "") : ""
+      }
     />
   );
 }
@@ -37,10 +42,12 @@ async function ProtectedWorkspace({
   section,
   returnTo,
   character,
+  prompt,
 }: {
   section: WorkspaceSection;
   returnTo: string;
   character?: string;
+  prompt: string;
 }) {
   const user = await getAppUser();
   if (!user) redirect("/login?returnTo=" + encodeURIComponent(returnTo));
@@ -51,6 +58,7 @@ async function ProtectedWorkspace({
       key={user.userId}
       initialPage={section}
       initialCharacter={character}
+      initialPrompt={prompt}
     />
   );
 }
