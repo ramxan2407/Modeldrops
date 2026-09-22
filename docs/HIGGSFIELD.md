@@ -4,7 +4,7 @@ The live workspace supports Soul 2 images and Kling 3.0 Standard silent videos t
 
 ## Activation
 
-1. Sign in to [Higgsfield API keys](https://open.higgsfield.ai/api-keys), create credentials, and save `HF_API_KEY_ID` and `HF_API_KEY_SECRET` in ignored `.env.vercel.local`. The API account needs available funds; a consumer website subscription is separate.
+1. Sign in to [Higgsfield API keys](https://open.higgsfield.ai/api-keys), create credentials, and save the entire copied key in `HF_CREDENTIALS` (the single value contains `ID:secret`) in ignored `.env.vercel.local`. The API account needs available funds; a consumer website subscription is separate.
 2. Set `HIGGSFIELD_ENABLED=true`, `HIGGSFIELD_DAILY_LIMIT_USD=5` (or an explicitly chosen cap), `WELCOME_CREDITS=0`, and a random `CRON_SECRET` of at least 32 characters. Never put these values in browser bundles or Git.
 3. Run `node --env-file=.env.vercel.local scripts/migrate-higgsfield.mjs`. This is an additive, repeatable migration of the existing workspace schema.
 4. Run `node --env-file=.env.vercel.local scripts/configure-higgsfield.mjs production` using the intended isolated Vercel account. Deploy the code afterward. The minute schedule in `vercel.json` requires a Vercel plan that supports that frequency; check the current workspace plan before activation.

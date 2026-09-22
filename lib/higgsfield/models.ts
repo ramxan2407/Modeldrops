@@ -1,3 +1,4 @@
+import { credentialsFor } from "./credentials.mjs";
 export const higgsfieldModels = [
   {
     id: "higgsfield-soul-2",
@@ -29,6 +30,7 @@ export const higgsfieldModels = [
 export const higgsfieldModel = (id: string) =>
   higgsfieldModels.find((m) => m.id === id);
 export type HiggsfieldEnvironment = {
+  HF_CREDENTIALS?: string;
   HF_API_KEY_ID?: string;
   HF_API_KEY_SECRET?: string;
   HIGGSFIELD_ENABLED?: string;
@@ -36,9 +38,7 @@ export type HiggsfieldEnvironment = {
   HIGGSFIELD_OUTPUT_HOSTS?: string;
 };
 export const higgsfieldEnabled = (env: HiggsfieldEnvironment) =>
-  env.HIGGSFIELD_ENABLED === "true" &&
-  !!env.HF_API_KEY_ID &&
-  !!env.HF_API_KEY_SECRET;
+  env.HIGGSFIELD_ENABLED === "true" && !!credentialsFor(env);
 
 export function generationInput(
   modelId: string,

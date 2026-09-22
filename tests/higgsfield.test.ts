@@ -4,8 +4,42 @@ import { createServer } from "vite";
 import { fileURLToPath } from "node:url";
 import { fixture, png } from "./helpers/lora-fixture";
 import { postgresFixture } from "./helpers/postgres-fixture";
+import { credentialsFor } from "../lib/higgsfield/credentials.mjs";
 import { generationInput } from "../lib/higgsfield/models";
 import { downloadOutput } from "../lib/higgsfield/client";
+await test("Higgsfield accepts the complete copied credential and legacy split fields", () => {
+  assert.equal(
+    credentialsFor({ HF_CREDENTIALS: " test-id:test-secret " }),
+    "test-id:test-secret",
+  );
+  assert.equal(
+    credentialsFor({
+      HF_API_KEY_ID: "test-id",
+      HF_API_KEY_SECRET: "test-secret",
+    }),
+    "test-id:test-secret",
+  );
+  assert.equal(
+    credentialsFor({ HF_API_KEY_ID: "test-id:test-secret" }),
+    "test-id:test-secret",
+  );
+  assert.equal(
+    credentialsFor({
+      HF_CREDENTIALS: "new:secret",
+      HF_API_KEY_ID: "old",
+      HF_API_KEY_SECRET: "old",
+    }),
+    "new:secret",
+  );
+  for (const value of [
+    "only-an-id",
+    "id:",
+    ":secret",
+    "id:secret:extra",
+    "id:secret\nheader:value",
+  ])
+    assert.equal(credentialsFor({ HF_CREDENTIALS: value }), undefined);
+});
 const root = fileURLToPath(new URL("../", import.meta.url));
 const settings = {
   ratio: "1:1",
@@ -94,6 +128,8 @@ for (const backend of ["sqlite", "postgres"]) {
     const runtime = {
       env: {
         ...f.env,
+        HF_CREDENTIALS:
+          backend === "postgres" ? "test-id:test-secret" : undefined,
         HF_API_KEY_ID: "test-id",
         HF_API_KEY_SECRET: "test-secret",
         HIGGSFIELD_ENABLED: "true",

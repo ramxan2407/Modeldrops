@@ -1,10 +1,16 @@
 import { spawnSync } from "node:child_process";
+import { credentialsFor } from "../lib/higgsfield/credentials.mjs";
+const credentials = credentialsFor(process.env);
+if (!credentials)
+  throw new Error(
+    "Save the entire copied Higgsfield API key in HF_CREDENTIALS (ID:secret).",
+  );
+process.env.HF_CREDENTIALS = credentials;
 const target = process.argv[2] || "preview";
 if (!["preview", "production"].includes(target))
   throw new Error("Choose preview or production");
 const keys = [
-  "HF_API_KEY_ID",
-  "HF_API_KEY_SECRET",
+  "HF_CREDENTIALS",
   "HIGGSFIELD_ENABLED",
   "HIGGSFIELD_DAILY_LIMIT_USD",
   "CRON_SECRET",

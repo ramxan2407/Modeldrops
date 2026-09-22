@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { HiggsfieldEnvironment } from "./models";
+import { credentialsFor } from "./credentials.mjs";
 const resultSchema = z.object({
   request_id: z.string().uuid(),
   status: z.enum([
@@ -21,14 +22,15 @@ export class HiggsfieldClient {
     private fetcher: typeof fetch = fetch,
   ) {}
   private async request(path: string, input?: unknown) {
-    if (!this.env.HF_API_KEY_ID || !this.env.HF_API_KEY_SECRET)
-      throw new Error("Higgsfield credentials missing.");
+    const credentials = credentialsFor(this.env);
+    if (!credentials)
+      throw new Error("Higgsfield credentials missing or incomplete.");
     const r = await this.fetcher(`https://api.higgsfield.ai/${path}`, {
       method: input ? "POST" : "GET",
       redirect: "error",
       signal: AbortSignal.timeout(20000),
       headers: {
-        Authorization: `Key ${this.env.HF_API_KEY_ID}:${this.env.HF_API_KEY_SECRET}`,
+        Authorization: `Key ${credentials}`,
         "Content-Type": "application/json",
       },
       ...(input ? { body: JSON.stringify(input) } : {}),
