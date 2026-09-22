@@ -1,10 +1,10 @@
 .lora-workspace {
   max-width: 1480px;
   margin: 0 auto;
-  color: light-dark(#17212d, #e7edf3);
+  color: light-dark(#17212d, #f2f2f2);
   padding: 14px 2px 60px;
   --lora-line: rgba(221, 241, 201, 0.11);
-  --lora-muted: light-dark(#939d8d, #95a5b5);
+  --lora-muted: light-dark(#939d8d, #909090);
   --lora-lime: #c7ee83;
 }
 .lora-heading {
@@ -58,15 +58,15 @@
 }
 .lora-button {
   border: 1px solid var(--lora-line);
-  background: light-dark(#f7f9fb, #131b24);
+  background: light-dark(#f7f9fb, #090909);
   border-radius: 8px;
   min-height: 38px;
   padding: 9px 14px;
-  color: light-dark(#17212d, #e7edf3);
+  color: light-dark(#17212d, #f2f2f2);
 }
 .lora-button:hover,
 .lora-icon-button:hover {
-  background: light-dark(#ffffff, #19222c);
+  background: light-dark(#ffffff, #111111);
 }
 .lora-primary {
   border-radius: 8px !important;
@@ -136,9 +136,9 @@
     11px ui-monospace,
     monospace;
   color: light-dark(#316341, #afd989);
-  border: 1px solid light-dark(#e0e5eb33, #34424f33);
+  border: 1px solid light-dark(#e0e5eb33, #2a2a2a33);
   border-radius: 9px;
-  background: light-dark(#eef2f50a, #222d380a);
+  background: light-dark(#eef2f50a, #1919190a);
   display: grid;
   place-items: center;
   width: 34px;
@@ -148,7 +148,7 @@
 .lora-mini-label {
   font-size: 12px;
   letter-spacing: 1.4px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
 }
 .lora-field {
   display: block;
@@ -162,23 +162,23 @@
   align-items: center;
   margin-bottom: 9px;
   font-weight: 500;
-  color: light-dark(#17212d, #e7edf3);
+  color: light-dark(#17212d, #f2f2f2);
 }
 .lora-field small {
   font-size: 12px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
   font-weight: 400;
 }
 .lora-field input:not([type="radio"]),
 .lora-field textarea,
 .lora-toolbar .lora-filter {
   width: 100%;
-  background: light-dark(#f7f9fbc7, #131b24c7);
-  border: 1px solid light-dark(#e0e5eb1a, #34424f1a);
+  background: light-dark(#f7f9fbc7, #090909c7);
+  border: 1px solid light-dark(#e0e5eb1a, #2a2a2a1a);
   border-radius: 7px;
   padding: 11px 12px;
   font: inherit;
-  color: light-dark(#17212d, #e7edf3);
+  color: light-dark(#17212d, #f2f2f2);
   outline: none;
   transition: border-color 0.15s;
 }
@@ -189,7 +189,7 @@
 }
 .lora-field input::placeholder,
 .lora-field textarea::placeholder {
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
 }
 .lora-field textarea {
   resize: vertical;
@@ -207,7 +207,7 @@
 .lora-field-explainer {
   font-size: 12px;
   line-height: 1.7;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
   padding-top: 24px;
 }
 .lora-type-options {
@@ -219,9 +219,9 @@
   padding: 8px 15px;
   border: 1px solid var(--lora-line);
   border-radius: 6px;
-  color: light-dark(#475467, #b4c0cb);
+  color: light-dark(#475467, #b3b3b3);
   font-size: 12px;
-  background: light-dark(#f7f9fb, #131b24);
+  background: light-dark(#f7f9fb, #090909);
   cursor: pointer;
 }
 .lora-type-options label.selected {
@@ -231,9 +231,9 @@
 }
 .lora-count {
   font-size: 12px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
   white-space: nowrap;
-  background: light-dark(#f7f9fb, #131b24);
+  background: light-dark(#f7f9fb, #090909);
   padding: 5px 8px;
   border-radius: 5px;
 }
@@ -241,7 +241,7 @@
   color: light-dark(#316341, #afd989);
 }
 .lora-dropzone {
-  border: 1px dashed light-dark(#e0e5eb3d, #34424f3d);
+  border: 1px dashed light-dark(#e0e5eb3d, #2a2a2a3d);
   border-radius: 10px;
   text-align: center;
   padding: 32px 12px;
@@ -253,7 +253,7 @@
 }
 .lora-dropzone.dragging {
   border-color: light-dark(#aacd82, #647e50);
-  background: light-dark(#eef2f520, #222d3820);
+  background: light-dark(#eef2f520, #19191920);
 }
 .lora-upload-icon {
   width: 54px;
@@ -264,7 +264,7 @@
   place-items: center;
   margin: 0 auto 16px;
   color: light-dark(#316341, #afd989);
-  background: light-dark(#f7f9fb, #131b24);
+  background: light-dark(#f7f9fb, #090909);
 }
 .lora-dropzone h3 {
   font-size: 13px;
@@ -273,7 +273,7 @@
 }
 .lora-dropzone p {
   font-size: 12px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
   margin-bottom: 14px;
 }
 .lora-dropzone p button {
@@ -283,7 +283,7 @@
   cursor: pointer;
 }
 .lora-dropzone small {
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
   font-size: 12px;
 }
 .lora-dataset-hints {
@@ -293,7 +293,7 @@
   gap: 10px;
   margin: 15px 0 0;
   font-size: 12px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
 }
 .lora-dataset-hints > span {
   display: flex;
@@ -310,7 +310,7 @@
   padding: 13px;
   font-size: 12px;
   line-height: 1.75;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
 }
 .lora-tip svg {
   flex-shrink: 0;
@@ -318,7 +318,7 @@
   color: light-dark(#316341, #afd989);
 }
 .lora-tip strong {
-  color: light-dark(#475467, #b4c0cb);
+  color: light-dark(#475467, #b3b3b3);
   font-weight: 500;
 }
 .lora-upload-summary {
@@ -326,7 +326,7 @@
   justify-content: space-between;
   margin: 22px 0 10px;
   font-size: 12px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
 }
 .lora-image-grid {
   display: grid;
@@ -339,8 +339,8 @@
   min-width: 0;
   border-radius: 7px;
   overflow: hidden;
-  border: 1px solid light-dark(#e0e5eb2b, #34424f2b);
-  background: light-dark(#f7f9fb, #131b24);
+  border: 1px solid light-dark(#e0e5eb2b, #2a2a2a2b);
+  background: light-dark(#f7f9fb, #090909);
 }
 .lora-image-tile img {
   width: 100%;
@@ -356,7 +356,7 @@
   height: 21px;
   display: grid;
   place-items: center;
-  background: light-dark(#f7f9fbcc, #131b24cc);
+  background: light-dark(#f7f9fbcc, #090909cc);
   cursor: pointer;
   color: #ffffff;
 }
@@ -372,7 +372,7 @@
   border-radius: 4px;
 }
 .lora-image-tile.has-error {
-  border-color: light-dark(#edc2bc, #34424f);
+  border-color: light-dark(#edc2bc, #2a2a2a);
 }
 .lora-image-tile [data-slot="progress"] {
   position: absolute;
@@ -402,7 +402,7 @@
 }
 .lora-upload-row small {
   display: block;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
   font-size: 12px;
   margin-top: 4px;
 }
@@ -418,7 +418,7 @@
   align-items: flex-start;
   gap: 7px;
   font-size: 12px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
   line-height: 1.7;
   max-width: 275px;
 }
@@ -434,11 +434,11 @@
   overflow: hidden;
   position: relative;
   padding: 26px;
-  border: 1px solid light-dark(#e0e5eb23, #34424f23);
+  border: 1px solid light-dark(#e0e5eb23, #2a2a2a23);
   border-radius: 14px;
   background:
-    radial-gradient(ellipse at 30% 0, light-dark(#eef2f527, #222d3827), transparent 50%),
-    linear-gradient(160deg, light-dark(#f7f9fbaa, #131b24aa), light-dark(#f7f9fbcc, #131b24cc));
+    radial-gradient(ellipse at 30% 0, light-dark(#eef2f527, #19191927), transparent 50%),
+    linear-gradient(160deg, light-dark(#f7f9fbaa, #090909aa), light-dark(#f7f9fbcc, #090909cc));
   backdrop-filter: blur(20px);
 }
 .lora-journey-card h2 {
@@ -451,7 +451,7 @@
 .lora-journey-card > p:not(.lora-eyebrow) {
   font-size: 12px;
   line-height: 1.85;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
 }
 .lora-orbit-art {
   position: relative;
@@ -469,7 +469,7 @@
   width: 116px;
   height: 77px;
   border-radius: 50%;
-  background: radial-gradient(ellipse, light-dark(#eef2f50a, #222d380a), transparent);
+  background: radial-gradient(ellipse, light-dark(#eef2f50a, #1919190a), transparent);
 }
 .lora-orbit-art > div:nth-child(2) {
   transform: rotate(37deg);
@@ -490,8 +490,8 @@
   position: absolute;
   right: 0;
   top: 19px;
-  background: light-dark(#f7f9fb, #131b24);
-  border: 1px solid light-dark(#e0e5eb66, #34424f66);
+  background: light-dark(#f7f9fb, #090909);
+  border: 1px solid light-dark(#e0e5eb66, #2a2a2a66);
   border-radius: 50%;
   width: 31px;
   height: 31px;
@@ -521,15 +521,15 @@
   gap: 11px;
   position: relative;
   padding-bottom: 23px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
   font-size: 12px;
   line-height: 1.5;
 }
 .lora-steps li > span {
   width: 22px;
   height: 22px;
-  background: light-dark(#f7f9fb, #131b24);
-  border: 1px solid light-dark(#e0e5eb36, #34424f36);
+  background: light-dark(#f7f9fb, #090909);
+  border: 1px solid light-dark(#e0e5eb36, #2a2a2a36);
   display: grid;
   place-items: center;
   font-size: 12px;
@@ -545,13 +545,13 @@
   top: 21px;
   width: 1px;
   height: calc(100% - 20px);
-  background: light-dark(#eef2f526, #222d3826);
+  background: light-dark(#eef2f526, #19191926);
 }
 .lora-steps li small {
   display: block;
   font-size: 12px;
   line-height: 1.6;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
   margin-top: 4px;
 }
 .lora-steps li:last-child {
@@ -570,8 +570,8 @@
   gap: 9px;
   line-height: 1.7;
   font-size: 12px;
-  color: light-dark(#667085, #b4c0cb);
-  background: light-dark(#eef2f509, #222d3809);
+  color: light-dark(#667085, #b3b3b3);
+  background: light-dark(#eef2f509, #19191909);
   border-radius: 7px;
   padding: 12px;
   margin-top: 25px;
@@ -591,13 +591,13 @@
 }
 .lora-private-card h3 {
   font-size: 12px;
-  color: light-dark(#475467, #b4c0cb);
+  color: light-dark(#475467, #b3b3b3);
   margin-bottom: 6px;
 }
 .lora-private-card p {
   font-size: 12px;
   line-height: 1.8;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
 }
 .lora-stats {
   display: grid;
@@ -607,7 +607,7 @@
 }
 .lora-stats > div {
   border: 1px solid var(--lora-line);
-  background: linear-gradient(130deg, light-dark(#ffffff77, #19222c77), light-dark(#f7f9fb66, #131b2466));
+  background: linear-gradient(130deg, light-dark(#ffffff77, #11111177), light-dark(#f7f9fb66, #09090966));
   border-radius: 12px;
   padding: 21px;
   display: grid;
@@ -626,23 +626,23 @@
 }
 .lora-stats span {
   font-size: 12px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
 }
 .lora-library {
   margin-bottom: 34px;
 }
 .lora-library > .lora-section-heading > span {
   font-size: 12px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
 }
 .lora-library-empty {
-  border: 1px dashed light-dark(#e0e5eb30, #34424f30);
+  border: 1px dashed light-dark(#e0e5eb30, #2a2a2a30);
   border-radius: 13px;
   padding: 33px 28px;
   display: flex;
   gap: 25px;
   align-items: center;
-  background: linear-gradient(120deg, light-dark(#ffffff1c, #19222c1c), transparent);
+  background: linear-gradient(120deg, light-dark(#ffffff1c, #1111111c), transparent);
 }
 .lora-library-empty h3 {
   font-size: 17px;
@@ -651,7 +651,7 @@
 }
 .lora-library-empty p {
   font-size: 12px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
   line-height: 1.7;
   max-width: 460px;
 }
@@ -672,7 +672,7 @@
   display: grid;
   place-items: center;
   color: light-dark(#316341, #afd989);
-  background: light-dark(#ffffff55, #19222c55);
+  background: light-dark(#ffffff55, #11111155);
   position: relative;
   flex-shrink: 0;
 }
@@ -691,7 +691,7 @@
   border: 1px solid var(--lora-line);
   border-radius: 12px;
   overflow: hidden;
-  background: light-dark(#f7f9fb, #131b24);
+  background: light-dark(#f7f9fb, #090909);
 }
 .lora-cover {
   display: block;
@@ -730,8 +730,8 @@
 }
 .lora-trigger {
   width: 100%;
-  border: 1px solid light-dark(#e0e5eb20, #34424f20);
-  background: light-dark(#f7f9fb, #131b24);
+  border: 1px solid light-dark(#e0e5eb20, #2a2a2a20);
+  background: light-dark(#f7f9fb, #090909);
   border-radius: 6px;
   padding: 8px 9px;
   display: flex;
@@ -748,7 +748,7 @@
 }
 .lora-model-body > p {
   font-size: 12px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
   margin: 13px 0;
 }
 .lora-card-actions {
@@ -764,8 +764,8 @@
   height: 36px;
   border: 1px solid var(--lora-line);
   border-radius: 7px;
-  color: light-dark(#475467, #b4c0cb);
-  background: light-dark(#f7f9fb, #131b24);
+  color: light-dark(#475467, #b3b3b3);
+  background: light-dark(#f7f9fb, #090909);
   flex-shrink: 0;
 }
 .lora-toolbar {
@@ -781,8 +781,8 @@
   border: 1px solid var(--lora-line);
   border-radius: 7px;
   padding: 9px 12px;
-  color: light-dark(#667085, #b4c0cb);
-  background: light-dark(#f7f9fb, #131b24);
+  color: light-dark(#667085, #b3b3b3);
+  background: light-dark(#f7f9fb, #090909);
   min-width: 0;
 }
 .lora-search input {
@@ -792,13 +792,13 @@
   min-width: 0;
   width: 100%;
   font-size: 12px;
-  color: light-dark(#17212d, #e7edf3);
+  color: light-dark(#17212d, #f2f2f2);
 }
 .lora-toolbar .lora-filter {
   width: auto;
   font-size: 12px;
   padding-right: 28px;
-  color: light-dark(#475467, #b4c0cb);
+  color: light-dark(#475467, #b3b3b3);
 }
 .lora-table-wrap {
   overflow: auto;
@@ -814,15 +814,15 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
   font-weight: 500;
   padding: 12px 14px;
   border-bottom: 1px solid var(--lora-line);
 }
 .lora-table td {
   padding: 18px 14px;
-  color: light-dark(#475467, #b4c0cb);
-  border-bottom: 1px solid light-dark(#e0e5eb10, #34424f10);
+  color: light-dark(#475467, #b3b3b3);
+  border-bottom: 1px solid light-dark(#e0e5eb10, #2a2a2a10);
 }
 .lora-table tr:last-child td {
   border: 0;
@@ -832,13 +832,13 @@
   padding-left: 0;
 }
 .lora-table strong {
-  color: light-dark(#17212d, #e7edf3);
+  color: light-dark(#17212d, #f2f2f2);
   font-weight: 500;
 }
 .lora-table code,
 .lora-table td small {
   display: block;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
   font-size: 12px;
   margin-top: 5px;
 }
@@ -850,8 +850,8 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  border: 1px solid light-dark(#e0e5eb33, #34424f33);
-  background: light-dark(#ffffff33, #19222c33);
+  border: 1px solid light-dark(#e0e5eb33, #2a2a2a33);
+  background: light-dark(#ffffff33, #11111133);
   color: light-dark(#316341, #afd989);
   border-radius: 5px;
   padding: 5px 7px;
@@ -866,33 +866,33 @@
 }
 .lora-status-pending {
   color: light-dark(#a13b31, #f0a498);
-  background: light-dark(#fff1ee22, #131b2422);
-  border-color: light-dark(#edc2bc44, #34424f44);
+  background: light-dark(#fff1ee22, #09090922);
+  border-color: light-dark(#edc2bc44, #2a2a2a44);
 }
 .lora-status-training {
   color: light-dark(#365bad, #aac8ff);
-  background: light-dark(#eff4ff22, #131b2422);
-  border-color: light-dark(#e0e5eb4d, #34424f4d);
+  background: light-dark(#eff4ff22, #09090922);
+  border-color: light-dark(#e0e5eb4d, #2a2a2a4d);
 }
 .lora-status-quality_check {
   color: light-dark(#7452a4, #d1b2ef);
-  background: light-dark(#f2edfa22, #222d3822);
-  border-color: light-dark(#e0e5eb3d, #34424f3d);
+  background: light-dark(#f2edfa22, #19191922);
+  border-color: light-dark(#e0e5eb3d, #2a2a2a3d);
 }
 .lora-status-completed {
   color: light-dark(#316341, #afd989);
-  background: light-dark(#f7f9fbcc, #131b24cc);
-  border-color: light-dark(#e0e5eb55, #34424f55);
+  background: light-dark(#f7f9fbcc, #090909cc);
+  border-color: light-dark(#e0e5eb55, #2a2a2a55);
 }
 .lora-status-rejected {
   color: light-dark(#a13b31, #f0a498);
-  background: light-dark(#fff1ee22, #131b2422);
-  border-color: light-dark(#edc2bc44, #34424f44);
+  background: light-dark(#fff1ee22, #09090922);
+  border-color: light-dark(#edc2bc44, #2a2a2a44);
 }
 .lora-status-draft {
-  color: light-dark(#475467, #b4c0cb);
-  background: light-dark(#ffffff33, #19222c33);
-  border-color: light-dark(#e0e5eb33, #34424f33);
+  color: light-dark(#475467, #b3b3b3);
+  background: light-dark(#ffffff33, #11111133);
+  border-color: light-dark(#e0e5eb33, #2a2a2a33);
 }
 .lora-admin-footer {
   display: flex;
@@ -900,7 +900,7 @@
   align-items: center;
   margin-top: 22px;
   font-size: 12px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
 }
 .lora-admin-footer > span {
   margin-left: auto;
@@ -913,15 +913,15 @@
   gap: 16px;
   align-items: center;
   padding: 80px 20px;
-  color: light-dark(#475467, #b4c0cb);
+  color: light-dark(#475467, #b3b3b3);
 }
 .lora-empty h2,
 .lora-empty h3 {
-  color: light-dark(#17212d, #e7edf3);
+  color: light-dark(#17212d, #f2f2f2);
 }
 .lora-empty p {
   font-size: 12px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
 }
 .lora-empty-small {
   padding: 30px;
@@ -930,7 +930,7 @@
 .lora-notice,
 .lora-error {
   padding: 15px;
-  border: 1px solid light-dark(#e0e5eb36, #34424f36);
+  border: 1px solid light-dark(#e0e5eb36, #2a2a2a36);
   border-radius: 8px;
   font-size: 12px;
   line-height: 1.7;
@@ -939,7 +939,7 @@
   gap: 14px;
   margin-bottom: 16px;
   color: light-dark(#316341, #afd989);
-  background: light-dark(#ffffff22, #19222c22);
+  background: light-dark(#ffffff22, #11111122);
 }
 .lora-notice button {
   color: light-dark(#316341, #afd989);
@@ -948,17 +948,17 @@
 }
 .lora-error {
   display: block;
-  background: light-dark(#fff1ee22, #131b2422);
+  background: light-dark(#fff1ee22, #09090922);
   color: light-dark(#a13b31, #f0a498);
-  border-color: light-dark(#edc2bc44, #34424f44);
+  border-color: light-dark(#edc2bc44, #2a2a2a44);
 }
 .lora-dialog {
   --lora-line: rgba(221, 241, 201, 0.11);
-  --lora-muted: light-dark(#939d8d, #95a5b5);
+  --lora-muted: light-dark(#939d8d, #909090);
   --lora-lime: #c7ee83;
-  background: light-dark(#f7f9fb, #131b24) !important;
-  border: 1px solid light-dark(#e0e5eb, #34424f) !important;
-  color: light-dark(#17212d, #e7edf3) !important;
+  background: light-dark(#f7f9fb, #090909) !important;
+  border: 1px solid light-dark(#e0e5eb, #2a2a2a) !important;
+  color: light-dark(#17212d, #f2f2f2) !important;
   border-radius: 16px !important;
   width: calc(100% - 28px) !important;
   max-width: 790px !important;
@@ -974,7 +974,7 @@
 }
 .lora-dialog [data-slot="dialog-description"] {
   font-size: 12px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
   line-height: 1.7;
 }
 .lora-dialog .lora-eyebrow {
@@ -992,7 +992,7 @@
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
   margin-top: -5px;
   overflow-wrap: anywhere;
 }
@@ -1021,7 +1021,7 @@
   height: 1px;
 }
 .lora-detail-text h3 {
-  color: light-dark(#475467, #b4c0cb);
+  color: light-dark(#475467, #b3b3b3);
   font-size: 12px;
   margin-bottom: 5px;
 }
@@ -1030,7 +1030,7 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   font-size: 12px;
-  color: light-dark(#475467, #b4c0cb);
+  color: light-dark(#475467, #b3b3b3);
   line-height: 1.8;
 }
 .lora-dialog .lora-rule {
@@ -1052,9 +1052,9 @@
 }
 .lora-delivery-form {
   padding: 22px;
-  border: 1px solid light-dark(#e0e5eb55, #34424f55);
+  border: 1px solid light-dark(#e0e5eb55, #2a2a2a55);
   border-radius: 12px;
-  background: light-dark(#eef2f509, #222d3809);
+  background: light-dark(#eef2f509, #19191909);
   margin-top: 10px;
 }
 .lora-delivery-form .lora-section-heading {
@@ -1062,11 +1062,11 @@
 }
 .lora-dialog .lora-field input[type="file"] {
   font-size: 12px;
-  color: light-dark(#475467, #b4c0cb);
+  color: light-dark(#475467, #b3b3b3);
 }
 .lora-field input[type="file"]::file-selector-button {
-  background: light-dark(#ffffff, #19222c);
-  color: light-dark(#17212d, #e7edf3);
+  background: light-dark(#ffffff, #111111);
+  color: light-dark(#17212d, #f2f2f2);
   border: 0;
   padding: 7px 9px;
   border-radius: 4px;
@@ -1092,20 +1092,20 @@
   margin-top: 8px;
 }
 .lora-danger {
-  background: light-dark(#fff1ee29, #131b2429);
+  background: light-dark(#fff1ee29, #09090929);
   color: light-dark(#a13b31, #f0a498);
-  border: 1px solid light-dark(#edc2bc66, #34424f66);
+  border: 1px solid light-dark(#edc2bc66, #2a2a2a66);
   padding: 10px 14px;
   border-radius: 7px;
   min-height: 38px;
 }
 .lora-danger:hover {
-  background: light-dark(#fff1ee3f, #131b243f);
+  background: light-dark(#fff1ee3f, #0909093f);
 }
 .lora-reject {
   width: 100%;
   padding: 15px;
-  border: 1px solid light-dark(#edc2bc44, #34424f44);
+  border: 1px solid light-dark(#edc2bc44, #2a2a2a44);
   border-radius: 9px;
 }
 .lora-timeline {
@@ -1124,7 +1124,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: light-dark(#eef2f5, #222d38);
+  background: light-dark(#eef2f5, #191919);
   flex-shrink: 0;
   margin-top: 5px;
 }
@@ -1134,13 +1134,13 @@
 }
 .lora-timeline p {
   font-size: 12px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
   line-height: 1.7;
   margin: 4px 0;
 }
 .lora-timeline small {
   font-size: 12px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
 }
 .lora-settings {
   max-width: 480px !important;
@@ -1148,7 +1148,7 @@
 .lora-muted {
   font-size: 12px;
   line-height: 1.8;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
   margin-bottom: 12px;
 }
 .lora-tags {
@@ -1161,7 +1161,7 @@
   padding: 6px 9px;
   border: 1px solid var(--lora-line);
   border-radius: 5px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
 }
 .lora-actions {
   display: flex;
@@ -1183,7 +1183,7 @@
   border: 1px solid light-dark(#aacd823b, #647e503b);
   padding: 17px;
   border-radius: 11px;
-  background: light-dark(#eef2f50c, #222d380c);
+  background: light-dark(#eef2f50c, #1919190c);
 }
 .lora-delivered > img {
   width: 124px;
@@ -1200,13 +1200,13 @@
 }
 .lora-delivered p {
   font-size: 12px;
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
   margin-bottom: 18px;
 }
 .lora-copy-block {
   padding: 14px;
-  background: light-dark(#f7f9fb, #131b24);
-  border: 1px solid light-dark(#e0e5eb33, #34424f33);
+  background: light-dark(#f7f9fb, #090909);
+  border: 1px solid light-dark(#e0e5eb33, #2a2a2a33);
   border-radius: 7px;
   font-size: 12px;
   line-height: 1.8;
@@ -1464,19 +1464,19 @@
 /* Light theme shares the app's surface and type hierarchy. */
 .lora-workspace,
 .lora-dialog {
-  --lora-line: light-dark(#e0e5eb, #34424f);
-  --lora-muted: light-dark(#667085, #b4c0cb);
+  --lora-line: light-dark(#e0e5eb, #2a2a2a);
+  --lora-muted: light-dark(#667085, #b3b3b3);
   --lora-lime: #426b34;
-  color: light-dark(#253141, #e7edf3);
+  color: light-dark(#253141, #f2f2f2);
 }
 .lora-panel {
-  background: light-dark(#fff, #19222c);
-  border-color: light-dark(#e0e5eb, #34424f);
+  background: light-dark(#fff, #111111);
+  border-color: light-dark(#e0e5eb, #2a2a2a);
   box-shadow: 0 2px 7px #17212d03;
   backdrop-filter: none;
 }
 .lora-heading h1 {
-  color: light-dark(#182531, #e7edf3);
+  color: light-dark(#182531, #f2f2f2);
   font-size: 34px;
   letter-spacing: -1.1px;
 }
@@ -1490,101 +1490,101 @@
 }
 .lora-section-heading h2 {
   font-size: 18px;
-  color: light-dark(#24313e, #e7edf3);
+  color: light-dark(#24313e, #f2f2f2);
 }
 .lora-section-heading p {
   font-size: 14px;
 }
 .lora-number {
-  background: light-dark(#f0f5e9, #222d38);
+  background: light-dark(#f0f5e9, #191919);
   color: light-dark(#57723d, #afd989);
-  border-color: light-dark(#dde7cf, #34424f);
+  border-color: light-dark(#dde7cf, #2a2a2a);
 }
 .lora-field {
   font-size: 14px;
 }
 .lora-field > span {
-  color: light-dark(#344054, #e7edf3);
+  color: light-dark(#344054, #f2f2f2);
   font-weight: 500;
 }
 .lora-field input:not([type="radio"]),
 .lora-field textarea {
-  background: light-dark(#fff, #19222c);
-  color: light-dark(#273442, #e7edf3);
-  border-color: light-dark(#d7dee5, #34424f);
+  background: light-dark(#fff, #111111);
+  color: light-dark(#273442, #f2f2f2);
+  border-color: light-dark(#d7dee5, #2a2a2a);
   font-size: 14px;
   padding: 12px;
 }
 .lora-field input::placeholder,
 .lora-field textarea::placeholder {
-  color: light-dark(#8a94a0, #95a5b5);
+  color: light-dark(#8a94a0, #909090);
 }
 .lora-type-options label {
   font-size: 13px;
-  color: light-dark(#667085, #b4c0cb);
-  background: light-dark(#fff, #19222c);
+  color: light-dark(#667085, #b3b3b3);
+  background: light-dark(#fff, #111111);
   padding: 9px 15px;
-  border-color: light-dark(#dfe5eb, #34424f);
+  border-color: light-dark(#dfe5eb, #2a2a2a);
 }
 .lora-type-options label.selected {
-  background: light-dark(#eff6e5, #222d38);
-  color: light-dark(#395f32, #e7edf3);
+  background: light-dark(#eff6e5, #191919);
+  color: light-dark(#395f32, #f2f2f2);
   border-color: light-dark(#abc78c, #647e50);
 }
 .lora-button,
 .lora-icon-button {
-  background: light-dark(#fff, #19222c);
-  color: light-dark(#425266, #b4c0cb);
-  border-color: light-dark(#dce3e9, #34424f);
+  background: light-dark(#fff, #111111);
+  color: light-dark(#425266, #b3b3b3);
+  border-color: light-dark(#dce3e9, #2a2a2a);
   font-size: 13px;
 }
 .lora-button:hover,
 .lora-icon-button:hover {
-  background: light-dark(#f3f6f8, #131b24);
-  color: light-dark(#263440, #e7edf3);
+  background: light-dark(#f3f6f8, #090909);
+  color: light-dark(#263440, #f2f2f2);
 }
 .lora-primary {
   font-size: 14px;
   min-height: 44px;
 }
 .lora-dropzone {
-  background: light-dark(#fafcf8, #131b24);
-  border: 1.5px dashed light-dark(#c0d1af, #34424f);
+  background: light-dark(#fafcf8, #090909);
+  border: 1.5px dashed light-dark(#c0d1af, #2a2a2a);
   padding: 35px 16px;
 }
 .lora-dropzone h3 {
   font-size: 16px;
-  color: light-dark(#3b4d36, #e7edf3);
+  color: light-dark(#3b4d36, #f2f2f2);
 }
 .lora-dropzone p {
   font-size: 14px;
-  color: light-dark(#798372, #b4c0cb);
+  color: light-dark(#798372, #b3b3b3);
 }
 .lora-dropzone p button {
   color: light-dark(#476b32, #afd989);
 }
 .lora-dropzone small {
-  color: light-dark(#788471, #b4c0cb);
+  color: light-dark(#788471, #b3b3b3);
 }
 .lora-upload-icon {
-  background: light-dark(#edf4e3, #222d38);
-  border-color: light-dark(#d8e5c5, #34424f);
+  background: light-dark(#edf4e3, #191919);
+  border-color: light-dark(#d8e5c5, #2a2a2a);
   color: light-dark(#6a8c48, #afd989);
 }
 .lora-journey-card {
-  background: linear-gradient(145deg, light-dark(#f2f7eb, #222d38), light-dark(#fff, #19222c) 70%);
-  border-color: light-dark(#dce6d1, #34424f);
+  background: linear-gradient(145deg, light-dark(#f2f7eb, #191919), light-dark(#fff, #111111) 70%);
+  border-color: light-dark(#dce6d1, #2a2a2a);
 }
 .lora-journey-card h2 {
-  color: light-dark(#294033, #e7edf3);
+  color: light-dark(#294033, #f2f2f2);
   font-size: 26px;
 }
 .lora-journey-card > p:not(.lora-eyebrow) {
-  color: light-dark(#687964, #b4c0cb);
+  color: light-dark(#687964, #b3b3b3);
   font-size: 14px;
 }
 .lora-journey-card h3 {
-  color: light-dark(#334a35, #e7edf3);
+  color: light-dark(#334a35, #f2f2f2);
   font-size: 14px;
 }
 .lora-orbit-art {
@@ -1595,27 +1595,27 @@
   background: none;
 }
 .lora-orbit-spark {
-  background: light-dark(#f6faef, #131b24);
-  border-color: light-dark(#b9d29c, #34424f);
+  background: light-dark(#f6faef, #090909);
+  border-color: light-dark(#b9d29c, #2a2a2a);
 }
 .lora-steps li {
-  color: light-dark(#63735c, #b4c0cb);
+  color: light-dark(#63735c, #b3b3b3);
   font-size: 13px;
 }
 .lora-steps li small {
-  color: light-dark(#7c8875, #b4c0cb);
+  color: light-dark(#7c8875, #b3b3b3);
   font-size: 12px;
 }
 .lora-steps li > span {
-  background: light-dark(#f6f9f2, #131b24);
-  border-color: light-dark(#cdddc0, #34424f);
-  color: light-dark(#637c4d, #b4c0cb);
+  background: light-dark(#f6f9f2, #090909);
+  border-color: light-dark(#cdddc0, #2a2a2a);
+  color: light-dark(#637c4d, #b3b3b3);
 }
 .lora-steps li.is-active {
-  color: light-dark(#355d30, #e7edf3);
+  color: light-dark(#355d30, #f2f2f2);
 }
 .lora-steps li.is-active > span {
-  color: light-dark(#355d30, #e7edf3);
+  color: light-dark(#355d30, #f2f2f2);
   background: light-dark(#ebf4dd, #243124);
   border-color: light-dark(#9abb78, #647e50);
 }
@@ -1623,65 +1623,65 @@
   background: light-dark(#dce6d1, #243124);
 }
 .lora-aside-note {
-  color: light-dark(#6c7d60, #b4c0cb);
-  background: light-dark(#f1f6e9, #222d38);
+  color: light-dark(#6c7d60, #b3b3b3);
+  background: light-dark(#f1f6e9, #191919);
 }
 .lora-private-card h3 {
-  color: light-dark(#4e6642, #b4c0cb);
+  color: light-dark(#4e6642, #b3b3b3);
 }
 .lora-private-card p {
-  color: light-dark(#788571, #b4c0cb);
+  color: light-dark(#788571, #b3b3b3);
 }
 .lora-stats > div {
-  background: light-dark(#fff, #19222c);
-  border-color: light-dark(#e0e5eb, #34424f);
+  background: light-dark(#fff, #111111);
+  border-color: light-dark(#e0e5eb, #2a2a2a);
 }
 .lora-stats strong {
-  color: light-dark(#24313e, #e7edf3);
+  color: light-dark(#24313e, #f2f2f2);
 }
 .lora-stats span {
-  color: light-dark(#667085, #b4c0cb);
+  color: light-dark(#667085, #b3b3b3);
   font-size: 13px;
 }
 .lora-stats svg {
   color: light-dark(#789957, #afd989);
 }
 .lora-model-card {
-  background: light-dark(#fff, #19222c);
+  background: light-dark(#fff, #111111);
 }
 .lora-trigger {
   color: light-dark(#486c35, #afd989);
-  background: light-dark(#f5f9ef, #131b24);
-  border-color: light-dark(#dde7cf, #34424f);
+  background: light-dark(#f5f9ef, #090909);
+  border-color: light-dark(#dde7cf, #2a2a2a);
 }
 .lora-model-body h3 {
-  color: light-dark(#253141, #e7edf3);
+  color: light-dark(#253141, #f2f2f2);
 }
 .lora-toolbar .lora-filter,
 .lora-search {
-  background: light-dark(#fff, #19222c);
-  border-color: light-dark(#dce3e9, #34424f);
-  color: light-dark(#697586, #b4c0cb);
+  background: light-dark(#fff, #111111);
+  border-color: light-dark(#dce3e9, #2a2a2a);
+  color: light-dark(#697586, #b3b3b3);
 }
 .lora-search input {
-  color: light-dark(#344054, #e7edf3);
+  color: light-dark(#344054, #f2f2f2);
   font-size: 14px;
 }
 .lora-table {
   font-size: 13px;
 }
 .lora-table th {
-  color: light-dark(#6e7a89, #b4c0cb);
-  background: light-dark(#f7f9fb, #131b24);
+  color: light-dark(#6e7a89, #b3b3b3);
+  background: light-dark(#f7f9fb, #090909);
   font-size: 12px;
   text-transform: none;
   letter-spacing: 0;
 }
 .lora-table td {
-  color: light-dark(#596678, #b4c0cb);
+  color: light-dark(#596678, #b3b3b3);
 }
 .lora-table strong {
-  color: light-dark(#283747, #e7edf3);
+  color: light-dark(#283747, #f2f2f2);
 }
 .lora-table-action {
   font-size: 13px;
@@ -1694,81 +1694,81 @@
 .lora-status-pending {
   background: light-dark(#fff8e6, #332d20);
   color: light-dark(#896524, #e1c181);
-  border-color: light-dark(#eddfb8, #34424f);
+  border-color: light-dark(#eddfb8, #2a2a2a);
 }
 .lora-status-approved,
 .lora-status-completed {
-  background: light-dark(#eff7e7, #222d38);
+  background: light-dark(#eff7e7, #191919);
   color: light-dark(#486d31, #afd989);
-  border-color: light-dark(#d7e7c4, #34424f);
+  border-color: light-dark(#d7e7c4, #2a2a2a);
 }
 .lora-status-training {
-  background: light-dark(#eff4ff, #131b24);
+  background: light-dark(#eff4ff, #090909);
   color: light-dark(#4b67a4, #aac8ff);
-  border-color: light-dark(#d6e1fa, #34424f);
+  border-color: light-dark(#d6e1fa, #2a2a2a);
 }
 .lora-status-quality_check {
-  background: light-dark(#f4effc, #131b24);
+  background: light-dark(#f4effc, #090909);
   color: light-dark(#76549c, #d1b2ef);
-  border-color: light-dark(#e1d5f2, #34424f);
+  border-color: light-dark(#e1d5f2, #2a2a2a);
 }
 .lora-status-rejected,
 .lora-danger,
 .lora-error {
-  background: light-dark(#fff2ee, #131b24);
+  background: light-dark(#fff2ee, #090909);
   color: light-dark(#a24938, #f0a498);
-  border-color: light-dark(#edcfc5, #34424f);
+  border-color: light-dark(#edcfc5, #2a2a2a);
 }
 .lora-status-draft {
-  background: light-dark(#f3f5f7, #131b24);
-  color: light-dark(#687384, #b4c0cb);
-  border-color: light-dark(#e0e5eb, #34424f);
+  background: light-dark(#f3f5f7, #090909);
+  color: light-dark(#687384, #b3b3b3);
+  border-color: light-dark(#e0e5eb, #2a2a2a);
 }
 .lora-dialog {
-  background: light-dark(#fff, #19222c) !important;
-  color: light-dark(#253141, #e7edf3) !important;
-  border-color: light-dark(#dce3e9, #34424f) !important;
+  background: light-dark(#fff, #111111) !important;
+  color: light-dark(#253141, #f2f2f2) !important;
+  border-color: light-dark(#dce3e9, #2a2a2a) !important;
 }
 .lora-dialog [data-slot="dialog-description"] {
-  color: light-dark(#697586, #b4c0cb);
+  color: light-dark(#697586, #b3b3b3);
   font-size: 14px;
 }
 .lora-detail-text p,
 .lora-preserve {
-  color: light-dark(#536273, #b4c0cb);
+  color: light-dark(#536273, #b3b3b3);
   font-size: 14px;
 }
 .lora-copy-block {
-  color: light-dark(#426039, #b4c0cb);
-  background: light-dark(#f5f8f0, #131b24);
-  border-color: light-dark(#dfe7d4, #34424f);
+  color: light-dark(#426039, #b3b3b3);
+  background: light-dark(#f5f8f0, #090909);
+  border-color: light-dark(#dfe7d4, #2a2a2a);
 }
 .lora-delivered,
 .lora-delivery-form {
-  background: light-dark(#fafcf8, #131b24);
-  border-color: light-dark(#dbe6d0, #34424f);
+  background: light-dark(#fafcf8, #090909);
+  border-color: light-dark(#dbe6d0, #2a2a2a);
 }
 .lora-notice {
-  color: light-dark(#5d7051, #b4c0cb);
-  background: light-dark(#f4f8ee, #222d38);
-  border-color: light-dark(#dce6d1, #34424f);
+  color: light-dark(#5d7051, #b3b3b3);
+  background: light-dark(#f4f8ee, #191919);
+  border-color: light-dark(#dce6d1, #2a2a2a);
 }
 .lora-count.ready {
   color: light-dark(#486c35, #afd989);
 }
 .lora-submit-bar p,
 .lora-dataset-hints {
-  color: light-dark(#6d7b63, #b4c0cb);
+  color: light-dark(#6d7b63, #b3b3b3);
   font-size: 12px;
 }
 .lora-tip {
-  background: light-dark(#f5f8f0, #131b24);
-  color: light-dark(#718064, #b4c0cb);
-  border-color: light-dark(#e7eddd, #34424f);
+  background: light-dark(#f5f8f0, #090909);
+  color: light-dark(#718064, #b3b3b3);
+  border-color: light-dark(#e7eddd, #2a2a2a);
   font-size: 13px;
 }
 .lora-tip strong {
-  color: light-dark(#516d3f, #b4c0cb);
+  color: light-dark(#516d3f, #b3b3b3);
 }
 @media (max-width: 540px) {
   .lora-heading h1 {

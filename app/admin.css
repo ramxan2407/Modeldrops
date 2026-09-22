@@ -17,7 +17,7 @@
 }
 .admin-heading p,
 .admin-muted {
-  color: light-dark(#657080, #b4c0cb);
+  color: light-dark(#657080, #b3b3b3);
   font-size: 14px;
   line-height: 1.7;
 }
@@ -27,7 +27,7 @@
   gap: 8px;
   font-size: 12px;
   letter-spacing: 1.7px;
-  color: light-dark(#496638, #b4c0cb);
+  color: light-dark(#496638, #b3b3b3);
   font-weight: 650;
 }
 .admin-notice {
@@ -35,9 +35,9 @@
   gap: 12px;
   align-items: center;
   padding: 16px 20px;
-  border: 1px solid light-dark(#e3d9b9, #34424f);
+  border: 1px solid light-dark(#e3d9b9, #2a2a2a);
   border-radius: 12px;
-  background: light-dark(#fffbee, #131b24);
+  background: light-dark(#fffbee, #090909);
   color: light-dark(#6c5929, #e1c181);
   font-size: 14px;
   margin-bottom: 24px;
@@ -60,7 +60,7 @@
   justify-content: flex-start;
   flex-wrap: wrap;
   gap: 5px;
-  background: light-dark(#e9edf1, #222d38);
+  background: light-dark(#e9edf1, #191919);
   padding: 5px;
   margin-bottom: 24px;
 }
@@ -71,8 +71,8 @@
   height: auto;
 }
 .admin-tabs [data-state="active"] {
-  background: light-dark(#ffffff, #19222c);
-  color: light-dark(#285337, #e7edf3);
+  background: light-dark(#ffffff, #111111);
+  color: light-dark(#285337, #f2f2f2);
   box-shadow: 0 1px 4px #17212d15;
 }
 .admin-search {
@@ -94,8 +94,8 @@
 .admin-metrics > div {
   display: flex;
   flex-direction: column;
-  background: light-dark(#ffffff, #19222c);
-  border: 1px solid light-dark(#dfe5eb, #34424f);
+  background: light-dark(#ffffff, #111111);
+  border: 1px solid light-dark(#dfe5eb, #2a2a2a);
   border-radius: 12px;
   padding: 24px;
   gap: 14px;
@@ -105,7 +105,7 @@
 }
 .admin-metrics span {
   font-size: 14px;
-  color: light-dark(#5b6572, #b4c0cb);
+  color: light-dark(#5b6572, #b3b3b3);
 }
 .admin-metrics strong {
   font-size: 32px;
@@ -120,9 +120,9 @@
 .admin-overview-grid article,
 .admin-integrations article {
   padding: 24px;
-  border: 1px solid light-dark(#dfe5eb, #34424f);
+  border: 1px solid light-dark(#dfe5eb, #2a2a2a);
   border-radius: 12px;
-  background: light-dark(#ffffff, #19222c);
+  background: light-dark(#ffffff, #111111);
 }
 .super-admin h2 {
   font-size: 19px;
@@ -139,7 +139,7 @@
   gap: 14px;
   width: 100%;
   padding: 16px 0;
-  border-bottom: 1px solid light-dark(#edf0f3, #34424f);
+  border-bottom: 1px solid light-dark(#edf0f3, #2a2a2a);
   text-align: left;
 }
 .admin-overview-grid button span {
@@ -150,9 +150,9 @@
 }
 .admin-table {
   overflow: auto;
-  border: 1px solid light-dark(#dfe5eb, #34424f);
+  border: 1px solid light-dark(#dfe5eb, #2a2a2a);
   border-radius: 10px;
-  background: light-dark(#fff, #19222c);
+  background: light-dark(#fff, #111111);
   margin: 18px 0 26px;
 }
 .admin-table table {
@@ -163,18 +163,18 @@
   min-width: 660px;
 }
 .admin-table th {
-  background: light-dark(#f9fafb, #131b24);
+  background: light-dark(#f9fafb, #090909);
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
-  color: light-dark(#687386, #b4c0cb);
+  color: light-dark(#687386, #b3b3b3);
   padding: 14px 18px;
   white-space: nowrap;
 }
 .admin-table td {
   padding: 17px 18px;
-  border-top: 1px solid light-dark(#edf0f3, #34424f);
+  border-top: 1px solid light-dark(#edf0f3, #2a2a2a);
   vertical-align: middle;
 }
 .admin-table td:first-child {
@@ -185,12 +185,12 @@
 .admin-edit small {
   display: block;
   font-size: 12px;
-  color: light-dark(#687386, #b4c0cb);
+  color: light-dark(#687386, #b3b3b3);
   margin-top: 5px;
 }
 .admin-table code {
   font-size: 12px;
-  color: light-dark(#687386, #b4c0cb);
+  color: light-dark(#687386, #b3b3b3);
   overflow-wrap: anywhere;
 }
 .admin-table pre {
@@ -210,9 +210,9 @@
 }
 .admin-badge {
   display: inline-flex;
-  background: light-dark(#edf4e6, #222d38);
+  background: light-dark(#edf4e6, #191919);
   color: light-dark(#42672b, #afd989);
-  border: 1px solid light-dark(#dde8d2, #34424f);
+  border: 1px solid light-dark(#dde8d2, #2a2a2a);
   border-radius: 5px;
   font-size: 12px;
   padding: 4px 8px;
@@ -236,9 +236,9 @@
   display: flex;
   align-items: center;
   gap: 24px;
-  border: 1px solid light-dark(#dfe5eb, #34424f);
+  border: 1px solid light-dark(#dfe5eb, #2a2a2a);
   border-radius: 10px;
-  background: light-dark(#ffffff, #19222c);
+  background: light-dark(#ffffff, #111111);
   padding: 20px;
   margin: 12px 0;
 }
@@ -261,7 +261,7 @@
 }
 .admin-integrations p {
   font-size: 14px;
-  color: light-dark(#657080, #b4c0cb);
+  color: light-dark(#657080, #b3b3b3);
   line-height: 1.7;
 }
 .admin-pagination {
@@ -274,18 +274,18 @@
 .admin-empty {
   padding: 45px 25px;
   text-align: center;
-  color: light-dark(#697588, #b4c0cb);
-  border: 1px dashed light-dark(#d5dde5, #34424f);
+  color: light-dark(#697588, #b3b3b3);
+  border: 1px dashed light-dark(#d5dde5, #2a2a2a);
   border-radius: 12px;
-  background: light-dark(#ffffff, #19222c);
+  background: light-dark(#ffffff, #111111);
   font-size: 14px;
   margin: 18px 0;
 }
 .admin-error {
   padding: 20px;
-  border: 1px solid light-dark(#edc9c5, #34424f);
+  border: 1px solid light-dark(#edc9c5, #2a2a2a);
   border-radius: 10px;
-  background: light-dark(#fff4f2, #131b24);
+  background: light-dark(#fff4f2, #090909);
   color: light-dark(#963c32, #f0a498);
   display: flex;
   align-items: center;
@@ -295,8 +295,8 @@
   max-width: 520px !important;
   max-height: 90svh;
   overflow-y: auto;
-  background: light-dark(#ffffff, #19222c) !important;
-  color: light-dark(#17212d, #e7edf3) !important;
+  background: light-dark(#ffffff, #111111) !important;
+  color: light-dark(#17212d, #f2f2f2) !important;
 }
 .admin-edit form {
   display: grid;
@@ -311,11 +311,11 @@
 .admin-edit input:not([type="checkbox"]),
 .admin-edit textarea,
 .admin-edit select {
-  border: 1px solid light-dark(#d4dce4, #34424f);
-  background: light-dark(#ffffff, #19222c);
+  border: 1px solid light-dark(#d4dce4, #2a2a2a);
+  background: light-dark(#ffffff, #111111);
   border-radius: 6px;
   padding: 10px;
-  color: light-dark(#17212d, #e7edf3);
+  color: light-dark(#17212d, #f2f2f2);
   width: 100%;
 }
 .admin-edit .admin-checkbox {
@@ -330,7 +330,7 @@
 }
 .admin-edit-record {
   padding: 14px;
-  background: light-dark(#f5f7f9, #131b24);
+  background: light-dark(#f5f7f9, #090909);
   border-radius: 8px;
 }
 .admin-edit-actions {
