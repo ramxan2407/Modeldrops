@@ -282,7 +282,7 @@ export class AdminService {
               .bind(
                 crypto.randomUUID(),
                 d.id,
-                `Your demo credits were adjusted by ${d.amount > 0 ? "+" : ""}${d.amount}. ${d.reason}`,
+                `Your credits were adjusted by ${d.amount > 0 ? "+" : ""}${d.amount}. ${d.reason}`,
               ),
           ]);
         } catch (e) {

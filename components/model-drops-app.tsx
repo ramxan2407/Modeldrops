@@ -135,6 +135,8 @@ type Generation = {
   createdAt: string;
   settings: string;
   projectId?: string;
+  live?: boolean;
+  error?: string;
 };
 type Project = {
   id: string;
@@ -573,13 +575,34 @@ export default function ModelDropsApp({
   const changeMode = (v: string) => {
     setMode(v);
     if (v === "video" && !["16:9", "9:16"].includes(ratio)) setRatio("16:9");
-    setModelId(v === "video" ? "forma-cinema" : "forma-image");
-    setResolution(v === "video" ? "720" : "1024");
+    const next = registry.find((m) => m.type === v && m.enabled);
+    if (next) {
+      setModelId(next.id);
+      setResolution(next.resolutions[0]);
+    }
   };
   const selectedUnavailable =
     !!selected && catalog.some((c) => c.id === selected && c.enabled === false);
   const model =
     registry.find((m) => m.id === modelId) || registry[0] || defaultModels[0];
+  const liveModel = model.provider === "Higgsfield";
+  useEffect(() => {
+    const next =
+      registry.find((m) => m.id === modelId && m.type === mode && m.enabled) ||
+      registry.find((m) => m.type === mode && m.enabled);
+    if (!next) return;
+    if (next.id !== modelId) setModelId(next.id);
+    if (!next.ratios.includes(ratio)) setRatio(next.ratios[0]);
+    if (!next.resolutions.includes(resolution))
+      setResolution(next.resolutions[0]);
+    if (next.provider === "Higgsfield") {
+      setOutputs("1");
+      setNegative("");
+      setReference(null);
+      setSelected("");
+      if (next.type === "video") setSeed("");
+    }
+  }, [registry, modelId, mode, ratio, resolution]);
   const cost =
     model.credits *
     Number(outputs) *
@@ -619,7 +642,7 @@ export default function ModelDropsApp({
       });
       idempotency.current = null;
       await refresh();
-      toast.success("Demo generation queued. You can leave this page.");
+      toast.success("Generation queued. You can leave this page.");
     });
   const purchase = (c: Character) =>
     action(async () => {
@@ -1280,7 +1303,11 @@ export default function ModelDropsApp({
                   <p className="eyebrow">CREATE CONTENT</p>
                   <h1>Create an image or video.</h1>
                 </div>
-                <span className="demo-pill">Demo generation</span>
+                <span className="demo-pill">
+                  {liveModel
+                    ? "Live generation · Higgsfield"
+                    : "Demo generation"}
+                </span>
               </div>
               <Tabs
                 value={mode}
@@ -1306,6 +1333,7 @@ export default function ModelDropsApp({
                       </button>
                     </label>
                     <Select
+                      disabled={liveModel}
                       value={selected || "none"}
                       onValueChange={(v) => setSelected(v === "none" ? "" : v)}
                     >
@@ -1326,6 +1354,12 @@ export default function ModelDropsApp({
                         ))}
                       </SelectContent>
                     </Select>
+                    {liveModel && (
+                      <small className="field-note">
+                        Prompt-based generation. Character references and custom
+                        LoRAs are not supported by these models.
+                      </small>
+                    )}
                     {selected && (
                       <div className="selected-character">
                         <img
@@ -1384,7 +1418,10 @@ export default function ModelDropsApp({
                       </SelectContent>
                     </Select>
                     <small className="field-note">
-                      <Zap size={12} /> Simulated provider · No AI API charge
+                      <Zap size={12} />{" "}
+                      {liveModel
+                        ? `${model.description} · ${model.time}`
+                        : "Simulated provider · No AI API charge"}
                     </small>
                   </div>
                   <div className="control-group">
@@ -1442,8 +1479,9 @@ export default function ModelDropsApp({
                         <SelectContent>
                           {model.resolutions.map((r) => (
                             <SelectItem key={r} value={r}>
-                              {r}
-                              {mode === "video" ? "p" : " px"}
+                              {liveModel && mode === "video"
+                                ? "Standard (provider default)"
+                                : `${r}${liveModel || mode === "video" ? "p" : " px"}`}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1455,7 +1493,7 @@ export default function ModelDropsApp({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {["1", "2", "4"].map((v) => (
+                          {(liveModel ? ["1"] : ["1", "2", "4"]).map((v) => (
                             <SelectItem key={v} value={v}>
                               {v}
                             </SelectItem>
@@ -1481,22 +1519,28 @@ export default function ModelDropsApp({
                           type="number"
                           value={seed}
                           onChange={(e) => setSeed(e.target.value)}
-                          placeholder="Random"
+                          placeholder={
+                            liveModel ? "Random (1–1,000,000)" : "Random"
+                          }
+                          min={liveModel ? 1 : 0}
+                          max={liveModel ? 1000000 : 4294967295}
                         />
                       </Field>
                     )}
                   </div>
-                  <button
-                    className="advanced-toggle"
-                    onClick={() => setAdvanced(!advanced)}
-                  >
-                    <SlidersHorizontal size={14} /> Advanced controls{" "}
-                    <ChevronDown
-                      className={advanced ? "rotated" : ""}
-                      size={14}
-                    />
-                  </button>
-                  {advanced && (
+                  {!liveModel && (
+                    <button
+                      className="advanced-toggle"
+                      onClick={() => setAdvanced(!advanced)}
+                    >
+                      <SlidersHorizontal size={14} /> Advanced controls{" "}
+                      <ChevronDown
+                        className={advanced ? "rotated" : ""}
+                        size={14}
+                      />
+                    </button>
+                  )}
+                  {advanced && !liveModel && (
                     <div className="advanced-panel">
                       <Field label="Negative prompt">
                         <Textarea
@@ -1521,7 +1565,12 @@ export default function ModelDropsApp({
                                   throw new Error(
                                     "Use an image smaller than 8 MB",
                                   );
-                                const d = await uploadFile("/api/upload", file, undefined, true);
+                                const d = await uploadFile(
+                                  "/api/upload",
+                                  file,
+                                  undefined,
+                                  true,
+                                );
                                 setReference(d.id);
                                 toast.success("Private reference uploaded");
                               });
@@ -1582,13 +1631,14 @@ export default function ModelDropsApp({
                             ? "Choose an available generation model."
                             : !prompt.trim()
                               ? "Write a prompt above to enable generation."
-                              : "You need more demo credits or fewer outputs to continue."}
+                              : "You need more credits to continue. Contact your administrator during the beta."}
                     </p>
                   )}
                   <p className="privacy-note">
-                    <Lock size={11} /> Private by default. This is a simulated
-                    generation. Results are sample images; video mode returns a
-                    storyboard preview.
+                    <Lock size={11} />{" "}
+                    {liveModel
+                      ? "Outputs stay private. Your prompt is sent to Higgsfield. Credits are reserved when submitted and returned if the provider rejects or fails the job. Submitted jobs cannot be cancelled here."
+                      : "Private by default. Demo results are sample images; video mode returns a storyboard preview."}
                   </p>
                 </div>
                 <div className="studio-canvas">
@@ -1836,10 +1886,7 @@ export default function ModelDropsApp({
                   value.
                 </p>
               </div>
-              {heading(
-                "Credit activity",
-                "An immutable record of your demo balance.",
-              )}
+              {heading("Credit activity", "Your credit usage and adjustments.")}
               <div className="table-wrap">
                 <table>
                   <thead>
@@ -2366,9 +2413,11 @@ export default function ModelDropsApp({
               </p>
               <h3>Preview limitations</h3>
               <p>
-                AI output is simulated using sample artwork. Credit transactions
-                use demo credits. No payments, commercial licenses, or payouts
-                are processed.
+                {liveModel
+                  ? "Higgsfield creates real outputs from your prompts. Beta credits are managed by the administrator. "
+                  : "Demo models return sample artwork. "}
+                Payments, character commercial licenses, and creator payouts are
+                not processed.
               </p>
             </div>
           )}
@@ -2417,19 +2466,36 @@ export default function ModelDropsApp({
           {asset && (
             <>
               <DialogTitle>
-                Your {asset.type === "video" ? "video storyboard" : "creation"}
+                Your{" "}
+                {asset.type === "video"
+                  ? asset.live
+                    ? "video"
+                    : "video storyboard"
+                  : "creation"}
               </DialogTitle>
               <DialogDescription>
-                Simulated output · Private to you
+                {asset.live ? "Generated with Higgsfield" : "Simulated output"}{" "}
+                · Private to you
               </DialogDescription>
-              {asset.image && (
-                <img
+              {asset.image && asset.live && asset.type === "video" ? (
+                <video
                   className="asset-preview"
                   src={asset.image}
-                  alt={asset.prompt}
+                  controls
+                  playsInline
+                  preload="metadata"
                 />
+              ) : (
+                asset.image && (
+                  <img
+                    className="asset-preview"
+                    src={asset.image}
+                    alt={asset.prompt}
+                  />
+                )
               )}
               <p>{asset.prompt}</p>
+              {asset.error && <p role="status">{asset.error}</p>}
               <div className="tag-row">
                 <span>{asset.status}</span>
                 <span>{asset.cost} credits</span>
@@ -2445,7 +2511,8 @@ export default function ModelDropsApp({
                 {asset.image && (
                   <Button asChild variant="secondary">
                     <a href={`/api/media?id=${asset.id}&download=1`} download>
-                      <Download size={15} /> Download sample
+                      <Download size={15} />{" "}
+                      {asset.live ? "Download" : "Download sample"}
                     </a>
                   </Button>
                 )}
@@ -2583,7 +2650,17 @@ function GenerationCard({
     <article className="generation-card">
       <button className="generation-preview" onClick={onClick}>
         {g.image ? (
-          <img src={g.image} alt={g.prompt} />
+          g.live && g.type === "video" ? (
+            <video
+              src={g.image}
+              muted
+              playsInline
+              preload="metadata"
+              aria-label={g.prompt}
+            />
+          ) : (
+            <img src={g.image} alt={g.prompt} />
+          )
         ) : (
           <div className="generation-placeholder">
             {["queued", "processing"].includes(g.status) ? (
@@ -2596,7 +2673,7 @@ function GenerationCard({
         )}
         <span className="generation-type">
           {g.type === "video" ? <Video size={12} /> : <ImageIcon size={12} />}{" "}
-          DEMO
+          {g.live ? "HIGGSFIELD" : "DEMO"}
         </span>
       </button>
       <div>
@@ -2607,7 +2684,8 @@ function GenerationCard({
             ? " returned"
             : ""}
         </span>
-        {["queued", "processing"].includes(g.status) && (
+        {g.error && <small role="status">{g.error}</small>}
+        {!g.live && ["queued", "processing"].includes(g.status) && (
           <button onClick={onCancel}>Cancel</button>
         )}
       </div>

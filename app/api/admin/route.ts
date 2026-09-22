@@ -7,6 +7,7 @@ import {
 import { LoraError } from "@/lib/lora/types";
 import { boundedBytes } from "@/lib/lora/http";
 import { supabaseConfig } from "@/lib/supabase/config";
+import { higgsfieldEnabled } from "@/lib/higgsfield/models";
 export const dynamic = "force-dynamic";
 function failure(e: unknown) {
   if (e instanceof AdminError || e instanceof LoraError)
@@ -34,6 +35,11 @@ export async function GET(request: Request) {
         ...data,
         ...(section === "integrations"
           ? {
+              generationJobs: (
+                await env.DB.prepare(
+                  "SELECT g.id,g.user_id,g.model_id,g.status,g.error,p.request_id,p.state,p.updated_at FROM provider_requests p JOIN generations g ON g.id=p.generation_id ORDER BY p.updated_at DESC LIMIT 20",
+                ).all()
+              ).results,
               integrations: [
                 {
                   name: "Email sign-in",
@@ -57,9 +63,12 @@ export async function GET(request: Request) {
                 },
                 {
                   name: "Image and video generation",
-                  status: "Demo only",
-                  detail:
-                    "The current generation worker returns sample images. Higgsfield/OpenRouter are not connected to this worker.",
+                  status: higgsfieldEnabled(env)
+                    ? "Higgsfield enabled"
+                    : "Demo only",
+                  detail: higgsfieldEnabled(env)
+                    ? "Soul 2 images and Kling 3.0 videos. Prompts only; server-side credentials. Check the provider console for usage and request outcomes."
+                    : "Set Higgsfield credentials and enable live generation to replace sample outputs.",
                 },
                 {
                   name: "Private storage",

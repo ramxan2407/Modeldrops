@@ -13,12 +13,23 @@ export async function GET(request: Request) {
     if (!row?.asset_key) throw new ApiError(404, "Asset not found");
     const object = await BUCKET.get(row.asset_key);
     if (!object) throw new ApiError(404, "Asset unavailable");
+    const mime = object.httpMetadata?.contentType || "image/png";
+    const extension =
+      (
+        {
+          "image/png": "png",
+          "image/jpeg": "jpg",
+          "image/webp": "webp",
+          "video/mp4": "mp4",
+          "video/webm": "webm",
+        } as Record<string, string>
+      )[mime] || "bin";
     return new Response(object.body, {
       headers: {
-        "Content-Type": object.httpMetadata?.contentType || "image/png",
+        "Content-Type": mime,
         "Cache-Control": "private, no-store",
         "X-Content-Type-Options": "nosniff",
-        "Content-Disposition": `${url.searchParams.has("download") ? "attachment" : "inline"}; filename="model-drops-demo-${id}.png"`,
+        "Content-Disposition": `${url.searchParams.has("download") ? "attachment" : "inline"}; filename="model-drops-${id}.${extension}"`,
       },
     });
   } catch (e) {

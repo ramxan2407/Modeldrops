@@ -1,6 +1,11 @@
 import { env } from "cloudflare:workers";
 import { getAppUser } from "@/lib/app-auth";
 import { roleFor, sameOrigin } from "./admin/policy";
+import {
+  higgsfieldModels,
+  higgsfieldEnabled,
+  type HiggsfieldEnvironment,
+} from "./higgsfield/models";
 import { models, packages } from "@/lib/catalog";
 export class ApiError extends Error {
   constructor(
@@ -12,13 +17,15 @@ export class ApiError extends Error {
 }
 export const uid = () => crypto.randomUUID();
 export function bindings() {
-  const e = env as unknown as {
+  const e = env as unknown as HiggsfieldEnvironment & {
     DB: D1Database;
     DEMO_ASSET?: () => Promise<ArrayBuffer>;
     BUCKET: R2Bucket;
     ADMIN_USER_IDS?: string;
     SUPER_ADMIN_USER_IDS?: string;
     JOB_RUNNER_SECRET?: string;
+    CRON_SECRET?: string;
+    WELCOME_CREDITS?: string;
     RESEND_API_KEY?: string;
     LORA_EMAIL_FROM?: string;
     LORA_ADMIN_EMAILS?: string;
@@ -43,14 +50,29 @@ export async function auth() {
   return user;
 }
 export async function initialize(user: Awaited<ReturnType<typeof auth>>) {
-  const { DB } = bindings();
+  const { DB, WELCOME_CREDITS } = bindings();
+  const welcomeCredits = Number(
+    WELCOME_CREDITS ?? (higgsfieldEnabled(bindings()) ? "0" : "1840"),
+  );
+  if (
+    !Number.isSafeInteger(welcomeCredits) ||
+    welcomeCredits < 0 ||
+    welcomeCredits > 10000
+  )
+    throw new ApiError(
+      503,
+      "Account credit configuration requires administrator review.",
+    );
   const statements = [
     DB.prepare("INSERT OR IGNORE INTO users(id,name,email) VALUES(?,?,?)").bind(
       user.userId,
       user.fullName || "Creator",
       user.email,
     ),
-    ...models.map((m) =>
+    ...[
+      ...models,
+      ...(higgsfieldEnabled(bindings()) ? higgsfieldModels : []),
+    ].map((m) =>
       DB.prepare(
         "INSERT OR IGNORE INTO ai_models(id,name,provider,type,credits,enabled,config) VALUES(?,?,?,?,?,?,?)",
       ).bind(m.id, m.name, m.provider, m.type, m.credits, 1, JSON.stringify(m)),
@@ -61,8 +83,17 @@ export async function initialize(user: Awaited<ReturnType<typeof auth>>) {
       ).bind(p.id, p.name, p.price, p.credits),
     ),
     DB.prepare(
-      "INSERT OR IGNORE INTO credit_transactions(id,user_id,amount,type,description,balance_before,balance_after,idempotency_key) VALUES(?,?,1840,'promotion','Welcome to Model Drops · demo credits',0,1840,?)",
-    ).bind(uid(), user.userId, `welcome:${user.userId}`),
+      "INSERT OR IGNORE INTO credit_transactions(id,user_id,amount,type,description,balance_before,balance_after,idempotency_key) VALUES(?,?,?,'promotion',?,0,?,?)",
+    ).bind(
+      uid(),
+      user.userId,
+      welcomeCredits,
+      higgsfieldEnabled(bindings())
+        ? "Welcome to Model Drops"
+        : "Welcome to Model Drops · demo credits",
+      welcomeCredits,
+      `welcome:${user.userId}`,
+    ),
   ];
   await DB.batch(statements);
 }

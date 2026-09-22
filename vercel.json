@@ -3,6 +3,18 @@
   "framework": "nextjs",
   "buildCommand": "npm run build:vercel",
   "installCommand": "npm ci",
-  "regions": ["syd1"],
-  "functions": { "app/api/**/route.ts": { "maxDuration": 60 } }
+  "regions": [
+    "syd1"
+  ],
+  "functions": {
+    "app/api/**/route.ts": {
+      "maxDuration": 60
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/jobs",
+      "schedule": "* * * * *"
+    }
+  ]
 }

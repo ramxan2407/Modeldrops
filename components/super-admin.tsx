@@ -616,6 +616,32 @@ export default function SuperAdmin({
                     )
                   : empty("No administrative changes match this filter."))}
               {section === "integrations" && (
+                <section>
+                  <h2>Recent Higgsfield jobs</h2>
+                  {(data.generationJobs || []).length
+                    ? table(
+                        [
+                          "Job / account",
+                          "Provider request",
+                          "Status",
+                          "Details",
+                        ],
+                        data.generationJobs.map((job: any) => (
+                          <tr key={job.id}>
+                            <td>
+                              {job.id}
+                              <small>{job.user_id}</small>
+                            </td>
+                            <td>{job.request_id || "Not confirmed"}</td>
+                            <td>{job.state}</td>
+                            <td>{job.error || job.status}</td>
+                          </tr>
+                        )),
+                      )
+                    : empty("No Higgsfield jobs yet.")}
+                </section>
+              )}
+              {section === "integrations" && (
                 <div className="admin-integrations">
                   {data.integrations.map((i: any) => (
                     <article key={i.name}>
@@ -679,7 +705,7 @@ export default function SuperAdmin({
               {edit.action === "credits" && (
                 <>
                   <p>
-                    Current demo balance:{" "}
+                    Current credit balance:{" "}
                     <strong>{fmt(edit.record.balance)}</strong>
                   </p>
                   <label>

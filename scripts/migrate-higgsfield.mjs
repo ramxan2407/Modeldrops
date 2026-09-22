@@ -1,11 +1,7 @@
 import { supabaseCa } from "../lib/vercel/tls.mjs";
 import { Pool } from "pg";
 import { readFile } from "node:fs/promises";
-if (
-  !process.env.DATABASE_URL ||
-  process.env.DATABASE_URL.includes("YOUR-PASSWORD")
-)
-  throw new Error("Set DATABASE_URL in .env.vercel.local first");
+if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required");
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: true, ca: supabaseCa },
@@ -16,16 +12,10 @@ try {
   await client.query("BEGIN");
   await client.query("SELECT pg_advisory_xact_lock(781942631)");
   const existing = await client.query(
-    "SELECT to_regclass('model_drops.users') AS name",
+    "SELECT to_regclass('model_drops.generations') AS name",
   );
-  if (existing.rows[0].name)
-    throw new Error("Workspace schema already exists. No changes applied.");
-  await client.query(
-    await readFile(
-      new URL("../migrations/vercel/001_workspace.sql", import.meta.url),
-      "utf8",
-    ),
-  );
+  if (!existing.rows[0].name)
+    throw new Error("Create the workspace schema first.");
   await client.query(
     await readFile(
       new URL("../migrations/vercel/002_higgsfield.sql", import.meta.url),
@@ -34,7 +24,7 @@ try {
   );
   await client.query("COMMIT");
   console.log(
-    "Model Drops workspace schema created successfully. Existing Supabase Auth is unchanged.",
+    "Higgsfield job tracking schema is ready. Existing records preserved.",
   );
 } catch (error) {
   await client.query("ROLLBACK");

@@ -5301,3 +5301,5 @@ h1 {
   line-height: 1.6;
   margin-top: 12px;
 }
+
+.generation-preview video { width: 100%; height: 100%; object-fit: cover; }
