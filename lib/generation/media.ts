@@ -1,75 +1,15 @@
-import { z } from "zod";
-import type { HiggsfieldEnvironment } from "./models";
-import { credentialsFor } from "./credentials.mjs";
-const resultSchema = z.object({
-  request_id: z.string().uuid(),
-  status: z.enum([
-    "queued",
-    "in_progress",
-    "completed",
-    "failed",
-    "nsfw",
-    "canceled",
-  ]),
-  images: z.array(z.object({ url: z.string().url() })).optional(),
-  video: z.object({ url: z.string().url() }).nullish(),
-});
-export type HiggsfieldResult = z.infer<typeof resultSchema>;
-export class RejectedSubmission extends Error {}
-export class HiggsfieldClient {
-  constructor(
-    private env: HiggsfieldEnvironment,
-    private fetcher: typeof fetch = fetch,
-  ) {}
-  private async request(path: string, input?: unknown) {
-    const credentials = credentialsFor(this.env);
-    if (!credentials)
-      throw new Error("Higgsfield credentials missing or incomplete.");
-    const r = await this.fetcher(`https://api.higgsfield.ai/${path}`, {
-      method: input ? "POST" : "GET",
-      redirect: "error",
-      signal: AbortSignal.timeout(20000),
-      headers: {
-        Authorization: `Key ${credentials}`,
-        "Content-Type": "application/json",
-      },
-      ...(input ? { body: JSON.stringify(input) } : {}),
-    });
-    if (!r.ok) {
-      // Never retry a paid POST whose acceptance is uncertain (network errors/5xx).
-      if (input && [400, 401, 403, 404, 422, 423, 429].includes(r.status))
-        throw new RejectedSubmission(
-          `Higgsfield rejected the request (HTTP ${r.status}).`,
-        );
-      throw new Error(`Higgsfield request failed (HTTP ${r.status}).`);
-    }
-    return resultSchema.parse(await r.json());
-  }
-  submit(endpoint: string, input: unknown) {
-    return this.request(endpoint, input);
-  }
-  async status(id: string) {
-    z.string().uuid().parse(id);
-    const result = await this.request(`requests/${id}/status`);
-    if (result.request_id !== id)
-      throw new Error("Provider returned a mismatched request.");
-    return result;
-  }
-}
-
+import type { GenerationEnvironment } from "./models";
 export async function downloadOutput(
   url: string,
   type: string,
-  env: HiggsfieldEnvironment,
+  env: GenerationEnvironment,
   fetcher: typeof fetch = fetch,
 ) {
   const parsed = new URL(url);
   const hosts = new Set([
-    "images.higgs.ai",
-    "videos.higgs.ai",
-    "cdn.higgsfield.ai",
-    "d28lhcrx5qdowv.cloudfront.net",
-    ...(env.HIGGSFIELD_OUTPUT_HOSTS || "")
+    "cloudflare-static.wavespeed.ai",
+    "static.wavespeed.ai",
+    ...(env.WAVESPEED_OUTPUT_HOSTS || "")
       .split(",")
       .map((h) => h.trim())
       .filter(Boolean),

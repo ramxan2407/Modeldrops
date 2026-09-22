@@ -617,7 +617,7 @@ export default function SuperAdmin({
                   : empty("No administrative changes match this filter."))}
               {section === "integrations" && (
                 <section>
-                  <h2>Recent Higgsfield jobs</h2>
+                  <h2>Recent generation jobs</h2>
                   {(data.generationJobs || []).length
                     ? table(
                         [
@@ -638,7 +638,7 @@ export default function SuperAdmin({
                           </tr>
                         )),
                       )
-                    : empty("No Higgsfield jobs yet.")}
+                    : empty("No provider jobs yet.")}
                 </section>
               )}
               {section === "integrations" && (

@@ -7,7 +7,7 @@ import {
 import { LoraError } from "@/lib/lora/types";
 import { boundedBytes } from "@/lib/lora/http";
 import { supabaseConfig } from "@/lib/supabase/config";
-import { higgsfieldEnabled } from "@/lib/higgsfield/models";
+import { generationEnabled } from "@/lib/generation/models";
 export const dynamic = "force-dynamic";
 function failure(e: unknown) {
   if (e instanceof AdminError || e instanceof LoraError)
@@ -63,12 +63,12 @@ export async function GET(request: Request) {
                 },
                 {
                   name: "Image and video generation",
-                  status: higgsfieldEnabled(env)
-                    ? "Higgsfield enabled"
-                    : "Demo only",
-                  detail: higgsfieldEnabled(env)
-                    ? "Soul 2 images and Kling 3.0 videos. Prompts only; server-side credentials. Check the provider console for usage and request outcomes."
-                    : "Set Higgsfield credentials and enable live generation to replace sample outputs.",
+                  status: generationEnabled(env)
+                    ? "WaveSpeed enabled"
+                    : "Setup required",
+                  detail: generationEnabled(env)
+                    ? "Qwen Image Edit, GPT Image 2.5 Flare/Sunburst, and Kling 3.0 videos. Model-specific controls, references, and live image pricing; server-side credentials. Check the provider console for usage and request outcomes."
+                    : "Set WaveSpeed credentials and enable live generation to replace sample outputs.",
                 },
                 {
                   name: "Private storage",

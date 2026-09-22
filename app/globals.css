@@ -5749,3 +5749,40 @@ h1 {
     grid-template-columns: 1fr;
   }
 }
+.dimension-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.dimension-inputs label,
+.format-setting {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.dimension-inputs input,
+.format-setting select {
+  min-width: 0;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #dce4d9;
+  border-radius: 8px;
+  background: white;
+  color: #223a2b;
+  font-size: 13px;
+}
+/* Provider schema controls stay legible across the full image catalog. */
+.image-model-picker,.image-schema-controls {display:grid;gap:12px;min-width:0}
+.image-model-picker select,.schema-field select,.schema-field textarea,.schema-field input:not([type=checkbox]):not([type=file]) {width:100%;min-width:0;border:1px solid #dce1db;border-radius:10px;padding:10px 12px;background:#fff;font:inherit;color:#26362c}
+.model-search{display:flex;align-items:center;gap:9px;border:1px solid #dce1db;border-radius:10px;padding:9px 12px;background:#fff}
+.model-search input{border:0;background:transparent;width:100%;min-width:0;outline:none}
+.schema-field{position:relative;display:grid;gap:7px;padding:12px 0;border-bottom:1px solid #e8ece6;min-width:0}
+.schema-field>label{font-size:12px;font-weight:600;color:#34453b}.schema-field small,.schema-help{font-size:11px;color:#66786d;overflow-wrap:anywhere}
+.schema-help summary{cursor:pointer}.schema-help p{margin:8px 0;line-height:1.55;white-space:pre-wrap}.required-mark{color:#528a37}
+.schema-checkbox{grid-template-columns:1fr auto}.schema-checkbox .schema-help{grid-column:1/-1}.schema-checkbox input{accent-color:#517b32}
+.schema-array,.schema-nested{display:grid;gap:10px;min-width:0}.schema-nested{border-left:2px solid #deebd4;padding-left:12px}
+.schema-array-row{display:flex;align-items:center;gap:8px;min-width:0}.schema-array-row>.schema-field{flex:1}.schema-array button,.schema-reset{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#52753a;cursor:pointer}
+.schema-upload{position:relative;display:flex;align-items:center;gap:8px;border:1px dashed #b6c8a8;border-radius:10px;padding:12px;background:#f7faf2;overflow:hidden;cursor:pointer}
+.schema-upload input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}.schema-reference-preview,.schema-array-row img{width:72px;height:72px;object-fit:cover;border-radius:8px}
+.schema-size{display:grid;gap:5px}.schema-reset{justify-self:start}.image-quote-note{font-size:11px;color:#66786d;line-height:1.6}

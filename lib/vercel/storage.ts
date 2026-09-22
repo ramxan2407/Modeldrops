@@ -112,6 +112,11 @@ export class PrivateBucket {
         this.client.send(new AbortMultipartUploadCommand(input)),
     };
   }
+  async signedRead(key: string) {
+    return getSignedUrl(this.client, new GetObjectCommand(this.input(key)), {
+      expiresIn: 86400,
+    });
+  }
   async signedUpload(key: string, size: number) {
     return getSignedUrl(
       this.client,

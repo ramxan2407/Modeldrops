@@ -89,7 +89,7 @@ async function LoginContent({
             </p>
           </div>
           <p className="login-preview-note">
-            Product preview · Purchases and AI generation are simulated.
+            Model Drops · Private creative workspace.
           </p>
         </div>
         <div className="login-footer">

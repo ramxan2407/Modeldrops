@@ -24,7 +24,7 @@ try {
   );
   await client.query("COMMIT");
   console.log(
-    "Higgsfield job tracking schema is ready. Existing records preserved.",
+    "Provider job tracking schema is ready. Existing records preserved.",
   );
 } catch (error) {
   await client.query("ROLLBACK");

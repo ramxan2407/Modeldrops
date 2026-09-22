@@ -1,6 +1,12 @@
 "use client";
 import { GenerationControls } from "@/components/generation-controls";
-import { defaultHiggsfieldOptions, optionsFor } from "@/lib/higgsfield/options";
+import { defaultGenerationOptions, optionsFor } from "@/lib/generation/options";
+import {
+  ImageModelControls,
+  ImageModelPicker,
+  imageQuoteKey,
+  type ImageQuote,
+} from "@/components/image-model-controls";
 import { calculateCredits, generationSettings } from "@/lib/pricing";
 import { uploadFile } from "@/lib/upload-client";
 import React, { useEffect, useState, useCallback, useRef } from "react";
@@ -139,6 +145,8 @@ type Generation = {
   settings: string;
   projectId?: string;
   live?: boolean;
+  provider?: string;
+  modelName?: string;
   outputs?: { id: string; url: string; mime: string }[];
   error?: string;
 };
@@ -408,7 +416,13 @@ export default function ModelDropsApp({
     [purchaseLicense, setPurchaseLicense] = useState<PurchaseRecord | null>(
       null,
     );
-  const [higgsOptions, setHiggsOptions] = useState(defaultHiggsfieldOptions);
+  const [generationOptions, setGenerationOptions] = useState(
+    defaultGenerationOptions,
+  );
+  const [imageInputs, setImageInputs] = useState<
+    Record<string, Record<string, unknown>>
+  >({});
+  const [imageQuote, setImageQuote] = useState<ImageQuote>({ key: "" });
   const idempotency = useRef<string | null>(null),
     searchRef = useRef<HTMLInputElement>(null);
   const refresh = useCallback(async () => {
@@ -591,7 +605,18 @@ export default function ModelDropsApp({
     !!selected && catalog.some((c) => c.id === selected && c.enabled === false);
   const model =
     registry.find((m) => m.id === modelId) || registry[0] || defaultModels[0];
-  const liveModel = model.provider === "Higgsfield";
+  const liveModel = model.provider === "WaveSpeed";
+  const liveImage = liveModel && mode === "image";
+  const activeImageInputs = imageInputs[modelId];
+  const quoteKey = imageQuoteKey(modelId, prompt, activeImageInputs || {});
+  const quoteReady =
+    imageQuote.key === quoteKey && imageQuote.credits !== undefined;
+  const promptNeeded = !liveImage || imageQuote.promptRequired !== false;
+  const updateImageInputs = useCallback(
+    (value: Record<string, unknown>) =>
+      setImageInputs((previous) => ({ ...previous, [modelId]: value })),
+    [modelId],
+  );
   useEffect(() => {
     const next =
       registry.find((m) => m.id === modelId && m.type === mode && m.enabled) ||
@@ -601,15 +626,25 @@ export default function ModelDropsApp({
     if (!next.ratios.includes(ratio)) setRatio(next.ratios[0]);
     if (!next.resolutions.includes(resolution))
       setResolution(next.resolutions[0]);
-    if (next.provider === "Higgsfield") {
-      if (next.type === "video" || !["1", "4"].includes(outputs))
-        setOutputs("1");
-      setNegative("");
+    if (next.provider === "WaveSpeed") {
+      setOutputs("1");
+      if (next.type === "image") {
+        setNegative("");
+      }
       setReference(null);
       setSelected("");
       if (next.type === "video") setSeed("");
     }
-  }, [registry, modelId, mode, ratio, resolution, outputs]);
+  }, [
+    registry,
+    modelId,
+    mode,
+    ratio,
+    resolution,
+    outputs,
+    generationOptions.width,
+    generationOptions.height,
+  ]);
   const requestedSettings = {
     ratio,
     resolution,
@@ -617,34 +652,49 @@ export default function ModelDropsApp({
     negative,
     seed: seed ? Number(seed) : null,
     duration: Number(duration),
-    ...(liveModel ? optionsFor(mode, higgsOptions) : {}),
+    ...(liveImage
+      ? {
+          ratio: "custom",
+          resolution: "custom",
+          providerInputs: activeImageInputs || {},
+        }
+      : liveModel
+        ? optionsFor(mode, generationOptions)
+        : {}),
   };
   const parsedSettings = generationSettings.safeParse(requestedSettings);
   const settingsError = !parsedSettings.success
-    ? parsedSettings.error.issues[0].path[0] === "styleId"
-      ? "Enter a valid style UUID, or leave it blank."
-      : "Check your advanced settings and shot prompts. All values must be within the displayed limits."
+    ? ["width", "height"].includes(
+        String(parsedSettings.error.issues[0].path[0]),
+      )
+      ? "Image width and height must be whole numbers from 256 to 1536 pixels."
+      : parsedSettings.error.issues[0].path[0] === "shots"
+        ? "Give every shot a prompt and a duration from 1 to 15 seconds."
+        : "Check your advanced settings. All values must be within the displayed limits."
     : liveModel &&
-        mode === "image" &&
-        seed &&
-        (Number(seed) < 1 || Number(seed) > 1000000)
-      ? "Seed must be an integer from 1 to 1,000,000."
-      : liveModel &&
-          mode === "video" &&
-          higgsOptions.multiShots &&
-          higgsOptions.shots.length > 0 &&
-          higgsOptions.shots.reduce((sum, shot) => sum + shot.duration, 0) !==
-            Number(duration)
-        ? "Shot durations must add up to the total video duration."
-        : "";
-  const cost = parsedSettings.success
-    ? calculateCredits(model.credits, mode, parsedSettings.data)
-    : Math.ceil(
-        model.credits *
-          Number(outputs) *
-          (["1080", "2048"].includes(resolution) ? 2 : 1) *
-          (mode === "video" ? Number(duration) / 5 : 1),
-      );
+        mode === "video" &&
+        generationOptions.shotType === "customize" &&
+        generationOptions.shots.length > 0 &&
+        generationOptions.shots.reduce(
+          (sum, shot) => sum + shot.duration,
+          0,
+        ) !== Number(duration)
+      ? "Shot durations must add up to the total video duration."
+      : "";
+  const cost = liveImage
+    ? quoteReady
+      ? imageQuote.credits!
+      : model.credits
+    : parsedSettings.success
+      ? calculateCredits(model.credits, mode, parsedSettings.data)
+      : Math.ceil(
+          model.credits *
+            Number(outputs) *
+            (["1080", "2048"].includes(resolution) ? 2 : 1) *
+            (mode === "video"
+              ? (Number(duration) / 5) * (generationOptions.sound ? 1.5 : 1)
+              : 1),
+        );
   useEffect(() => {
     idempotency.current = null;
   }, [
@@ -658,7 +708,8 @@ export default function ModelDropsApp({
     seed,
     duration,
     reference,
-    higgsOptions,
+    generationOptions,
+    activeImageInputs,
   ]);
   const generate = () =>
     action(async () => {
@@ -669,6 +720,7 @@ export default function ModelDropsApp({
         modelId,
         prompt,
         settings: requestedSettings,
+        ...(liveImage ? { expectedCredits: imageQuote.credits } : {}),
         reference,
       });
       idempotency.current = null;
@@ -690,17 +742,40 @@ export default function ModelDropsApp({
   const remix = (g: Generation) => {
     setPrompt(g.prompt);
     setSelected(g.characterId || "");
-    setModelId(g.modelId);
+    const available =
+      registry.find((m) => m.id === g.modelId && m.enabled) ||
+      registry.find((m) => m.type === g.type && m.enabled);
+    setModelId(available?.id || g.modelId);
     setMode(g.type);
     try {
       const s = JSON.parse(g.settings);
       setRatio(s.ratio);
-      setResolution(s.resolution);
+      setResolution(
+        available?.resolutions.includes(s.resolution)
+          ? s.resolution
+          : available?.resolutions[0] || s.resolution,
+      );
       setOutputs(String(s.outputs));
       setNegative(s.negative || "");
       setSeed(s.seed === null ? "" : String(s.seed));
       setDuration(String(s.duration || 5));
-      setHiggsOptions({ ...defaultHiggsfieldOptions, ...s });
+      if (available?.id !== g.modelId) {
+        setGenerationOptions(defaultGenerationOptions);
+        setRatio("16:9");
+        setOutputs("1");
+        setNegative("");
+        setSeed("");
+        toast.info(
+          "The original model is retired. Review the current model settings before generating.",
+        );
+      } else {
+        setGenerationOptions({ ...defaultGenerationOptions, ...s });
+        if (s.providerInputs)
+          setImageInputs((previous) => ({
+            ...previous,
+            [g.modelId]: s.providerInputs,
+          }));
+      }
     } catch {}
     setAsset(null);
     navigate("studio");
@@ -1341,7 +1416,7 @@ export default function ModelDropsApp({
                 </div>
                 <span className="demo-pill">
                   {liveModel
-                    ? "Live generation · Higgsfield"
+                    ? "Live generation · WaveSpeed"
                     : "Demo generation"}
                 </span>
               </div>
@@ -1445,20 +1520,30 @@ export default function ModelDropsApp({
                     <label>
                       <span>{liveModel ? "01" : "02"}</span> Generation model
                     </label>
-                    <Select value={modelId} onValueChange={setModelId}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {registry
-                          .filter((m) => m.type === mode && m.enabled)
-                          .map((m) => (
-                            <SelectItem key={m.id} value={m.id}>
-                              {m.name} · {m.credits} credits
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
+                    {liveImage ? (
+                      <ImageModelPicker
+                        models={registry.filter(
+                          (m) => m.type === "image" && m.enabled,
+                        )}
+                        value={modelId}
+                        onChange={setModelId}
+                      />
+                    ) : (
+                      <Select value={modelId} onValueChange={setModelId}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {registry
+                            .filter((m) => m.type === mode && m.enabled)
+                            .map((m) => (
+                              <SelectItem key={m.id} value={m.id}>
+                                {m.name} · {m.credits} credits
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                     <small className="field-note">
                       <Zap size={12} />{" "}
                       {liveModel
@@ -1466,39 +1551,50 @@ export default function ModelDropsApp({
                         : "Simulated provider · No AI API charge"}
                     </small>
                   </div>
-                  <div className="control-group">
-                    <label htmlFor="prompt">
-                      <span>{liveModel ? "02" : "03"}</span> Describe your
-                      vision <Sparkles size={14} />
-                    </label>
-                    <Textarea
-                      id="prompt"
-                      value={prompt}
-                      onChange={(e) => {
-                        setPrompt(e.target.value);
-                        idempotency.current = null;
-                      }}
-                      placeholder="A cinematic portrait, golden-hour light spilling through a window…"
-                      maxLength={4000}
-                      className="prompt-input"
-                    />
-                    <div className="prompt-footer">
-                      <button
-                        onClick={() =>
-                          setPrompt(
-                            prompt
-                              ? prompt +
-                                  ", carefully composed, natural lighting, cinematic depth of field"
-                              : "An atmospheric portrait in a quiet city at dawn, natural light, cinematic depth of field",
-                          )
-                        }
-                      >
-                        <Sparkles size={12} /> Add cinematic detail
-                      </button>
-                      <span>{prompt.length}/4000</span>
+                  {(!liveImage || imageQuote.hasPrompt !== false) && (
+                    <div className="control-group">
+                      <label htmlFor="prompt">
+                        <span>{liveModel ? "02" : "03"}</span> Describe your
+                        vision <Sparkles size={14} />
+                      </label>
+                      <Textarea
+                        id="prompt"
+                        value={prompt}
+                        onChange={(e) => {
+                          setPrompt(e.target.value);
+                          idempotency.current = null;
+                        }}
+                        placeholder="A cinematic portrait, golden-hour light spilling through a window…"
+                        maxLength={4000}
+                        className="prompt-input"
+                      />
+                      <div className="prompt-footer">
+                        <button
+                          onClick={() =>
+                            setPrompt(
+                              prompt
+                                ? prompt +
+                                    ", carefully composed, natural lighting, cinematic depth of field"
+                                : "An atmospheric portrait in a quiet city at dawn, natural light, cinematic depth of field",
+                            )
+                          }
+                        >
+                          <Sparkles size={12} /> Add cinematic detail
+                        </button>
+                        <span>{prompt.length}/4000</span>
+                      </div>
                     </div>
-                  </div>
-                  {liveModel ? (
+                  )}
+                  {liveImage ? (
+                    <ImageModelControls
+                      key={modelId}
+                      modelId={modelId}
+                      prompt={prompt}
+                      values={activeImageInputs}
+                      onChange={updateImageInputs}
+                      onQuote={setImageQuote}
+                    />
+                  ) : liveModel ? (
                     <GenerationControls
                       type={mode}
                       ratios={model.ratios}
@@ -1507,13 +1603,15 @@ export default function ModelDropsApp({
                       outputs={outputs}
                       seed={seed}
                       duration={duration}
-                      options={higgsOptions}
+                      options={generationOptions}
+                      negative={negative}
+                      setNegative={setNegative}
                       setRatio={setRatio}
                       setResolution={setResolution}
                       setOutputs={setOutputs}
                       setSeed={setSeed}
                       setDuration={setDuration}
-                      onOptions={setHiggsOptions}
+                      onOptions={setGenerationOptions}
                     />
                   ) : (
                     <div className="control-grid">
@@ -1648,22 +1746,34 @@ export default function ModelDropsApp({
                       <span>Generation cost</span>
                       <strong>
                         <Zap size={14} />
-                        {cost} credits
+                        {liveImage && !quoteReady ? "—" : cost} credits
                       </strong>
                     </div>
                     <small>
                       {count(account.balance)} available{" "}
                       <ArrowRight size={10} />{" "}
-                      {count(Math.max(0, account.balance - cost))} after
-                      generation
+                      {liveImage && !quoteReady
+                        ? "—"
+                        : count(Math.max(0, account.balance - cost))}{" "}
+                      after generation
                     </small>
                   </div>
+                  {liveImage && (
+                    <p className="image-quote-note" role="status">
+                      {imageQuote.key === quoteKey && imageQuote.error
+                        ? imageQuote.error
+                        : quoteReady
+                          ? "Price checked for these settings. It will be verified again before charging."
+                          : "Checking price… Complete the required fields to continue."}
+                    </p>
+                  )}
                   <Button
                     className="lime-button generate-button"
                     disabled={
                       busy ||
                       !!settingsError ||
-                      !prompt.trim() ||
+                      (promptNeeded && !prompt.trim()) ||
+                      (liveImage && !quoteReady) ||
                       cost > account.balance ||
                       (!!selected && !account.owned.includes(selected)) ||
                       !model.enabled ||
@@ -1679,7 +1789,7 @@ export default function ModelDropsApp({
                     Generate {mode}
                     <span>
                       <Zap size={13} />
-                      {cost}
+                      {liveImage && !quoteReady ? "—" : cost}
                     </span>
                   </Button>
                   {settingsError && (
@@ -1690,7 +1800,7 @@ export default function ModelDropsApp({
                       {settingsError}
                     </p>
                   )}
-                  {(!prompt.trim() ||
+                  {((promptNeeded && !prompt.trim()) ||
                     (!!selected && !account.owned.includes(selected)) ||
                     cost > account.balance ||
                     !model.enabled ||
@@ -1702,7 +1812,7 @@ export default function ModelDropsApp({
                           ? "Add this character to your library to continue."
                           : !model.enabled
                             ? "Choose an available generation model."
-                            : !prompt.trim()
+                            : promptNeeded && !prompt.trim()
                               ? "Write a prompt above to enable generation."
                               : "You need more credits to continue. Contact your administrator during the beta."}
                     </p>
@@ -1710,7 +1820,7 @@ export default function ModelDropsApp({
                   <p className="privacy-note">
                     <Lock size={11} />{" "}
                     {liveModel
-                      ? "Outputs stay private. Your prompt is sent to Higgsfield. Credits are reserved when submitted and returned if the provider rejects or fails the job. Submitted jobs cannot be cancelled here."
+                      ? "Outputs stay private. Your prompt and selected references are sent to WaveSpeed. Credits are reserved when submitted and returned if the provider rejects or fails the job. Submitted jobs cannot be cancelled here."
                       : "Private by default. Demo results are sample images; video mode returns a storyboard preview."}
                   </p>
                 </div>
@@ -1769,7 +1879,7 @@ export default function ModelDropsApp({
                             <>
                               <SlidersHorizontal size={13} /> {ratio} ·{" "}
                               {mode === "image"
-                                ? `${resolution}p`
+                                ? `${generationOptions.width} × ${generationOptions.height}`
                                 : `${duration}s`}
                             </>
                           ) : (
@@ -2500,7 +2610,7 @@ export default function ModelDropsApp({
               <h3>Preview limitations</h3>
               <p>
                 {liveModel
-                  ? "Higgsfield creates real outputs from your prompts. Beta credits are managed by the administrator. "
+                  ? "WaveSpeed creates real outputs from your prompts. Beta credits are managed by the administrator. "
                   : "Demo models return sample artwork. "}
                 Payments, character commercial licenses, and creator payouts are
                 not processed.
@@ -2560,7 +2670,9 @@ export default function ModelDropsApp({
                   : "creation"}
               </DialogTitle>
               <DialogDescription>
-                {asset.live ? "Generated with Higgsfield" : "Simulated output"}{" "}
+                {asset.live
+                  ? `Generated with ${asset.provider || "your provider"}`
+                  : "Simulated output"}{" "}
                 · Private to you
               </DialogDescription>
               {asset.type === "image" && (asset.outputs?.length || 0) > 1 ? (
@@ -2603,7 +2715,8 @@ export default function ModelDropsApp({
                 <span>{asset.status}</span>
                 <span>{asset.cost} credits</span>
                 <span>
-                  {registry.find((m) => m.id === asset.modelId)?.name}
+                  {asset.modelName ||
+                    registry.find((m) => m.id === asset.modelId)?.name}
                 </span>
                 <span>{new Date(asset.createdAt).toLocaleString()}</span>
               </div>
@@ -2776,7 +2889,7 @@ function GenerationCard({
         )}
         <span className="generation-type">
           {g.type === "video" ? <Video size={12} /> : <ImageIcon size={12} />}{" "}
-          {g.live ? "HIGGSFIELD" : "DEMO"}
+          {g.live ? (g.provider || "AI").toUpperCase() : "DEMO"}
           {(g.outputs?.length || 0) > 1 ? ` · ${g.outputs!.length} IMAGES` : ""}
         </span>
       </button>

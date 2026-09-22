@@ -2,10 +2,10 @@ import { env } from "cloudflare:workers";
 import { getAppUser } from "@/lib/app-auth";
 import { roleFor, sameOrigin } from "./admin/policy";
 import {
-  higgsfieldModels,
-  higgsfieldEnabled,
-  type HiggsfieldEnvironment,
-} from "./higgsfield/models";
+  generationModels,
+  generationConfigured,
+  type GenerationEnvironment,
+} from "./generation/models";
 import { models, packages } from "@/lib/catalog";
 export class ApiError extends Error {
   constructor(
@@ -17,7 +17,7 @@ export class ApiError extends Error {
 }
 export const uid = () => crypto.randomUUID();
 export function bindings() {
-  const e = env as unknown as HiggsfieldEnvironment & {
+  const e = env as unknown as GenerationEnvironment & {
     DB: D1Database;
     DEMO_ASSET?: () => Promise<ArrayBuffer>;
     BUCKET: R2Bucket;
@@ -52,7 +52,7 @@ export async function auth() {
 export async function initialize(user: Awaited<ReturnType<typeof auth>>) {
   const { DB, WELCOME_CREDITS } = bindings();
   const welcomeCredits = Number(
-    WELCOME_CREDITS ?? (higgsfieldEnabled(bindings()) ? "0" : "1840"),
+    WELCOME_CREDITS ?? (generationConfigured(bindings()) ? "0" : "1840"),
   );
   if (
     !Number.isSafeInteger(welcomeCredits) ||
@@ -63,6 +63,10 @@ export async function initialize(user: Awaited<ReturnType<typeof auth>>) {
       503,
       "Account credit configuration requires administrator review.",
     );
+  const known = await DB.prepare("SELECT id FROM ai_models").all<{
+    id: string;
+  }>();
+  const knownIds = new Set(known.results.map((m) => m.id));
   const statements = [
     DB.prepare("INSERT OR IGNORE INTO users(id,name,email) VALUES(?,?,?)").bind(
       user.userId,
@@ -71,12 +75,22 @@ export async function initialize(user: Awaited<ReturnType<typeof auth>>) {
     ),
     ...[
       ...models,
-      ...(higgsfieldEnabled(bindings()) ? higgsfieldModels : []),
-    ].map((m) =>
-      DB.prepare(
-        "INSERT OR IGNORE INTO ai_models(id,name,provider,type,credits,enabled,config) VALUES(?,?,?,?,?,?,?)",
-      ).bind(m.id, m.name, m.provider, m.type, m.credits, 1, JSON.stringify(m)),
-    ),
+      ...(generationConfigured(bindings()) ? generationModels : []),
+    ]
+      .filter((m) => !knownIds.has(m.id))
+      .map((m) =>
+        DB.prepare(
+          "INSERT OR IGNORE INTO ai_models(id,name,provider,type,credits,enabled,config) VALUES(?,?,?,?,?,?,?)",
+        ).bind(
+          m.id,
+          m.name,
+          m.provider,
+          m.type,
+          m.credits,
+          1,
+          JSON.stringify(m),
+        ),
+      ),
     ...packages.map((p) =>
       DB.prepare(
         "INSERT OR IGNORE INTO credit_packages(id,name,price,credits) VALUES(?,?,?,?)",
@@ -88,7 +102,7 @@ export async function initialize(user: Awaited<ReturnType<typeof auth>>) {
       uid(),
       user.userId,
       welcomeCredits,
-      higgsfieldEnabled(bindings())
+      generationConfigured(bindings())
         ? "Welcome to Model Drops"
         : "Welcome to Model Drops · demo credits",
       welcomeCredits,

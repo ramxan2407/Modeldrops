@@ -37,8 +37,7 @@ The demo uses a shorter D1 outbox with an asynchronous `waitUntil` processor and
 
 ## Provider boundaries
 
-Higgsfield is the proposed image/video launch provider; its official API was verified as available on September 21, 2026. It is not connected to the current app. See [launch services](LAUNCH-SERVICES.md) for prerequisites and reference-model limitations. The existing adapters below are separate foundation examples.
-
+WaveSpeed is the current workspace image/video provider. The live adapter and durable queue are in `lib/generation`; see [WaveSpeed operations](WAVESPEED.md) for credentials, supported models, pricing and retirement handling. The adapters below are separate foundation examples.
 
 The `AIProvider` contract separates image, video, text, status, cancellation, cost calculation, and normalization. Only verified supported capabilities are implemented. WaveSpeed cancellation is explicitly unsupported; deleting a prediction is not assumed to stop billing. The OpenRouter adapter supports its dedicated image API and text chat endpoint, with image MIME restrictions. Video can use the WaveSpeed adapter with an approved model binding.
 

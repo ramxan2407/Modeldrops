@@ -1,3 +1,6 @@
+import { imageEndpoint } from "@/lib/generation/images";
+import { quoteImage } from "@/lib/generation/quote";
+import { resolveImageReferences } from "@/lib/generation/references";
 import { catalogFor } from "@/lib/admin/service";
 import { waitUntil } from "cloudflare:workers";
 import { z } from "zod";
@@ -17,14 +20,15 @@ import {
   ledgerStatement,
 } from "@/lib/server";
 import { generationSettings, calculateCredits } from "@/lib/pricing";
-import { runGenerationJob } from "@/lib/higgsfield/worker";
+import { runGenerationJob } from "@/lib/generation/worker";
 import {
-  higgsfieldEnabled,
-  higgsfieldModel,
+  generationEnabled,
+  generationConfigured,
+  generationModel,
   generationInput,
   providerReserve,
   dailyLimit,
-} from "@/lib/higgsfield/models";
+} from "@/lib/generation/models";
 import { refundJob } from "@/lib/demo-worker";
 export const dynamic = "force-dynamic";
 const str = (max = 100) => z.string().trim().min(1).max(max);
@@ -86,7 +90,7 @@ export async function GET(request: Request) {
         .bind(user.userId)
         .all(),
       DB.prepare(
-        'SELECT id,prompt,character_id AS "characterId",model_id AS "modelId",status,cost,type,settings,error,created_at AS "createdAt",project_id AS "projectId",asset_key IS NOT NULL AS "hasAsset" FROM generations WHERE user_id=? ORDER BY created_at DESC LIMIT 100',
+        'SELECT g.id,g.prompt,g.character_id AS "characterId",g.model_id AS "modelId",g.status,g.cost,g.type,g.settings,g.error,g.created_at AS "createdAt",g.project_id AS "projectId",g.asset_key IS NOT NULL AS "hasAsset",m.provider,m.name AS "modelName" FROM generations g JOIN ai_models m ON m.id=g.model_id WHERE g.user_id=? ORDER BY g.created_at DESC LIMIT 100',
       )
         .bind(user.userId)
         .all<any>(),
@@ -115,12 +119,12 @@ export async function GET(request: Request) {
     )
       .bind(user.userId, user.userId)
       .all<{ id: string; generation_id: string; mime: string }>();
-    const liveEnabled = higgsfieldEnabled(bindings());
+    const liveEnabled = generationEnabled(bindings());
+    const liveConfigured = generationConfigured(bindings());
     for (const g of generations.results
       .filter(
         (g) =>
-          higgsfieldModel(g.modelId) &&
-          ["queued", "processing"].includes(g.status),
+          g.provider !== "Demo" && ["queued", "processing"].includes(g.status),
       )
       .slice(0, 3))
       waitUntil(runGenerationJob(g.id, new URL(request.url).origin));
@@ -145,7 +149,7 @@ export async function GET(request: Request) {
           generations: generations.results.map(({ hasAsset, ...g }) => ({
             ...g,
             image: hasAsset ? `/api/media?id=${g.id}` : "",
-            live: !!higgsfieldModel(g.modelId),
+            live: g.provider !== "Demo",
             outputs: assets.results
               .filter((asset) => asset.generation_id === g.id)
               .map((asset) => ({
@@ -163,16 +167,18 @@ export async function GET(request: Request) {
         },
         models: models.results
           .filter((m) =>
-            liveEnabled ? m.provider === "Higgsfield" : m.provider === "Demo",
+            liveConfigured
+              ? m.provider === "WaveSpeed" && !!generationModel(m.id)
+              : m.provider === "Demo",
           )
           .map((m) => ({
             ...JSON.parse(m.config),
             name:
               catalogModels.find((catalogModel) => catalogModel.id === m.id)
                 ?.name ?? m.name,
-            ...(higgsfieldModel(m.id) || {}),
+            ...(generationModel(m.id) || {}),
             credits: m.credits,
-            enabled: !!m.enabled,
+            enabled: !!m.enabled && (m.provider !== "WaveSpeed" || liveEnabled),
           })),
         packages: packages.results,
         characters: await catalogFor(DB),
@@ -261,8 +267,9 @@ export async function POST(request: Request) {
           .object({
             idempotencyKey: key,
             characterId: str().nullable(),
-            modelId: str(),
-            prompt: str(4000),
+            modelId: str(200),
+            prompt: z.string().trim().max(16000),
+            expectedCredits: z.number().int().positive().optional(),
             settings: generationSettings,
             reference: key.nullable().optional(),
           })
@@ -293,11 +300,11 @@ export async function POST(request: Request) {
           .bind(d.modelId)
           .first<any>();
         if (!m) throw new ApiError(400, "Choose an available model");
-        const live = m.provider === "Higgsfield";
+        const live = m.provider === "WaveSpeed";
         if (
-          (live && !higgsfieldEnabled(bindings())) ||
+          (live && !generationEnabled(bindings())) ||
           (!live && m.provider !== "Demo") ||
-          (!live && higgsfieldEnabled(bindings()))
+          (!live && generationConfigured(bindings()))
         )
           throw new ApiError(503, "Choose an available generation model.");
         let providerInput: unknown;
@@ -324,7 +331,7 @@ export async function POST(request: Request) {
             400,
             "This character is currently unavailable. Choose another character.",
           );
-        const cfg = higgsfieldModel(m.id) || JSON.parse(m.config);
+        const cfg = generationModel(m.id) || JSON.parse(m.config);
         if (
           !cfg.ratios.includes(d.settings.ratio) ||
           !cfg.resolutions.includes(d.settings.resolution)
@@ -362,7 +369,42 @@ export async function POST(request: Request) {
           .first<any>();
         if (active.n >= 3)
           throw new ApiError(429, "Three generations are already in progress.");
-        const cost = calculateCredits(m.credits, m.type, d.settings);
+        if ((!live || m.type !== "image") && !d.prompt)
+          throw new ApiError(400, "Write a prompt first.");
+        let endpoint = live ? generationModel(m.id)!.endpoint : "";
+        let reserve = live ? providerReserve(m.id, d.settings) : 0;
+        let cost = calculateCredits(m.credits, m.type, d.settings);
+        if (live && m.type === "image") {
+          if (!d.expectedCredits)
+            throw new ApiError(
+              400,
+              "Get a current image price before generating.",
+            );
+          providerInput = await resolveImageReferences(
+            providerInput as Record<string, unknown>,
+            id,
+          );
+          try {
+            endpoint = imageEndpoint(
+              m.id,
+              providerInput as Record<string, unknown>,
+            );
+            const quote = await quoteImage(bindings(), endpoint, providerInput);
+            if (quote.credits > d.expectedCredits)
+              throw new ApiError(
+                409,
+                "The price changed. Review the updated quote before generating.",
+              );
+            cost = quote.credits;
+            reserve = quote.providerMicrousd;
+          } catch (e) {
+            if (e instanceof ApiError) throw e;
+            throw new ApiError(
+              422,
+              "Could not verify this image price. No credits were charged. Refresh the quote and try again.",
+            );
+          }
+        }
         const balance = await DB.prepare(
           "SELECT COALESCE(SUM(amount),0) AS balance FROM credit_transactions WHERE user_id=?",
         )
@@ -393,7 +435,7 @@ export async function POST(request: Request) {
               -cost,
               "generation_charge",
               live
-                ? "Higgsfield generation · credits reserved"
+                ? "WaveSpeed generation · credits reserved"
                 : "Demo generation · credits reserved",
               `charge:${gen}`,
               gen,
@@ -401,15 +443,15 @@ export async function POST(request: Request) {
             ...(live
               ? [
                   DB.prepare(
-                    "INSERT INTO provider_requests(generation_id,endpoint,input_json,reserved_microusd,created_at,updated_at) SELECT ?,?,?,CASE WHEN COALESCE(SUM(reserved_microusd),0)+?<=? AND (SELECT COUNT(*) FROM generations WHERE user_id=? AND status IN ('queued','processing'))<=3 THEN CAST(? AS bigint) ELSE NULL END,?,? FROM provider_requests WHERE created_at>=?",
+                    "INSERT INTO provider_requests(generation_id,endpoint,input_json,reserved_microusd,created_at,updated_at) SELECT ?,?,?,CASE WHEN COALESCE(SUM(reserved_microusd),0)+?<=? AND (SELECT COUNT(*) FROM generations WHERE user_id=? AND status IN ('queued','processing'))<=3 THEN CAST(? AS bigint) ELSE NULL END,?,? FROM provider_requests WHERE created_at>=? AND generation_id IN (SELECT g.id FROM generations g JOIN ai_models m ON m.id=g.model_id WHERE m.provider='WaveSpeed')",
                   ).bind(
                     gen,
-                    higgsfieldModel(m.id)!.endpoint,
+                    endpoint,
                     JSON.stringify(providerInput),
-                    providerReserve(m.id, d.settings),
+                    reserve,
                     dailyLimit(bindings()),
                     id,
-                    providerReserve(m.id, d.settings),
+                    reserve,
                     new Date().toISOString(),
                     new Date().toISOString(),
                     new Date().toISOString().slice(0, 10) + "T00:00:00.000Z",
@@ -463,10 +505,14 @@ export async function POST(request: Request) {
           .bind(d.id, id)
           .first<any>();
         if (!g) throw new ApiError(404, "Generation not found");
-        if (higgsfieldModel(g.model_id))
+        if (
+          !catalogModels.some(
+            (model) => model.id === g.model_id && model.provider === "Demo",
+          )
+        )
           throw new ApiError(
             409,
-            "Submitted Higgsfield jobs cannot be cancelled here. Failed jobs return credits automatically.",
+            "Submitted WaveSpeed jobs cannot be cancelled here. Failed jobs return credits automatically.",
           );
         await refundJob(
           d.id,

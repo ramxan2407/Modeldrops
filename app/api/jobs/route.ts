@@ -1,6 +1,6 @@
 import { waitUntil } from "cloudflare:workers";
 import { bindings, ApiError, fail } from "@/lib/server";
-import { runGenerationJob } from "@/lib/higgsfield/worker";
+import { runGenerationJob } from "@/lib/generation/worker";
 /** Scheduler recovery endpoint; deployment must supply JOB_RUNNER_SECRET and a periodic external invocation. */
 export async function POST(request: Request) {
   try {

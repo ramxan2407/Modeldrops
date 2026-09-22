@@ -1,7 +1,8 @@
 import { bindings } from "@/lib/server";
 import { refundJob, runDemoJob } from "@/lib/demo-worker";
-import { HiggsfieldClient, RejectedSubmission, downloadOutput } from "./client";
-import { higgsfieldEnabled } from "./models";
+import { WaveSpeedClient, RejectedSubmission } from "./client";
+import { downloadOutput } from "./media";
+import { generationEnabled } from "./models";
 
 export async function runGenerationJob(id: string, origin: string) {
   const env = bindings();
@@ -13,7 +14,7 @@ export async function runGenerationJob(id: string, origin: string) {
     .first<any>();
   if (!g || !["queued", "processing"].includes(g.status)) return;
   if (g.provider === "Demo") return runDemoJob(id, origin);
-  if (g.provider !== "Higgsfield" || !higgsfieldEnabled(env)) return;
+  if (g.provider === "WaveSpeed" && !generationEnabled(env)) return;
   const now = new Date().toISOString();
   const claim = await DB.prepare(
     "UPDATE generation_jobs SET status='processing',lease_until=?,attempts=attempts+1 WHERE generation_id=? AND (status='queued' OR (status='processing' AND lease_until<?))",
@@ -21,7 +22,7 @@ export async function runGenerationJob(id: string, origin: string) {
     .bind(new Date(Date.now() + 120000).toISOString(), id, now)
     .run();
   if (!claim.meta.changes) return;
-  const provider = new HiggsfieldClient(env);
+  const provider = new WaveSpeedClient(env);
   let p = await DB.prepare(
     "SELECT * FROM provider_requests WHERE generation_id=?",
   )
@@ -34,6 +35,21 @@ export async function runGenerationJob(id: string, origin: string) {
     )
       .bind(now, id)
       .run();
+    // Retired jobs keep their identity. Never replay them through the new provider.
+    if (g.provider !== "WaveSpeed") {
+      if (p.state === "ready" && !p.request_id)
+        await terminal(
+          id,
+          "cancelled",
+          "This model was retired before submission. Credits returned.",
+        );
+      else
+        await review(
+          id,
+          "This job belongs to a retired provider and requires administrator reconciliation. It will not be resubmitted.",
+        );
+      return;
+    }
     if (["submitting", "uncertain"].includes(p.state) && !p.request_id) {
       await review(
         id,
@@ -69,15 +85,15 @@ export async function runGenerationJob(id: string, origin: string) {
         await DB.prepare(
           "UPDATE provider_requests SET request_id=?,state='polling',updated_at=? WHERE generation_id=?",
         )
-          .bind(submitted.request_id, new Date().toISOString(), id)
+          .bind(submitted.id, new Date().toISOString(), id)
           .run();
-        p = { ...p, request_id: submitted.request_id, state: "polling" };
+        p = { ...p, request_id: submitted.id, state: "polling" };
       } catch (error) {
         if (error instanceof RejectedSubmission) {
           await terminal(
             id,
             "failed",
-            "Higgsfield could not accept this request. Credits returned.",
+            `${error.userMessage} Credits returned.`,
           );
           return;
         }
@@ -99,24 +115,27 @@ export async function runGenerationJob(id: string, origin: string) {
       return;
     }
     const result = await provider.status(p.request_id);
-    if (["failed", "nsfw", "canceled"].includes(result.status)) {
+    if (["failed", "cancelled"].includes(result.status)) {
       await terminal(
         id,
-        result.status === "canceled" ? "cancelled" : "failed",
-        result.status === "nsfw"
-          ? "The provider declined this content. Credits returned."
-          : "Generation did not complete. Credits returned.",
+        result.status === "cancelled" ? "cancelled" : "failed",
+        "Generation did not complete. Credits returned.",
       );
       return;
     }
     if (result.status !== "completed") return;
     const expected =
-      g.type === "video" ? 1 : Number(JSON.parse(p.input_json).batch_size || 1);
-    const urls =
-      g.type === "video"
-        ? [result.video?.url]
-        : result.images?.map((image) => image.url);
-    if (!urls || urls.length !== expected || urls.some((url) => !url))
+      g.type === "video" ? 1 : Number(JSON.parse(p.input_json).num_images || 1);
+    const urls = result.outputs;
+    const catalogImage =
+      g.type === "image" && !!JSON.parse(g.settings).providerInputs;
+    if (
+      !urls ||
+      !urls.length ||
+      urls.length > 50 ||
+      (!catalogImage && urls.length !== expected) ||
+      urls.some((url) => !url)
+    )
       throw new Error("Provider returned unexpected outputs.");
     // Save one output per invocation so a four-image batch stays within function limits.
     // Existing files survive retries, without repeating the paid submission.
@@ -189,7 +208,7 @@ export async function runGenerationJob(id: string, origin: string) {
         id,
       )
       .run();
-    console.error("Higgsfield job requires retry", id);
+    console.error("Generation job requires retry", id);
   } finally {
     await DB.prepare(
       "UPDATE generation_jobs SET lease_until=? WHERE generation_id=? AND status='processing'",

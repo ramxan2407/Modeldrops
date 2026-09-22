@@ -10,7 +10,9 @@ export async function POST(request: Request) {
     if (Number(request.headers.get("content-length")) > 9 * 1024 * 1024)
       throw new ApiError(413, "Use an image smaller than 8 MB");
     const staged = await stagedUpload(request, 8 * 1024 * 1024);
-    const file = staged ? new File([new Uint8Array(staged)], "reference") : (await request.formData()).get("file");
+    const file = staged
+      ? new File([new Uint8Array(staged)], "reference")
+      : (await request.formData()).get("file");
     if (
       !(file instanceof File) ||
       file.size > 8 * 1024 * 1024 ||
@@ -58,6 +60,30 @@ export async function POST(request: Request) {
       throw e;
     }
     return Response.json({ id }, { status: 201 });
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const user = await auth();
+    const { DB, BUCKET } = bindings();
+    const row = await DB.prepare(
+      "SELECT storage_key,mime FROM generation_assets WHERE id=? AND user_id=? AND generation_id IS NULL",
+    )
+      .bind(new URL(request.url).searchParams.get("id"), user.userId)
+      .first<{ storage_key: string; mime: string }>();
+    if (!row) throw new ApiError(404, "Reference image not found.");
+    const object = await BUCKET.get(row.storage_key);
+    if (!object) throw new ApiError(404, "Reference image unavailable.");
+    return new Response(object.body, {
+      headers: {
+        "Content-Type": row.mime,
+        "Cache-Control": "private, no-store",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
   } catch (e) {
     return fail(e);
   }
