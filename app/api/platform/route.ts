@@ -435,7 +435,7 @@ export async function POST(request: Request) {
               -cost,
               "generation_charge",
               live
-                ? "WaveSpeed generation · credits reserved"
+                ? "AI generation · credits reserved"
                 : "Demo generation · credits reserved",
               `charge:${gen}`,
               gen,
@@ -512,7 +512,7 @@ export async function POST(request: Request) {
         )
           throw new ApiError(
             409,
-            "Submitted WaveSpeed jobs cannot be cancelled here. Failed jobs return credits automatically.",
+            "Submitted generation jobs cannot be cancelled here. Failed jobs return credits automatically.",
           );
         await refundJob(
           d.id,

@@ -41,7 +41,7 @@ export function generationInput(
 ) {
   settings = generationSettings.parse(settings);
   const model = generationModel(modelId);
-  if (!model) throw new Error("Choose an available WaveSpeed model.");
+  if (!model) throw new Error("Choose an available generation model.");
   const imageDef = imageDefinition(modelId);
   if (imageDef && settings.providerInputs) {
     if (

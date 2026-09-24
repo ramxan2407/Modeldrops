@@ -99,6 +99,10 @@ import {
 } from "@/components/ui/sidebar";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+import {
+  generationMessage,
+  generationModelLabel,
+} from "@/lib/generation/presentation";
 import { ThemeToggle } from "@/components/theme-provider";
 import {
   UserDashboard,
@@ -1420,9 +1424,7 @@ export default function ModelDropsApp({
                   </p>
                 </div>
                 <span className="demo-pill">
-                  {liveModel
-                    ? "Live generation · WaveSpeed"
-                    : "Demo generation"}
+                  {liveModel ? "Live generation" : "Demo generation"}
                 </span>
               </div>
               <Tabs
@@ -1825,7 +1827,7 @@ export default function ModelDropsApp({
                   <p className="privacy-note">
                     <Lock size={11} />{" "}
                     {liveModel
-                      ? "Outputs stay private. Your prompt and selected references are sent to WaveSpeed. Credits are reserved when submitted and returned if the provider rejects or fails the job. Submitted jobs cannot be cancelled here."
+                      ? "Outputs stay private. Your prompt and selected references are sent to our third-party generation service. Credits are reserved when submitted and returned if the provider rejects or fails the job. Submitted jobs cannot be cancelled here."
                       : "Private by default. Demo results are sample images; video mode returns a storyboard preview."}
                   </p>
                 </div>
@@ -2101,7 +2103,7 @@ export default function ModelDropsApp({
                   <tbody>
                     {account.transactions.map((t) => (
                       <tr key={t.id}>
-                        <td>{t.description}</td>
+                        <td>{generationMessage(t.description)}</td>
                         <td>{new Date(t.createdAt).toLocaleDateString()}</td>
                         <td className={t.amount > 0 ? "positive" : ""}>
                           {t.amount > 0 ? "+" : ""}
@@ -2615,7 +2617,7 @@ export default function ModelDropsApp({
               <h3>Preview limitations</h3>
               <p>
                 {liveModel
-                  ? "WaveSpeed creates real outputs from your prompts. Beta credits are managed by the administrator. "
+                  ? "Create real images and videos from your prompts. Beta credits are managed by the administrator. "
                   : "Demo models return sample artwork. "}
                 Payments, character commercial licenses, and creator payouts are
                 not processed.
@@ -2675,10 +2677,8 @@ export default function ModelDropsApp({
                   : "creation"}
               </DialogTitle>
               <DialogDescription>
-                {asset.live
-                  ? `Generated with ${asset.provider || "your provider"}`
-                  : "Simulated output"}{" "}
-                · Private to you
+                {asset.live ? "Generated in Model Drops" : "Simulated output"} ·
+                Private to you
               </DialogDescription>
               {asset.type === "image" && (asset.outputs?.length || 0) > 1 ? (
                 <div className="batch-results">
@@ -2715,13 +2715,18 @@ export default function ModelDropsApp({
                 )
               )}
               <p>{asset.prompt}</p>
-              {asset.error && <p role="status">{asset.error}</p>}
+              {asset.error && (
+                <p role="status">{generationMessage(asset.error)}</p>
+              )}
               <div className="tag-row">
                 <span>{asset.status}</span>
                 <span>{asset.cost} credits</span>
                 <span>
-                  {asset.modelName ||
-                    registry.find((m) => m.id === asset.modelId)?.name}
+                  {generationModelLabel(
+                    asset.modelName ||
+                      registry.find((m) => m.id === asset.modelId)?.name ||
+                      "Generation model",
+                  )}
                 </span>
                 <span>{new Date(asset.createdAt).toLocaleString()}</span>
               </div>
@@ -2894,7 +2899,7 @@ function GenerationCard({
         )}
         <span className="generation-type">
           {g.type === "video" ? <Video size={12} /> : <ImageIcon size={12} />}{" "}
-          {g.live ? (g.provider || "AI").toUpperCase() : "DEMO"}
+          {g.live ? "AI GENERATED" : "DEMO"}
           {(g.outputs?.length || 0) > 1 ? ` · ${g.outputs!.length} IMAGES` : ""}
         </span>
       </button>
@@ -2906,7 +2911,7 @@ function GenerationCard({
             ? " returned"
             : ""}
         </span>
-        {g.error && <small role="status">{g.error}</small>}
+        {g.error && <small role="status">{generationMessage(g.error)}</small>}
         {!g.live && ["queued", "processing"].includes(g.status) && (
           <button onClick={onCancel}>Cancel</button>
         )}

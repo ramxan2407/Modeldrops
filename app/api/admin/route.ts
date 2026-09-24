@@ -64,11 +64,11 @@ export async function GET(request: Request) {
                 {
                   name: "Image and video generation",
                   status: generationEnabled(env)
-                    ? "WaveSpeed enabled"
+                    ? "Live generation enabled"
                     : "Setup required",
                   detail: generationEnabled(env)
                     ? "Qwen Image Edit, GPT Image 2.5 Flare/Sunburst, and Kling 3.0 videos. Model-specific controls, references, and live image pricing; server-side credentials. Check the provider console for usage and request outcomes."
-                    : "Set WaveSpeed credentials and enable live generation to replace sample outputs.",
+                    : "Configure generation credentials and enable live generation to replace sample outputs.",
                 },
                 {
                   name: "Private storage",

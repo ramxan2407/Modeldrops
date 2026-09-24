@@ -19,6 +19,10 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  generationMessage,
+  generationModelLabel,
+} from "@/lib/generation/presentation";
 import { toast } from "sonner";
 const sections = [
   "Overview",
@@ -391,7 +395,7 @@ export default function SuperAdmin({
                               {fmt(r.amount)}
                             </td>
                             <td>{fmt(r.balance_after)}</td>
-                            <td>{r.description}</td>
+                            <td>{generationMessage(r.description)}</td>
                             <td>{date(r.created_at)}</td>
                           </tr>
                         )),
@@ -474,10 +478,10 @@ export default function SuperAdmin({
                     rows.map((m: any) => (
                       <tr key={m.id}>
                         <td>
-                          <strong>{m.name}</strong>
-                          <small>{m.id}</small>
+                          <strong>{generationModelLabel(m.name)}</strong>
+                          <small>{generationModelLabel(m.id)}</small>
                         </td>
-                        <td>{m.provider}</td>
+                        <td>{generationMessage(m.provider)}</td>
                         <td>{m.type}</td>
                         <td>{m.credits}</td>
                         <td>{m.enabled ? "Available" : "Disabled"}</td>
@@ -596,14 +600,25 @@ export default function SuperAdmin({
                           <td>{r.email}</td>
                           <td>{r.action}</td>
                           <td>
-                            <code>{r.entity_id}</code>
+                            <code>
+                              {r.action === "admin.model"
+                                ? generationModelLabel(r.entity_id)
+                                : r.entity_id}
+                            </code>
                           </td>
                           <td>
                             <details>
                               <summary>View change</summary>
                               <pre>
                                 {JSON.stringify(
-                                  JSON.parse(r.metadata),
+                                  r.action === "admin.model"
+                                    ? {
+                                        ...JSON.parse(r.metadata),
+                                        id: generationModelLabel(
+                                          JSON.parse(r.metadata).id,
+                                        ),
+                                      }
+                                    : JSON.parse(r.metadata),
                                   null,
                                   2,
                                 )}
@@ -634,7 +649,9 @@ export default function SuperAdmin({
                             </td>
                             <td>{job.request_id || "Not confirmed"}</td>
                             <td>{job.state}</td>
-                            <td>{job.error || job.status}</td>
+                            <td>
+                              {generationMessage(job.error || job.status)}
+                            </td>
                           </tr>
                         )),
                       )
@@ -691,7 +708,9 @@ export default function SuperAdmin({
             <form onSubmit={save} key={edit.action + edit.record.id}>
               <div className="admin-edit-record">
                 <strong>
-                  {edit.record.name || edit.record.email || edit.record.id}
+                  {edit.action === "model"
+                    ? generationModelLabel(edit.record.name || edit.record.id)
+                    : edit.record.name || edit.record.email || edit.record.id}
                 </strong>
                 {edit.record.email && <small>{edit.record.email}</small>}
               </div>

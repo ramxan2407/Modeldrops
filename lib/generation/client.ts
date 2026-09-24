@@ -19,14 +19,14 @@ export class RejectedSubmission extends Error {
   }
   get userMessage() {
     if (this.status === 402)
-      return "WaveSpeed's API balance is insufficient. Please contact the administrator.";
+      return "The generation service balance is insufficient. Please contact the administrator.";
     if ([401, 403].includes(this.status))
-      return "WaveSpeed credentials or model access need administrator attention.";
+      return "Generation credentials or model access need administrator attention.";
     if (this.status === 429)
-      return "WaveSpeed is temporarily rate-limited. Please try again later.";
+      return "Generation is temporarily rate-limited. Please try again later.";
     if ([400, 422].includes(this.status))
-      return "WaveSpeed rejected these generation settings.";
-    return "WaveSpeed could not accept this request.";
+      return "The generation service rejected these settings.";
+    return "The generation service could not accept this request.";
   }
 }
 export class WaveSpeedClient {
