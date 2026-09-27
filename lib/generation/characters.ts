@@ -1,6 +1,7 @@
 import { characterAllowed } from "../admin/character-permissions";
 import { catalogFor } from "../admin/service";
-import { ApiError } from "../server";
+import { characterAccess } from "../characters/access";
+import { ApiError, bindings } from "../server";
 import { imageDefinition } from "./images";
 
 /** Resolve the owned catalog identity on the server; never trust a client portrait URL. */
@@ -11,7 +12,7 @@ export async function characterReferenceInputs(
   modelId: string,
   inputs: Record<string, unknown>,
   origin: string,
-) {
+): Promise<Record<string, unknown>> {
   if (!(await characterAllowed(db, userId, characterId, "generate")))
     throw new ApiError(
       403,
@@ -21,18 +22,10 @@ export async function characterReferenceInputs(
     (c) => c.id === characterId && c.enabled,
   );
   if (!character) throw new ApiError(400, "This model drop is unavailable.");
-  const owned = await db
-    .prepare(
-      "SELECT id,price_cents,license_version FROM character_purchases WHERE user_id=? AND character_id=? AND status='active'",
-    )
-    .bind(userId, characterId)
-    .first<{ id: string; price_cents: number; license_version: string }>();
-  if (!owned)
-    throw new ApiError(403, "Unlock this model before generating with her.");
-  if (Number(owned.price_cents) <= 0 || owned.license_version === "demo-1")
+  if (!(await characterAccess(db, userId, characterId, bindings())))
     throw new ApiError(
       403,
-      "Preview access does not unlock model generation. Paid model access is not available yet.",
+      "Unlock this model before generating with her. Preview claims do not include generation access.",
     );
   if (!character.referenceImage)
     throw new ApiError(
@@ -40,15 +33,38 @@ export async function characterReferenceInputs(
       "This model's portrait is not ready. Generation opens when her drop launches. No credits were charged.",
     );
   const definition = imageDefinition(modelId);
-  if (!definition)
+  if (!definition && modelId !== "wavespeed-kling-3")
     throw new ApiError(
       400,
-      "Character identity is supported in image editing only. Video character references are not connected yet.",
+      "Choose a generation model that supports character references.",
     );
-  const url = new URL(character.referenceImage, origin).href;
-  // Replace all identity references so a selected character cannot silently become a different person.
-  const { image: _image, images: _images, ...settings } = inputs;
-  return definition.endpoint.startsWith("openai/")
+  let url = new URL(character.referenceImage, origin).href;
+  if (character.referenceAssetId) {
+    const asset = await db
+      .prepare(
+        "SELECT storage_key FROM generation_assets WHERE id=? AND generation_id IS NULL",
+      )
+      .bind(character.referenceAssetId)
+      .first<{ storage_key: string }>();
+    const bucket = bindings().BUCKET as R2Bucket & {
+      signedRead?: (key: string) => Promise<string>;
+    };
+    if (!asset || !bucket.signedRead)
+      throw new ApiError(
+        503,
+        "Character reference delivery is unavailable. No credits were charged.",
+      );
+    url = await bucket.signedRead(asset.storage_key);
+  }
+  // Reference identity comes exclusively from the approved catalog asset.
+  const {
+    image: _image,
+    images: _images,
+    end_image: _end,
+    element_list: _elements,
+    ...settings
+  } = inputs;
+  return definition?.endpoint.startsWith("openai/")
     ? { ...settings, images: [url] }
     : { ...settings, image: url };
 }

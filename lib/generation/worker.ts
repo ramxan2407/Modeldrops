@@ -1,3 +1,6 @@
+import { characterAccess } from "../characters/access";
+import { characterAllowed } from "../admin/character-permissions";
+import { catalogFor } from "../admin/service";
 import { bindings } from "@/lib/server";
 import { refundJob, runDemoJob } from "@/lib/demo-worker";
 import { WaveSpeedClient, RejectedSubmission } from "./client";
@@ -64,7 +67,19 @@ export async function runGenerationJob(id: string, origin: string) {
       const model = await DB.prepare("SELECT enabled FROM ai_models WHERE id=?")
         .bind(g.model_id)
         .first<{ enabled: number }>();
-      if (!account || account.suspended || !model?.enabled) {
+      const availableCharacter =
+        g.character_id &&
+        (await catalogFor(DB)).some(
+          (c) => c.id === g.character_id && c.enabled,
+        );
+      if (
+        !account ||
+        account.suspended ||
+        !model?.enabled ||
+        !availableCharacter ||
+        !(await characterAccess(DB, g.user_id, g.character_id, env)) ||
+        !(await characterAllowed(DB, g.user_id, g.character_id, "generate"))
+      ) {
         await terminal(
           id,
           "failed",

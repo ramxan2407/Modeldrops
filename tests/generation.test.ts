@@ -221,9 +221,35 @@ for (const backend of ["sqlite", "postgres"]) {
           "SELECT SUM(amount) AS balance FROM credit_transactions WHERE user_id='alice'",
         )
         .first<any>())!.balance;
+    await db
+      .prepare(
+        "INSERT INTO character_purchases(id,user_id,character_id,price_cents,license_version,license_snapshot) VALUES('native-fixture','alice','amara-rose',2900,'paid-1','Fixture license')",
+      )
+      .run();
+    await db
+      .prepare(
+        "INSERT INTO generation_assets(id,user_id,storage_key,mime,size) VALUES('00000000-0000-4000-8000-000000000099','admin','private/alice/reference.png','image/png',100)",
+      )
+      .run();
+    await db
+      .prepare(
+        "INSERT INTO character_controls(id,price,enabled,featured,profile) VALUES('amara-rose',29,1,0,?)",
+      )
+      .bind(
+        JSON.stringify({
+          name: "Amara Rose",
+          age: 29,
+          category: "Beauty",
+          description: "Fictional adult.",
+          referenceAssetId: "00000000-0000-4000-8000-000000000099",
+        }),
+      )
+      .run();
+    (runtime.env.BUCKET as any).signedRead = async () =>
+      "https://private-storage.example.com/reference.png?signature=test";
     const payload = () => ({
       idempotencyKey: crypto.randomUUID(),
-      characterId: null,
+      characterId: "amara-rose",
       reference: null,
       modelId: "wavespeed-qwen-image-edit",
       expectedCredits: 12,
@@ -259,6 +285,10 @@ for (const backend of ["sqlite", "postgres"]) {
           "INSERT INTO credit_transactions(id,user_id,amount,type,description,balance_before,balance_after,idempotency_key) VALUES('fund','alice',1000,'promotion','Test credits',0,1000,'fund')",
         )
         .run();
+      assert.equal(
+        (await post("generate", { ...payload(), characterId: null })).status,
+        403,
+      );
       // Prices are server-derived, and a failed/stale quote must not spend credits.
       quotePrice = 0.04;
       assert.equal((await post("generate", payload())).status, 409);
@@ -293,6 +323,7 @@ for (const backend of ["sqlite", "postgres"]) {
           },
           body: JSON.stringify({
             modelId: "wavespeed-qwen-image-edit",
+            characterId: "amara-rose",
             prompt: "Edit the background",
             inputs: { image: `asset:${referenceId}` },
           }),
@@ -439,6 +470,21 @@ for (const backend of ["sqlite", "postgres"]) {
           settings: videoSettings,
         })
       ).json();
+      const videoRequest = await db
+        .prepare(
+          "SELECT endpoint,input_json FROM provider_requests WHERE generation_id=?",
+        )
+        .bind(video.id)
+        .first<any>();
+      assert.equal(
+        videoRequest.endpoint,
+        "kwaivgi/kling-v3.0-std/image-to-video",
+      );
+      assert.equal(
+        JSON.parse(videoRequest.input_json).image,
+        "https://private-storage.example.com/reference.png?signature=test",
+      );
+      assert.equal(JSON.parse(videoRequest.input_json).aspect_ratio, undefined);
       await drain();
       await tick(video.id);
       const download = await media.GET(
@@ -676,7 +722,12 @@ for (const backend of ["sqlite", "postgres"]) {
       );
       character = catalog.characters[1];
       characterPayload.characterId = character.id;
-      await db.prepare("INSERT INTO character_purchases(id,user_id,character_id,price_cents,license_version,license_snapshot) VALUES(?,'alice',?,2900,'test-paid','Fixture license')").bind(crypto.randomUUID(), character.id).run();
+      await db
+        .prepare(
+          "INSERT INTO character_purchases(id,user_id,character_id,price_cents,license_version,license_snapshot) VALUES(?,'alice',?,2900,'test-paid','Fixture license')",
+        )
+        .bind(crypto.randomUUID(), character.id)
+        .run();
       assert.equal((await post("generate", characterPayload)).status, 409);
       assert.equal(
         submissions,
@@ -719,20 +770,81 @@ for (const backend of ["sqlite", "postgres"]) {
           ),
           /Unlock this model/,
         );
-        await assert.rejects(
-          refs.characterReferenceInputs(
+        assert.deepEqual(
+          await refs.characterReferenceInputs(
             db,
             "alice",
             character.id,
             "wavespeed-kling-3",
-            {},
+            { image: "https://forged.example/face.png" },
             "https://modeldrops.example",
           ),
-          /image editing only/,
+          {
+            image: "https://modeldrops.example/assets/drops/test-approved.png",
+          },
         );
       } finally {
         delete character.referenceImage;
       }
+      const beforeRevocation = await balance(),
+        beforeSubmissions = submissions;
+      const pending = { id: crypto.randomUUID() };
+      await db.batch([
+        db
+          .prepare(
+            "INSERT INTO generations(id,user_id,character_id,model_id,prompt,settings,type,cost,idempotency_key,updated_at) VALUES(?,'alice','amara-rose','wavespeed-qwen-image-edit','Queued character request',?,'image',12,?,?)",
+          )
+          .bind(
+            pending.id,
+            JSON.stringify(settings),
+            pending.id,
+            new Date().toISOString(),
+          ),
+        db
+          .prepare("INSERT INTO generation_jobs(id,generation_id) VALUES(?,?)")
+          .bind(pending.id, pending.id),
+        db
+          .prepare(
+            "INSERT INTO provider_requests(generation_id,endpoint,input_json,state,reserved_microusd,created_at,updated_at) VALUES(?,'wavespeed-ai/qwen-image/edit','{}','ready',20000,?,?)",
+          )
+          .bind(pending.id, new Date().toISOString(), new Date().toISOString()),
+        db
+          .prepare(
+            "INSERT INTO credit_transactions(id,user_id,amount,type,description,balance_before,balance_after,idempotency_key,generation_id) VALUES(?,'alice',-12,'generation_charge','Queued reference test',?,?,?,?)",
+          )
+          .bind(
+            pending.id,
+            beforeRevocation,
+            beforeRevocation - 12,
+            pending.id,
+            pending.id,
+          ),
+      ]);
+      await db
+        .prepare(
+          "INSERT INTO character_permissions(user_id,character_id,can_view,can_generate) VALUES('alice','amara-rose',1,0)",
+        )
+        .run();
+      await tick(pending.id);
+      assert.equal(
+        submissions,
+        beforeSubmissions,
+        "Revoked generation access is checked again before provider spend",
+      );
+      assert.equal(
+        await balance(),
+        beforeRevocation,
+        "Revoked queued request refunds reserved credits",
+      );
+      assert.equal(
+        (
+          await db
+            .prepare("SELECT status FROM generations WHERE id=?")
+            .bind(pending.id)
+            .first<any>()
+        ).status,
+        "failed",
+      );
       const scheduler = await vite.ssrLoadModule("/app/api/jobs/route.ts");
       assert.equal(
         (await scheduler.GET(new Request("http://test.local/api/jobs"))).status,

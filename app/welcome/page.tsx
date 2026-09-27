@@ -62,7 +62,7 @@ const steps = [
     text: "Use her reference portrait, write a scene, and review your credit quote.",
     detail: "Think beyond the frame",
     description:
-      "Owned models use their approved portrait with image editing. Results depend on the generation model; character video references are not connected yet. Prompt-based video remains available.",
+      "Unlocked models use their approved portrait for image editing and as the starting frame for video. Results depend on the generation model. Generation requires character access and credits.",
     action: "Open the Studio",
     href: "/studio",
     tags: ["Video generation", "Shot planning", "Optional sound"],

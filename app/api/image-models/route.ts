@@ -39,6 +39,11 @@ export async function POST(request: Request) {
         inputs: z.record(z.unknown()),
       })
       .parse(await request.json());
+    if (!d.characterId)
+      throw new ApiError(
+        403,
+        "Choose an unlocked character before pricing generation.",
+      );
     const model = imageDefinition(d.modelId);
     if (!model) throw new ApiError(404, "Image model not found.");
     const enabled = await bindings()

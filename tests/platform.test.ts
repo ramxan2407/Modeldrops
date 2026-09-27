@@ -345,7 +345,11 @@ for (const backend of ["sqlite", "postgres"]) {
       backend +
         ": character restrictions are enforced by catalog, claims and favorites",
       async () => {
-        await f.env.DB.prepare("UPDATE character_controls SET enabled=1 WHERE id=?").bind("valentina").run();
+        await f.env.DB.prepare(
+          "UPDATE character_controls SET enabled=1 WHERE id=?",
+        )
+          .bind("valentina")
+          .run();
         who("alice");
         await f.env.DB.prepare(
           "INSERT INTO character_permissions(user_id,character_id,can_view,can_generate) VALUES(?,?,0,0)",
@@ -399,6 +403,185 @@ for (const backend of ["sqlite", "postgres"]) {
         assert.equal(
           (await state()).characters.some((c: any) => c.id === "valentina"),
           true,
+        );
+      },
+    );
+
+    await test(
+      backend +
+        ": test checkout is idempotent, owned and disabled in production",
+      async () => {
+        const checkoutApi = await vite.ssrLoadModule(
+          "/app/api/characters/checkout/route.ts",
+        );
+        who("alice");
+        assert.equal(
+          (
+            await checkoutApi.POST(
+              new Request("http://test.local/api/characters/checkout", {
+                method: "POST",
+                headers: {
+                  origin: "https://other.test",
+                  "Content-Type": "application/json",
+                },
+                body: "{}",
+              }),
+            )
+          ).status,
+          403,
+        );
+        who(null);
+        assert.equal(
+          (
+            await checkoutApi.GET(
+              new Request("http://test.local/api/characters/checkout?id=sora"),
+            )
+          ).status,
+          401,
+        );
+        who("alice");
+        const { CharacterCheckout } = await vite.ssrLoadModule(
+          "/lib/characters/checkout.ts",
+        );
+        const { characterAccess } = await vite.ssrLoadModule(
+          "/lib/characters/access.ts",
+        );
+        const { AdminService } = await vite.ssrLoadModule(
+          "/lib/admin/service.ts",
+        );
+        const svc = new AdminService(
+          f.env.DB,
+          { SUPER_ADMIN_USER_IDS: "admin" },
+          "admin",
+        );
+        const characterId = "sora";
+        const referenceId = crypto.randomUUID();
+        await f.env.DB.prepare(
+          "INSERT INTO generation_assets(id,user_id,storage_key,mime,size) VALUES(?,'admin','private/admin/character.png','image/png',100)",
+        )
+          .bind(referenceId)
+          .run();
+        const profile = {
+          name: "Sora",
+          age: 26,
+          category: "Editorial",
+          description: "Fictional adult character",
+          referenceAssetId: referenceId,
+        };
+        await assert.rejects(
+          new AdminService(
+            f.env.DB,
+            { SUPER_ADMIN_USER_IDS: "admin" },
+            "alice",
+          ).mutate("character", {
+            id: characterId,
+            price: 29,
+            enabled: true,
+            featured: false,
+            profile,
+            reason: "Approve reference portrait",
+          }),
+        );
+        await assert.rejects(
+          svc.mutate("character", {
+            id: characterId,
+            price: 29,
+            enabled: true,
+            featured: false,
+            profile: { ...profile, referenceAssetId: crypto.randomUUID() },
+            reason: "Reject foreign asset",
+          }),
+        );
+        await svc.mutate("character", {
+          id: characterId,
+          price: 29,
+          enabled: true,
+          featured: false,
+          profile,
+          reason: "Approve reference portrait",
+        });
+        const testEnv = {
+          CHARACTER_TEST_CHECKOUT: "true",
+          VERCEL_ENV: "preview",
+        };
+        const service = new CharacterCheckout(f.env.DB, "alice", testEnv);
+        const order = {
+          characterId,
+          expectedAmountCents: 2900,
+          acceptedLicense: true,
+          idempotencyKey: crypto.randomUUID(),
+        };
+        assert.equal((await service.quote(characterId)).ready, true);
+        await assert.rejects(
+          new CharacterCheckout(f.env.DB, "alice", {}).complete(order),
+          /Payments are not connected/,
+        );
+        await assert.rejects(
+          new CharacterCheckout(f.env.DB, "alice", {
+            ...testEnv,
+            VERCEL_ENV: "production",
+          }).complete(order),
+          /Payments are not connected/,
+        );
+        await assert.rejects(
+          service.complete({ ...order, expectedAmountCents: 1 }),
+          /price changed/,
+        );
+        const [first, second] = await Promise.all([
+          service.complete(order),
+          service.complete(order),
+        ]);
+        assert.equal(first.id, second.id);
+        const refs = await vite.ssrLoadModule("/lib/generation/characters.ts");
+        (runtime.env as any).CHARACTER_TEST_CHECKOUT = "true";
+        (runtime.env as any).VERCEL_ENV = "preview";
+        (runtime.env.BUCKET as any).signedRead = async () =>
+          "https://example.com/approved-sora.png";
+        assert.deepEqual(
+          await refs.characterReferenceInputs(
+            f.env.DB,
+            "alice",
+            characterId,
+            "wavespeed-kling-3",
+            { image: "https://example.com/forged.png" },
+            "https://modeldrops.example",
+          ),
+          { image: "https://example.com/approved-sora.png" },
+        );
+        assert((await state()).account.usableCharacters.includes(characterId));
+        delete (runtime.env as any).CHARACTER_TEST_CHECKOUT;
+        delete (runtime.env as any).VERCEL_ENV;
+
+        assert.equal(
+          await characterAccess(f.env.DB, "alice", characterId, testEnv),
+          true,
+        );
+        assert.equal(
+          await characterAccess(f.env.DB, "bob", characterId, testEnv),
+          false,
+        );
+        assert.equal(
+          await characterAccess(f.env.DB, "alice", characterId, {
+            ...testEnv,
+            VERCEL_ENV: "production",
+          }),
+          false,
+        );
+        await assert.rejects(
+          service.complete({ ...order, characterId: "scarlett" }),
+          /another order/,
+        );
+        await assert.rejects(
+          service.complete({ ...order, idempotencyKey: crypto.randomUUID() }),
+          /already in your library/,
+        );
+        assert.equal(
+          (
+            await f.env.DB.prepare(
+              "SELECT COUNT(*) n FROM character_orders",
+            ).first<any>()
+          ).n,
+          1,
         );
       },
     );

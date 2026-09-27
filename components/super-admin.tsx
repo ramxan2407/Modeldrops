@@ -23,6 +23,7 @@ import {
   generationMessage,
   generationModelLabel,
 } from "@/lib/generation/presentation";
+import { uploadFile } from "@/lib/upload-client";
 import { toast } from "sonner";
 const sections = [
   "Overview",
@@ -67,6 +68,8 @@ export default function SuperAdmin({
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [edit, setEdit] = useState<{
     action: string;
     record: any;
@@ -104,7 +107,7 @@ export default function SuperAdmin({
   }
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!edit || saving.current) return;
+    if (!edit || saving.current || uploading) return;
     const f = new FormData(event.currentTarget),
       value = (k: string) => String(f.get(k) || "");
     const d: any = { id: edit.record.id, reason: value("reason") };
@@ -130,6 +133,7 @@ export default function SuperAdmin({
         description: value("description"),
         age: Number(value("age")),
         category: value("category"),
+        referenceAssetId: edit.record.referenceAssetId || null,
       };
     }
     if (edit.action === "character_permission") {
@@ -443,6 +447,37 @@ export default function SuperAdmin({
               )}
               {section === "payments" && (
                 <>
+                  <h2>Character orders</h2>
+                  {(data.orders || []).length
+                    ? table(
+                        [
+                          "Account",
+                          "Character",
+                          "Mode",
+                          "Amount collected",
+                          "Status",
+                          "Date",
+                        ],
+                        data.orders.map((o: any) => (
+                          <tr key={o.id}>
+                            <td>{o.email}</td>
+                            <td>{o.character_id}</td>
+                            <td>
+                              {o.mode === "test"
+                                ? "Test · no payment"
+                                : "Payment"}
+                            </td>
+                            <td>
+                              {o.mode === "test"
+                                ? "$0.00"
+                                : `$${(o.amount_cents / 100).toFixed(2)}`}
+                            </td>
+                            <td>{o.status}</td>
+                            <td>{date(o.created_at)}</td>
+                          </tr>
+                        )),
+                      )
+                    : empty("No character checkout orders yet.")}
                   <h2>Credit packages</h2>
                   <p className="admin-muted">
                     Configure the displayed demo offers. Editing an offer does
@@ -733,7 +768,7 @@ export default function SuperAdmin({
       <Dialog
         open={!!edit}
         onOpenChange={(open) => {
-          if (!open && !busy) setEdit(null);
+          if (!open && !busy && !uploading) setEdit(null);
         }}
       >
         <DialogContent className="admin-edit">
@@ -844,6 +879,66 @@ export default function SuperAdmin({
               )}
               {edit.action === "character" && (
                 <>
+                  <label>
+                    Approved reference portrait
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      disabled={uploading || busy}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setUploading(true);
+                        setUploadProgress(0);
+                        try {
+                          const result = await uploadFile(
+                            "/api/upload",
+                            file,
+                            setUploadProgress,
+                            true,
+                          );
+                          setEdit((current) =>
+                            current
+                              ? {
+                                  ...current,
+                                  record: {
+                                    ...current.record,
+                                    referenceAssetId: result.id,
+                                    referencePreview:
+                                      "/api/upload?id=" + result.id,
+                                  },
+                                }
+                              : current,
+                          );
+                          toast.success(
+                            "Portrait uploaded. Save the profile to approve it.",
+                          );
+                        } catch (error) {
+                          toast.error((error as Error).message);
+                        } finally {
+                          setUploading(false);
+                        }
+                      }}
+                    />
+                  </label>
+                  {uploading && (
+                    <p role="status">Uploading reference… {uploadProgress}%</p>
+                  )}
+                  {edit.record.referenceAssetId && (
+                    <img
+                      src={
+                        edit.record.referencePreview ||
+                        edit.record.referenceImage
+                      }
+                      alt="Character reference awaiting profile save"
+                      style={{ maxHeight: 180, objectFit: "contain" }}
+                    />
+                  )}
+                  <small>
+                    Use an approved fictional adult portrait, PNG, JPG or WebP
+                    up to 8 MB. This becomes the identity reference for all
+                    supported generations.
+                  </small>
                   <label>
                     Character name
                     <Input
@@ -982,12 +1077,12 @@ export default function SuperAdmin({
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={busy}
+                  disabled={busy || uploading}
                   onClick={() => setEdit(null)}
                 >
                   Cancel
                 </Button>
-                <Button disabled={busy}>
+                <Button disabled={busy || uploading}>
                   {busy ? "Saving…" : "Confirm change"}
                 </Button>
               </div>

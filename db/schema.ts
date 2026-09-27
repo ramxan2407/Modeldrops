@@ -382,3 +382,40 @@ export const characterPermissions = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.userId, t.characterId] })],
 );
+
+export const characterOrders = sqliteTable(
+  "character_orders",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    characterId: text("character_id").notNull(),
+    amountCents: integer("amount_cents").notNull(),
+    currency: text("currency").notNull().default("usd"),
+    mode: text("mode").notNull(),
+    status: text("status").notNull(),
+    licenseSnapshot: text("license_snapshot").notNull(),
+    idempotencyKey: text("idempotency_key").notNull().unique(),
+    createdAt: time(),
+  },
+  (t) => [
+    uniqueIndex("character_test_order_once")
+      .on(t.userId, t.characterId)
+      .where(sql`${t.mode}='test'`),
+  ],
+);
+export const characterEntitlements = sqliteTable(
+  "character_entitlements",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    characterId: text("character_id").notNull(),
+    orderId: text("order_id")
+      .notNull()
+      .references(() => characterOrders.id),
+    status: text("status").notNull().default("active"),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.characterId] })],
+);

@@ -3,6 +3,7 @@ import { SlidersHorizontal, Plus, X, AudioLines } from "lucide-react";
 import { type GenerationOptions } from "@/lib/generation/options";
 type Props = {
   type: string;
+  characterReference?: boolean;
   ratios: string[];
   ratio: string;
   resolution: string;
@@ -28,37 +29,43 @@ export function GenerationControls(p: Props) {
   );
   return (
     <div className="generation-settings">
-      <fieldset>
-        <legend>
-          Frame <span>Aspect ratio</span>
-        </legend>
-        <div className="ratio-options">
-          {p.ratios
-            .filter((ratio) => ratio !== "custom")
-            .map((ratio) => {
-              const [w, h] = ratio.split(":").map(Number);
-              return (
-                <button
-                  key={ratio}
-                  type="button"
-                  aria-pressed={p.ratio === ratio}
-                  onClick={() => {
-                    p.setRatio(ratio);
-                  }}
-                >
-                  <span
-                    className="ratio-shape"
-                    style={{
-                      width: 26 * Math.min(1, w / h),
-                      height: 26 * Math.min(1, h / w),
+      {p.characterReference ? (
+        <p className="field-note">
+          Video framing follows your character’s reference image.
+        </p>
+      ) : (
+        <fieldset>
+          <legend>
+            Frame <span>Aspect ratio</span>
+          </legend>
+          <div className="ratio-options">
+            {p.ratios
+              .filter((ratio) => ratio !== "custom")
+              .map((ratio) => {
+                const [w, h] = ratio.split(":").map(Number);
+                return (
+                  <button
+                    key={ratio}
+                    type="button"
+                    aria-pressed={p.ratio === ratio}
+                    onClick={() => {
+                      p.setRatio(ratio);
                     }}
-                  />
-                  {ratio}
-                </button>
-              );
-            })}
-        </div>
-      </fieldset>
+                  >
+                    <span
+                      className="ratio-shape"
+                      style={{
+                        width: 26 * Math.min(1, w / h),
+                        height: 26 * Math.min(1, h / w),
+                      }}
+                    />
+                    {ratio}
+                  </button>
+                );
+              })}
+          </div>
+        </fieldset>
+      )}
 
       <>
         <div className="standard-quality">

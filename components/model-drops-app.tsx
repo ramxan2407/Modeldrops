@@ -1,4 +1,5 @@
 "use client";
+import { CharacterCheckout } from "@/components/character-checkout";
 import { GenerationControls } from "@/components/generation-controls";
 import { defaultGenerationOptions, optionsFor } from "@/lib/generation/options";
 import {
@@ -180,6 +181,7 @@ type Account = {
   isSuperAdmin?: boolean;
   name: string;
   email?: string;
+  usableCharacters?: string[];
   purchases?: {
     characterId: string;
     purchaseDate: string;
@@ -380,6 +382,9 @@ export default function ModelDropsApp({
     [query, setQuery] = useState(""),
     [category, setCategory] = useState("All models"),
     [sort, setSort] = useState("trending");
+  const [checkoutCharacter, setCheckoutCharacter] = useState<Character | null>(
+    null,
+  );
   const [catalog, setCatalog] = useState<(Character & { enabled?: boolean })[]>(
     [],
   );
@@ -588,14 +593,23 @@ export default function ModelDropsApp({
       await refresh();
     });
   };
-  const useCharacter = (c: Character) => {
+  const useCharacter = (
+    c: Character,
+    outputMode: "image" | "video" = "image",
+  ) => {
     setSelected(c.id);
-    setMode("image");
-    const imageModel = registry.find((m) => m.type === "image" && m.enabled);
-    if (imageModel) setModelId(imageModel.id);
+    setMode(outputMode);
+    setReference(null);
+    const imageModel = registry.find((m) => m.type === outputMode && m.enabled);
+    if (imageModel) {
+      setModelId(imageModel.id);
+      setResolution(imageModel.resolutions[0]);
+    }
     setDetail(null);
     setPrompt(
-      `An editorial portrait of the adult woman in the reference image, preserving her facial identity, with soft natural light and realistic skin texture. ${c.name}, age ${c.age}.`,
+      outputMode === "video"
+        ? "Subtle natural movement, a gentle smile, soft cinematic lighting. Preserve the woman’s facial identity and appearance from the reference image."
+        : `An editorial portrait of the adult woman in the reference image, preserving her facial identity, with soft natural light and realistic skin texture.`,
     );
     navigate("studio");
     history.replaceState(
@@ -680,11 +694,13 @@ export default function ModelDropsApp({
         : {}),
   };
   const parsedSettings = generationSettings.safeParse(requestedSettings);
-  const settingsError =
-    selected && characters.find((c) => c.id === selected)?.canGenerate === false
-      ? "Generation with this model is restricted for your account."
-      : liveModel && selected && mode === "video"
-        ? "Character references are available for images only. Choose Image to create with your model, or clear the model for prompt-based video."
+  const settingsError = !selected
+    ? "Choose an unlocked model from your library to start."
+    : !(account.usableCharacters || []).includes(selected)
+      ? "Unlock this model before creating images or videos."
+      : selected &&
+          characters.find((c) => c.id === selected)?.canGenerate === false
+        ? "Generation with this model is restricted for your account."
         : liveModel &&
             selected &&
             !characters.find((c) => c.id === selected)?.referenceImage
@@ -752,18 +768,6 @@ export default function ModelDropsApp({
       idempotency.current = null;
       await refresh();
       toast.success("Generation queued. You can leave this page.");
-    });
-  const purchase = (c: Character) =>
-    action(async () => {
-      await api("claim", {
-        characterId: c.id,
-        acceptedLicense: licenseAccepted,
-      });
-      await refresh();
-      toast.success(`${c.name} is ready in your dashboard`);
-      setLicenseAccepted(false);
-      setDetail(null);
-      navigate("dashboard");
     });
   const remix = (g: Generation) => {
     setPrompt(g.prompt);
@@ -1097,14 +1101,13 @@ export default function ModelDropsApp({
               characters={characters}
               name={account.name}
               balance={account.balance}
-              owned={account.owned}
+              owned={account.usableCharacters || []}
               purchases={account.purchases || []}
               generations={account.generations}
               projects={account.projects}
               loading={loading}
               onCreate={(c, kind) => {
-                changeMode(kind);
-                useCharacter(c);
+                useCharacter(c, kind);
               }}
               onBrowse={() => navigate("marketplace")}
               onModels={() => navigate("characters")}
@@ -1478,23 +1481,28 @@ export default function ModelDropsApp({
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">
-                            Start from a prompt
+                            Choose an unlocked model
                           </SelectItem>
-                          {characters.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>
-                              {c.name}
-                              {account.owned.includes(c.id)
-                                ? " · In your library"
-                                : " · Preview only"}
-                            </SelectItem>
-                          ))}
+                          {characters
+                            .filter((c) =>
+                              (account.usableCharacters || []).includes(c.id),
+                            )
+                            .map((c) => (
+                              <SelectItem key={c.id} value={c.id}>
+                                {c.name}
+                                {account.owned.includes(c.id)
+                                  ? " · In your library"
+                                  : " · Preview only"}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                       {liveModel && (
                         <small className="field-note">
-                          Owned model portraits are attached to image requests
-                          automatically. Character video references are not
-                          connected yet.
+                          Your approved character reference is attached
+                          automatically to every image and video request. Video
+                          starts from the reference portrait; framing follows
+                          that image.
                         </small>
                       )}
                       {selected && (
@@ -1620,6 +1628,7 @@ export default function ModelDropsApp({
                     />
                   ) : liveModel ? (
                     <GenerationControls
+                      characterReference={!!selected}
                       type={mode}
                       ratios={model.ratios}
                       ratio={ratio}
@@ -2418,9 +2427,11 @@ export default function ModelDropsApp({
                 <div className="detail-purchase">
                   <span>
                     <strong>${detail.price}</strong>
-                    <small>Planned launch price · checkout not connected</small>
+                    <small>
+                      Character access · generation credits separate
+                    </small>
                   </span>
-                  {account.owned.includes(detail.id) ? (
+                  {(account.usableCharacters || []).includes(detail.id) ? (
                     <Button
                       className="lime-button"
                       onClick={() => useCharacter(detail)}
@@ -2429,29 +2440,15 @@ export default function ModelDropsApp({
                     </Button>
                   ) : (
                     <>
-                      <label className="rights-check">
-                        <input
-                          type="checkbox"
-                          checked={licenseAccepted}
-                          onChange={(e) => setLicenseAccepted(e.target.checked)}
-                        />
-                        I accept the{" "}
-                        <button onClick={() => setModal("license")}>
-                          demo license
-                        </button>
-                        .
-                      </label>
                       <Button
                         className="lime-button"
-                        disabled={busy || !licenseAccepted}
-                        onClick={() => purchase(detail)}
+                        disabled={busy}
+                        onClick={() => {
+                          setCheckoutCharacter(detail);
+                          setDetail(null);
+                        }}
                       >
-                        {busy ? (
-                          <LoaderCircle size={16} className="spin" />
-                        ) : (
-                          <Plus size={16} />
-                        )}{" "}
-                        Add preview access
+                        Review character access <ArrowUpRight size={16} />
                       </Button>
                     </>
                   )}
@@ -2802,6 +2799,18 @@ export default function ModelDropsApp({
           )}
         </DialogContent>
       </Dialog>
+      <CharacterCheckout
+        character={checkoutCharacter}
+        onClose={() => setCheckoutCharacter(null)}
+        onComplete={async (id) => {
+          await refresh();
+          const c = characters.find((c) => c.id === id);
+          if (c) useCharacter(c);
+          toast.success(
+            "Test access unlocked. Choose image or video to start.",
+          );
+        }}
+      />
       <Dialog
         open={!!purchaseLicense}
         onOpenChange={(open) => {

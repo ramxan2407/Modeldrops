@@ -30,6 +30,8 @@ export function bindings() {
     LORA_EMAIL_FROM?: string;
     LORA_ADMIN_EMAILS?: string;
     APP_ORIGIN?: string;
+    CHARACTER_TEST_CHECKOUT?: string;
+    VERCEL_ENV?: string;
     MAX_LORA_UPLOAD_BYTES?: string;
   };
   if (!e.DB) throw new ApiError(503, "Workspace storage is not configured.");

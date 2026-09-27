@@ -393,3 +393,8 @@
     max-width: 100%;
   }
 }
+
+.character-checkout-review {
+  display: grid;
+  gap: 16px;
+}

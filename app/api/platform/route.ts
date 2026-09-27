@@ -1,3 +1,4 @@
+import { characterAccess, testCheckoutEnabled } from "@/lib/characters/access";
 import {
   characterAllowed,
   visibleCharacters,
@@ -119,6 +120,26 @@ export async function GET(request: Request) {
         .bind(user.userId)
         .all(),
     ]);
+    const accessRows = await DB.prepare(
+      "SELECT e.character_id,o.created_at,o.mode,o.license_snapshot,o.amount_cents FROM character_entitlements e JOIN character_orders o ON o.id=e.order_id WHERE e.user_id=? AND e.status='active' AND o.status IN ('paid','test_completed')",
+    )
+      .bind(user.userId)
+      .all<any>();
+    const access = accessRows.results.filter(
+      (r) => r.mode === "payment" || testCheckoutEnabled(bindings()),
+    );
+    const usable = await Promise.all(
+      [
+        ...new Set([
+          ...owned.results.map((r) => r.character_id),
+          ...access.map((r) => r.character_id),
+        ]),
+      ].map(async (characterId) =>
+        (await characterAccess(DB, user.userId, characterId, bindings()))
+          ? characterId
+          : null,
+      ),
+    );
     const assets = await DB.prepare(
       "SELECT id,generation_id,mime FROM generation_assets WHERE user_id=? AND generation_id IN (SELECT id FROM generations WHERE user_id=? AND status='completed' ORDER BY created_at DESC LIMIT 100) ORDER BY id",
     )
@@ -139,7 +160,16 @@ export async function GET(request: Request) {
         account: {
           name: profile.name,
           email: user.email,
-          purchases: owned.results.map((p) => ({
+          purchases: [
+            ...owned.results.filter(
+              (p) => !access.some((r) => r.character_id === p.character_id),
+            ),
+            ...access.map((r) => ({
+              ...r,
+              license_version: r.mode === "test" ? "test-1" : "paid-1",
+              price_cents: r.mode === "test" ? 0 : r.amount_cents,
+            })),
+          ].map((p) => ({
             characterId: p.character_id,
             purchaseDate: p.created_at,
             licenseVersion: p.license_version,
@@ -148,7 +178,13 @@ export async function GET(request: Request) {
           })),
           defaultPrivate: !!profile.default_private,
           balance: balance.balance,
-          owned: owned.results.map((x) => x.character_id),
+          owned: [
+            ...new Set([
+              ...owned.results.map((x) => x.character_id),
+              ...access.map((r) => r.character_id),
+            ]),
+          ],
+          usableCharacters: usable.filter(Boolean),
           favorites: favorites.results.map((x) => x.character_id),
           projects: projects.results,
           generations: generations.results.map(({ hasAsset, ...g }) => ({
@@ -287,6 +323,11 @@ export async function POST(request: Request) {
             reference: key.nullable().optional(),
           })
           .parse(data);
+        if (!d.characterId)
+          throw new ApiError(
+            403,
+            "Choose an unlocked character before generating.",
+          );
         const idem = `generation:${id}:${d.idempotencyKey}`;
         const existing = await DB.prepare(
           "SELECT id,prompt,model_id,character_id,settings,reference_id FROM generations WHERE idempotency_key=?",
@@ -323,24 +364,24 @@ export async function POST(request: Request) {
         let providerInput: unknown;
         if (live) {
           try {
+            const identity = await characterReferenceInputs(
+              DB,
+              id,
+              d.characterId,
+              m.id,
+              d.settings.providerInputs || {},
+              new URL(request.url).origin,
+            );
             providerInput = generationInput(
               m.id,
               d.prompt,
-              d.characterId
-                ? {
-                    ...d.settings,
-                    providerInputs: await characterReferenceInputs(
-                      DB,
-                      id,
-                      d.characterId,
-                      m.id,
-                      d.settings.providerInputs || {},
-                      new URL(request.url).origin,
-                    ),
-                  }
-                : d.settings,
+              {
+                ...d.settings,
+                ...(m.type === "image" ? { providerInputs: identity } : {}),
+              },
               null,
-              d.reference,
+              null,
+              m.type === "video" ? String(identity.image) : undefined,
             );
           } catch (e) {
             if (e instanceof ApiError) throw e;
@@ -378,11 +419,14 @@ export async function POST(request: Request) {
             )
           )
             throw new ApiError(400, "Character unavailable");
-          const owned = await DB.prepare(
-            "SELECT id FROM character_purchases WHERE user_id=? AND character_id=? AND status='active'",
-          )
-            .bind(id, d.characterId)
-            .first();
+          const owned =
+            live || (await characterAccess(DB, id, d.characterId, bindings()))
+              ? true
+              : await DB.prepare(
+                  "SELECT id FROM character_purchases WHERE user_id=? AND character_id=? AND status='active'",
+                )
+                  .bind(id, d.characterId)
+                  .first();
           if (!owned)
             throw new ApiError(
               403,
@@ -406,7 +450,11 @@ export async function POST(request: Request) {
           throw new ApiError(429, "Three generations are already in progress.");
         if ((!live || m.type !== "image") && !d.prompt)
           throw new ApiError(400, "Write a prompt first.");
-        let endpoint = live ? generationModel(m.id)!.endpoint : "";
+        let endpoint = live
+          ? m.type === "video"
+            ? "kwaivgi/kling-v3.0-std/image-to-video"
+            : generationModel(m.id)!.endpoint
+          : "";
         let reserve = live ? providerReserve(m.id, d.settings) : 0;
         let cost = calculateCredits(m.credits, m.type, d.settings);
         if (live && m.type === "image") {

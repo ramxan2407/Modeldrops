@@ -38,6 +38,7 @@ export function generationInput(
   settings: z.infer<typeof generationSettings>,
   characterId?: string | null,
   reference?: string | null,
+  characterImage?: string,
 ) {
   settings = generationSettings.parse(settings);
   const model = generationModel(modelId);
@@ -92,7 +93,9 @@ export function generationInput(
     prompt,
     negative_prompt: settings.negative,
     duration: settings.duration,
-    aspect_ratio: settings.ratio,
+    ...(characterImage
+      ? { image: characterImage }
+      : { aspect_ratio: settings.ratio }),
     sound: settings.sound ?? false,
     cfg_scale: settings.cfgScale ?? 0.5,
     shot_type: settings.shotType ?? "customize",

@@ -218,9 +218,8 @@ export function UserDashboard(p: Props) {
                           </Button>
                           <Button
                             variant="secondary"
-                            disabled
-                            title="Character video references are not connected yet"
-                            aria-label={`Video for ${c.name} is coming soon`}
+                            onClick={() => p.onCreate(c, "video")}
+                            aria-label={`Create video with ${c.name}`}
                           >
                             <Video size={16} />
                           </Button>

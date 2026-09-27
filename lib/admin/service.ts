@@ -16,7 +16,7 @@ const profile = z.object({
   description: z.string().trim().min(1).max(2000),
   age: z.number().int().min(18).max(100),
   category: text,
-  triggerWord: z.string().trim().max(100).optional(),
+  referenceAssetId: z.string().uuid().nullable().optional(),
 });
 const schemas = {
   character_permission: z.object({
@@ -87,9 +87,18 @@ export async function catalogFor(db: D1Database) {
   const rows = await db.prepare("SELECT * FROM character_controls").all<any>();
   return characters.map((c) => {
     const r = rows.results.find((r) => r.id === c.id);
+    const managed: Partial<z.infer<typeof profile>> = r?.profile
+      ? profile.parse(JSON.parse(r.profile))
+      : {};
     return {
       ...c,
-      ...(r?.profile ? profile.parse(JSON.parse(r.profile)) : {}),
+      ...managed,
+      ...(managed.referenceAssetId
+        ? {
+            referenceImage: `/api/characters/reference?id=${encodeURIComponent(c.id)}`,
+            image: `/api/characters/reference?id=${encodeURIComponent(c.id)}`,
+          }
+        : {}),
       enabled: r ? !!r.enabled : true,
       featured: r ? !!r.featured : c.badge === "FEATURED",
       price: r ? r.price : c.price,
@@ -167,6 +176,10 @@ export class AdminService {
           )),
           packages: await list(
             "SELECT * FROM credit_packages ORDER BY price,id",
+          ),
+          orders: await list(
+            "SELECT o.*,u.email FROM character_orders o JOIN users u ON u.id=o.user_id WHERE u.email LIKE ? ESCAPE '\\' ORDER BY o.created_at DESC,o.id LIMIT 100",
+            [match],
           ),
           connected: false,
         };
@@ -360,6 +373,24 @@ export class AdminService {
         break;
       }
       case "character": {
+        if (d.profile?.referenceAssetId) {
+          const existing = (await catalogFor(this.db)).find(
+            (c) => c.id === d.id,
+          );
+          if (existing?.referenceAssetId !== d.profile.referenceAssetId) {
+            const asset = await this.db
+              .prepare(
+                "SELECT id FROM generation_assets WHERE id=? AND user_id=? AND generation_id IS NULL AND mime IN ('image/png','image/jpeg','image/webp')",
+              )
+              .bind(d.profile.referenceAssetId, this.actor)
+              .first();
+            if (!asset)
+              throw new AdminError(
+                400,
+                "Upload an approved character portrait from your admin account first.",
+              );
+          }
+        }
         if (!characters.some((c) => c.id === d.id))
           throw new AdminError(404, "Character not found.");
         await this.db.batch([
