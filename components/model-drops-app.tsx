@@ -380,8 +380,9 @@ export default function ModelDropsApp({
     [query, setQuery] = useState(""),
     [category, setCategory] = useState("All models"),
     [sort, setSort] = useState("trending");
-  const [catalog, setCatalog] =
-    useState<(Character & { enabled?: boolean })[]>(defaultCharacters);
+  const [catalog, setCatalog] = useState<(Character & { enabled?: boolean })[]>(
+    [],
+  );
   const characters = catalog.filter(
     (c) => c.enabled !== false || account.owned.includes(c.id),
   );
@@ -391,7 +392,8 @@ export default function ModelDropsApp({
     >(null),
     [busy, setBusy] = useState(false),
     [selected, setSelected] = useState(
-      initialCharacter && characters.some((c) => c.id === initialCharacter)
+      initialCharacter &&
+        defaultCharacters.some((c) => c.id === initialCharacter)
         ? initialCharacter
         : "",
     ),
@@ -439,7 +441,7 @@ export default function ModelDropsApp({
       setAccount(data.account);
       setRegistry(data.models);
       setCreditPackages(data.packages);
-      setCatalog(data.characters || defaultCharacters);
+      setCatalog(data.characters || []);
       setLoadError("");
       return data.account as Account;
     } catch (e) {
@@ -679,30 +681,32 @@ export default function ModelDropsApp({
   };
   const parsedSettings = generationSettings.safeParse(requestedSettings);
   const settingsError =
-    liveModel && selected && mode === "video"
-      ? "Character references are available for images only. Choose Image to create with your model, or clear the model for prompt-based video."
-      : liveModel &&
-          selected &&
-          !characters.find((c) => c.id === selected)?.referenceImage
-        ? "This model’s portrait is being prepared. Generation opens with her drop."
-        : !parsedSettings.success
-          ? ["width", "height"].includes(
-              String(parsedSettings.error.issues[0].path[0]),
-            )
-            ? "Image width and height must be whole numbers from 256 to 1536 pixels."
-            : parsedSettings.error.issues[0].path[0] === "shots"
-              ? "Give every shot a prompt and a duration from 1 to 15 seconds."
-              : "Check your advanced settings. All values must be within the displayed limits."
-          : liveModel &&
-              mode === "video" &&
-              generationOptions.shotType === "customize" &&
-              generationOptions.shots.length > 0 &&
-              generationOptions.shots.reduce(
-                (sum, shot) => sum + shot.duration,
-                0,
-              ) !== Number(duration)
-            ? "Shot durations must add up to the total video duration."
-            : "";
+    selected && characters.find((c) => c.id === selected)?.canGenerate === false
+      ? "Generation with this model is restricted for your account."
+      : liveModel && selected && mode === "video"
+        ? "Character references are available for images only. Choose Image to create with your model, or clear the model for prompt-based video."
+        : liveModel &&
+            selected &&
+            !characters.find((c) => c.id === selected)?.referenceImage
+          ? "This model’s portrait is being prepared. Generation opens with her drop."
+          : !parsedSettings.success
+            ? ["width", "height"].includes(
+                String(parsedSettings.error.issues[0].path[0]),
+              )
+              ? "Image width and height must be whole numbers from 256 to 1536 pixels."
+              : parsedSettings.error.issues[0].path[0] === "shots"
+                ? "Give every shot a prompt and a duration from 1 to 15 seconds."
+                : "Check your advanced settings. All values must be within the displayed limits."
+            : liveModel &&
+                mode === "video" &&
+                generationOptions.shotType === "customize" &&
+                generationOptions.shots.length > 0 &&
+                generationOptions.shots.reduce(
+                  (sum, shot) => sum + shot.duration,
+                  0,
+                ) !== Number(duration)
+              ? "Shot durations must add up to the total video duration."
+              : "";
   const cost = liveImage
     ? quoteReady
       ? imageQuote.credits!
@@ -1090,6 +1094,7 @@ export default function ModelDropsApp({
           )}
           {page === "dashboard" && (
             <UserDashboard
+              characters={characters}
               name={account.name}
               balance={account.balance}
               owned={account.owned}
@@ -1139,7 +1144,7 @@ export default function ModelDropsApp({
               <section className="hero">
                 <img
                   className="hero-image"
-                  src={defaultCharacters[0].image}
+                  src={characters[0].image}
                   alt="Drop 001 model preview"
                 />
                 <div className="hero-scrim" />
@@ -1178,21 +1183,23 @@ export default function ModelDropsApp({
                     <span />
                   </div>
                 </div>
-                <button
-                  className="hero-character"
-                  onClick={() => setDetail(characters[0])}
-                >
-                  <span className="hero-avatar">
-                    <img src={defaultCharacters[0].image} alt="" />
-                  </span>
-                  <span>
-                    <small>MEET YOUR NEXT CHARACTER</small>
-                    <strong>
-                      Valentina <span>by @modeldrops</span>
-                    </strong>
-                  </span>
-                  <ArrowUpRight size={19} />
-                </button>
+                {characters[0] && (
+                  <button
+                    className="hero-character"
+                    onClick={() => setDetail(characters[0])}
+                  >
+                    <span className="hero-avatar">
+                      <img src={characters[0].image} alt="" />
+                    </span>
+                    <span>
+                      <small>MEET YOUR NEXT CHARACTER</small>
+                      <strong>
+                        {characters[0].name} <span>by @modeldrops</span>
+                      </strong>
+                    </span>
+                    <ArrowUpRight size={19} />
+                  </button>
+                )}
                 <div className="hero-label">MADE OF IMAGINATION</div>
               </section>
               <div className="quick-tools">
@@ -1381,7 +1388,7 @@ export default function ModelDropsApp({
                   }}
                 >
                   <img
-                    src={defaultCharacters[0].image}
+                    src={characters[0].image}
                     alt="Cinematic world building inspiration"
                   />
                   <span className="inspiration-tag">
@@ -2045,7 +2052,7 @@ export default function ModelDropsApp({
               )}
               <div className="explore-hero">
                 <img
-                  src={defaultCharacters[0].image}
+                  src={characters[0].image}
                   alt="Valentina · Drop 001 preview"
                 />
                 <div>

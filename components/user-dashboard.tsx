@@ -15,7 +15,7 @@ import {
   Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { characters, type Character } from "@/lib/catalog";
+import { type Character } from "@/lib/catalog";
 export type PurchaseRecord = {
   characterId: string;
   purchaseDate: string;
@@ -32,6 +32,7 @@ type Creation = {
   createdAt: string;
 };
 type Props = {
+  characters: Character[];
   name: string;
   balance: number;
   owned: string[];
@@ -53,7 +54,7 @@ type Props = {
   onLicense: (purchase: PurchaseRecord) => void;
 };
 export function UserDashboard(p: Props) {
-  const collection = characters
+  const collection = p.characters
     .filter((c) => p.owned.includes(c.id))
     .sort((a, b) =>
       (

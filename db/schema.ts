@@ -1,5 +1,6 @@
 import {
   sqliteTable,
+  primaryKey,
   text,
   integer,
   index,
@@ -362,8 +363,22 @@ export const trainingEmails = sqliteTable(
 );
 
 export const characterControls = sqliteTable("character_controls", {
+  profile: text("profile"),
   id: text("id").primaryKey(),
   enabled: integer("enabled").notNull().default(1),
   featured: integer("featured").notNull().default(0),
   price: integer("price").notNull().default(0),
 });
+
+export const characterPermissions = sqliteTable(
+  "character_permissions",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    characterId: text("character_id").notNull(),
+    canView: integer("can_view").notNull().default(1),
+    canGenerate: integer("can_generate").notNull().default(1),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.characterId] })],
+);

@@ -292,3 +292,96 @@ test("all cookie-authenticated writes require the exact origin", () => {
     true,
   );
 });
+
+test("character profiles and per-user permissions are super-admin only", async () => {
+  const f = setup();
+  const { characterAllowed, visibleCharacters } =
+    await import("../lib/admin/character-permissions");
+  const change = {
+    id: "valentina",
+    price: 29,
+    enabled: true,
+    featured: false,
+    profile: {
+      name: "Valentina Rose",
+      age: 28,
+      category: "Editorial",
+      description: "A fictional adult editorial model.",
+    },
+    reason: "Update launch profile",
+  };
+  for (const service of [f.ordinary, f.staff]) {
+    await rejected(service.mutate("character", change), 403);
+    await rejected(
+      service.mutate("character_permission", {
+        id: "alice",
+        characterId: "*",
+        canView: false,
+        canGenerate: false,
+        reason: "Restrict access",
+      }),
+      403,
+    );
+  }
+  await rejected(
+    f.superadmin.mutate("character", {
+      ...change,
+      profile: { ...change.profile, age: 17 },
+    }),
+    400,
+  );
+  await f.superadmin.mutate("character", change);
+  assert.equal((await catalogFor(f.env.DB))[0].name, "Valentina Rose");
+  const permission = {
+    id: "alice",
+    characterId: "valentina",
+    canView: true,
+    canGenerate: false,
+    reason: "Restrict generation",
+  };
+  await f.superadmin.mutate("character_permission", permission);
+  assert.equal(await characterAllowed(f.env.DB, "alice", "valentina"), true);
+  assert.equal(
+    await characterAllowed(f.env.DB, "alice", "valentina", "generate"),
+    false,
+  );
+  assert.equal(
+    await characterAllowed(f.env.DB, "bob", "valentina", "generate"),
+    true,
+  );
+  await f.superadmin.mutate("character_permission", {
+    ...permission,
+    characterId: "*",
+    canView: false,
+  });
+  assert.equal(
+    (await visibleCharacters(f.env.DB, "alice", await catalogFor(f.env.DB)))
+      .length,
+    0,
+  );
+  await f.superadmin.mutate("character_permission", {
+    ...permission,
+    canGenerate: true,
+  });
+  assert.equal(
+    await characterAllowed(f.env.DB, "alice", "valentina", "generate"),
+    false,
+  );
+  await rejected(
+    f.superadmin.mutate("character_permission", {
+      ...permission,
+      canView: false,
+      canGenerate: true,
+    }),
+    400,
+  );
+  assert.equal(
+    f.sql
+      .prepare(
+        "SELECT COUNT(*) n FROM audit_logs WHERE action='admin.character_permission'",
+      )
+      .get()!.n,
+    3,
+  );
+  f.sql.close();
+});

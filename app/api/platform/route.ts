@@ -1,3 +1,7 @@
+import {
+  characterAllowed,
+  visibleCharacters,
+} from "@/lib/admin/character-permissions";
 import { characterReferenceInputs } from "@/lib/generation/characters";
 import { imageEndpoint } from "@/lib/generation/images";
 import { quoteImage } from "@/lib/generation/quote";
@@ -182,7 +186,11 @@ export async function GET(request: Request) {
             enabled: !!m.enabled && (m.provider !== "WaveSpeed" || liveEnabled),
           })),
         packages: packages.results,
-        characters: await catalogFor(DB),
+        characters: await visibleCharacters(
+          DB,
+          user.userId,
+          await catalogFor(DB),
+        ),
       },
       { headers: { "Cache-Control": "private, no-store" } },
     );
@@ -207,7 +215,11 @@ export async function POST(request: Request) {
     switch (action) {
       case "favorite": {
         const d = z.object({ characterId: str() }).parse(data);
-        if (!characters.some((c) => c.id === d.characterId))
+        if (
+          !(await visibleCharacters(DB, id, await catalogFor(DB))).some(
+            (c) => c.id === d.characterId,
+          )
+        )
           throw new ApiError(404, "Character not found");
         const exists = await DB.prepare(
           "SELECT id FROM favorites WHERE user_id=? AND character_id=?",
@@ -233,7 +245,7 @@ export async function POST(request: Request) {
           .object({ characterId: str(), acceptedLicense: z.literal(true) })
           .parse(data);
         if (
-          !(await catalogFor(DB)).some(
+          !(await visibleCharacters(DB, id, await catalogFor(DB))).some(
             (c) => c.id === d.characterId && c.enabled,
           )
         )
@@ -337,7 +349,7 @@ export async function POST(request: Request) {
         }
         if (
           d.characterId &&
-          !(await catalogFor(DB)).some(
+          !(await visibleCharacters(DB, id, await catalogFor(DB))).some(
             (c) => c.id === d.characterId && c.enabled,
           )
         )
@@ -355,7 +367,16 @@ export async function POST(request: Request) {
             "These settings are not supported by the model.",
           );
         if (d.characterId) {
-          if (!characters.some((c) => c.id === d.characterId))
+          if (!(await characterAllowed(DB, id, d.characterId, "generate")))
+            throw new ApiError(
+              403,
+              "Character generation access is restricted for your account.",
+            );
+          if (
+            !(await visibleCharacters(DB, id, await catalogFor(DB))).some(
+              (c) => c.id === d.characterId,
+            )
+          )
             throw new ApiError(400, "Character unavailable");
           const owned = await DB.prepare(
             "SELECT id FROM character_purchases WHERE user_id=? AND character_id=? AND status='active'",
@@ -592,7 +613,11 @@ export async function POST(request: Request) {
         const d = z
           .object({ characterId: str(), reason: str(1000) })
           .parse(data);
-        if (!characters.some((c) => c.id === d.characterId))
+        if (
+          !(await visibleCharacters(DB, id, await catalogFor(DB))).some(
+            (c) => c.id === d.characterId,
+          )
+        )
           throw new ApiError(404, "Character not found");
         const existing = await DB.prepare(
           "SELECT id FROM reports WHERE user_id=? AND character_id=? AND status='open'",

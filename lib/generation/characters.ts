@@ -1,3 +1,4 @@
+import { characterAllowed } from "../admin/character-permissions";
 import { catalogFor } from "../admin/service";
 import { ApiError } from "../server";
 import { imageDefinition } from "./images";
@@ -11,6 +12,11 @@ export async function characterReferenceInputs(
   inputs: Record<string, unknown>,
   origin: string,
 ) {
+  if (!(await characterAllowed(db, userId, characterId, "generate")))
+    throw new ApiError(
+      403,
+      "Character generation access is restricted for your account.",
+    );
   const character = (await catalogFor(db)).find(
     (c) => c.id === characterId && c.enabled,
   );

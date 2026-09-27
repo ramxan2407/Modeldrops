@@ -125,6 +125,17 @@ export default function SuperAdmin({
       d.price = Number(value("price"));
       d.enabled = f.has("enabled");
       d.featured = f.has("featured");
+      d.profile = {
+        name: value("name"),
+        description: value("description"),
+        age: Number(value("age")),
+        category: value("category"),
+      };
+    }
+    if (edit.action === "character_permission") {
+      d.characterId = edit.record.characterId;
+      d.canView = f.has("canView");
+      d.canGenerate = f.has("canGenerate");
     }
     if (edit.action === "listing" || edit.action === "report")
       d.status = value("status");
@@ -333,6 +344,33 @@ export default function SuperAdmin({
                           <td>{date(u.created_at)}</td>
                           <td>
                             <div className="admin-actions">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  const permission = data.permissions.find(
+                                    (p: any) =>
+                                      p.user_id === u.id &&
+                                      p.character_id === "*",
+                                  );
+                                  open(
+                                    "character_permission",
+                                    {
+                                      ...u,
+                                      characterId: "*",
+                                      canView: permission
+                                        ? !!permission.can_view
+                                        : true,
+                                      canGenerate: permission
+                                        ? !!permission.can_generate
+                                        : true,
+                                    },
+                                    "Character permissions",
+                                  );
+                                }}
+                              >
+                                Permissions
+                              </Button>
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -742,6 +780,113 @@ export default function SuperAdmin({
                   <small>
                     Enter a positive amount to grant credits or a negative
                     amount to deduct.
+                  </small>
+                </>
+              )}
+              {edit.action === "character_permission" && (
+                <>
+                  <p>
+                    Control access to all characters or a specific model. Global
+                    restrictions take priority. Allowing generation still
+                    requires a valid purchase and an approved portrait.
+                  </p>
+                  <label>
+                    Model scope
+                    <select
+                      value={edit.record.characterId}
+                      onChange={(e) => {
+                        const characterId = e.target.value;
+                        const permission = data.permissions.find(
+                          (p: any) =>
+                            p.user_id === edit.record.id &&
+                            p.character_id === characterId,
+                        );
+                        setEdit({
+                          ...edit,
+                          record: {
+                            ...edit.record,
+                            characterId,
+                            canView: permission ? !!permission.can_view : true,
+                            canGenerate: permission
+                              ? !!permission.can_generate
+                              : true,
+                          },
+                        });
+                      }}
+                    >
+                      <option value="*">All characters</option>
+                      {data.characters.map((c: any) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div key={edit.record.characterId}>
+                    <label className="admin-checkbox">
+                      <input
+                        type="checkbox"
+                        name="canView"
+                        defaultChecked={edit.record.canView}
+                      />
+                      Allow viewing
+                    </label>
+                    <label className="admin-checkbox">
+                      <input
+                        type="checkbox"
+                        name="canGenerate"
+                        defaultChecked={edit.record.canGenerate}
+                      />
+                      Allow generation
+                    </label>
+                  </div>
+                </>
+              )}
+              {edit.action === "character" && (
+                <>
+                  <label>
+                    Character name
+                    <Input
+                      name="name"
+                      defaultValue={edit.record.name}
+                      maxLength={200}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Age
+                    <Input
+                      name="age"
+                      type="number"
+                      min={18}
+                      max={100}
+                      defaultValue={edit.record.age}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Category
+                    <Input
+                      name="category"
+                      defaultValue={edit.record.category}
+                      maxLength={200}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Description
+                    <textarea
+                      name="description"
+                      defaultValue={edit.record.description}
+                      maxLength={2000}
+                      required
+                      rows={4}
+                    />
+                  </label>
+                  <small>
+                    Only super administrators can edit profiles. Disabling a
+                    model stops new access and generation while preserving
+                    purchase history.
                   </small>
                 </>
               )}

@@ -341,6 +341,67 @@ for (const backend of ["sqlite", "postgres"]) {
         assert.equal((await send()).status, 404);
         assert.equal(f.objects.has(storageKey), false);
       });
+    await test(
+      backend +
+        ": character restrictions are enforced by catalog, claims and favorites",
+      async () => {
+        await f.env.DB.prepare("UPDATE character_controls SET enabled=1 WHERE id=?").bind("valentina").run();
+        who("alice");
+        await f.env.DB.prepare(
+          "INSERT INTO character_permissions(user_id,character_id,can_view,can_generate) VALUES(?,?,0,0)",
+        )
+          .bind("alice", "valentina")
+          .run();
+        assert.equal(
+          (await state()).characters.some((c: any) => c.id === "valentina"),
+          false,
+        );
+        assert.equal(
+          (
+            await post("claim", {
+              characterId: "valentina",
+              acceptedLicense: true,
+            })
+          ).status,
+          404,
+        );
+        assert.equal(
+          (await post("favorite", { characterId: "valentina" })).status,
+          404,
+        );
+        await f.env.DB.prepare(
+          "UPDATE character_permissions SET can_view=1 WHERE user_id=? AND character_id=?",
+        )
+          .bind("alice", "valentina")
+          .run();
+        const balance = (await state()).account.balance;
+        assert.equal(
+          (
+            await post("generate", {
+              idempotencyKey: crypto.randomUUID(),
+              characterId: "valentina",
+              modelId: "forma-image",
+              prompt: "Permission check",
+              settings: {
+                ratio: "1:1",
+                resolution: "1024",
+                outputs: 1,
+                negative: "",
+                seed: null,
+                duration: 5,
+              },
+            })
+          ).status,
+          403,
+        );
+        assert.equal((await state()).account.balance, balance);
+        who("bob");
+        assert.equal(
+          (await state()).characters.some((c: any) => c.id === "valentina"),
+          true,
+        );
+      },
+    );
   } finally {
     await Promise.allSettled(runtime.jobs);
     globalThis.fetch = originalFetch;

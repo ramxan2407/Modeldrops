@@ -11,7 +11,21 @@ export class AdminError extends Error {
 }
 const text = z.string().trim().min(1).max(200);
 const reason = z.string().trim().min(5).max(500);
+const profile = z.object({
+  name: text,
+  description: z.string().trim().min(1).max(2000),
+  age: z.number().int().min(18).max(100),
+  category: text,
+  triggerWord: z.string().trim().max(100).optional(),
+});
 const schemas = {
+  character_permission: z.object({
+    id: text,
+    characterId: text,
+    canView: z.boolean(),
+    canGenerate: z.boolean(),
+    reason,
+  }),
   user: z.object({ id: text, suspended: z.boolean(), reason }),
   credits: z.object({
     id: text,
@@ -40,6 +54,7 @@ const schemas = {
   }),
   character: z.object({
     id: text,
+    profile: profile.optional(),
     price: z.number().int().min(0).max(100000),
     enabled: z.boolean(),
     featured: z.boolean(),
@@ -74,10 +89,11 @@ export async function catalogFor(db: D1Database) {
     const r = rows.results.find((r) => r.id === c.id);
     return {
       ...c,
+      ...(r?.profile ? profile.parse(JSON.parse(r.profile)) : {}),
       enabled: r ? !!r.enabled : true,
       featured: r ? !!r.featured : c.badge === "FEATURED",
       price: r ? r.price : c.price,
-      badge: r ? (r.featured ? "FEATURED" : undefined) : c.badge,
+      badge: r?.featured ? "FEATURED" : c.badge,
     };
   });
 }
@@ -135,6 +151,8 @@ export class AdminService {
             [match, match, match],
           )),
           roles: this.rolesSummary(),
+          characters: await catalogFor(this.db),
+          permissions: await list("SELECT * FROM character_permissions"),
         };
       case "credits":
         return paged(
@@ -319,15 +337,43 @@ export class AdminService {
           audit(),
         ]);
         break;
+      case "character_permission": {
+        await find("users");
+        if (
+          d.characterId !== "*" &&
+          !characters.some((c) => c.id === d.characterId)
+        )
+          throw new AdminError(404, "Character not found.");
+        if (!d.canView && d.canGenerate)
+          throw new AdminError(
+            400,
+            "Viewing must be allowed before generation.",
+          );
+        await this.db.batch([
+          this.db
+            .prepare(
+              "INSERT INTO character_permissions(user_id,character_id,can_view,can_generate) VALUES(?,?,?,?) ON CONFLICT(user_id,character_id) DO UPDATE SET can_view=excluded.can_view,can_generate=excluded.can_generate",
+            )
+            .bind(d.id, d.characterId, +d.canView, +d.canGenerate),
+          audit(),
+        ]);
+        break;
+      }
       case "character": {
         if (!characters.some((c) => c.id === d.id))
           throw new AdminError(404, "Character not found.");
         await this.db.batch([
           this.db
             .prepare(
-              "INSERT INTO character_controls(id,price,enabled,featured) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET price=excluded.price,enabled=excluded.enabled,featured=excluded.featured",
+              "INSERT INTO character_controls(id,price,enabled,featured,profile) VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET price=excluded.price,enabled=excluded.enabled,featured=excluded.featured,profile=COALESCE(excluded.profile,character_controls.profile)",
             )
-            .bind(d.id, d.price, +d.enabled, +d.featured),
+            .bind(
+              d.id,
+              d.price,
+              +d.enabled,
+              +d.featured,
+              d.profile ? JSON.stringify(d.profile) : null,
+            ),
           audit(),
         ]);
         break;

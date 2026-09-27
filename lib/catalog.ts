@@ -15,6 +15,7 @@ export type Character = {
   age: number;
   drop: string;
   referenceImage?: string;
+  canGenerate?: boolean;
 };
 // Portraits must be original fictional adults. Set referenceImage only after a
 // final portrait has been reviewed and added to public/assets/drops.

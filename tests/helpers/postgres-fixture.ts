@@ -17,6 +17,15 @@ export async function postgresFixture() {
       "utf8",
     ),
   );
+  await pg.exec(
+    await readFile(
+      new URL(
+        "../../migrations/vercel/003_character_management.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
   const db = new PostgresDatabase({
     transaction: (fn) =>
       pg.transaction(async (tx) => {
