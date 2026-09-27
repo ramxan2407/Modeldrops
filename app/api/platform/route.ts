@@ -1,3 +1,4 @@
+import { characterReferenceInputs } from "@/lib/generation/characters";
 import { imageEndpoint } from "@/lib/generation/images";
 import { quoteImage } from "@/lib/generation/quote";
 import { resolveImageReferences } from "@/lib/generation/references";
@@ -313,11 +314,24 @@ export async function POST(request: Request) {
             providerInput = generationInput(
               m.id,
               d.prompt,
-              d.settings,
-              d.characterId,
+              d.characterId
+                ? {
+                    ...d.settings,
+                    providerInputs: await characterReferenceInputs(
+                      DB,
+                      id,
+                      d.characterId,
+                      m.id,
+                      d.settings.providerInputs || {},
+                      new URL(request.url).origin,
+                    ),
+                  }
+                : d.settings,
+              null,
               d.reference,
             );
           } catch (e) {
+            if (e instanceof ApiError) throw e;
             throw new ApiError(400, (e as Error).message);
           }
         }

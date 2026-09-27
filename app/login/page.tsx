@@ -1,3 +1,4 @@
+import { characters } from "@/lib/catalog";
 import { ShieldCheck } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getAppUser } from "@/lib/app-auth";
@@ -33,8 +34,8 @@ async function LoginContent({
     <main className="login-page">
       <section className="login-story">
         <img
-          src="/assets/hero.png"
-          alt="Nova, a cinematic character ready for your next story"
+          src={characters[0].image}
+          alt="Valentina · Drop 001 portrait coming soon"
         />
         <a
           className="login-brand"
@@ -56,7 +57,7 @@ async function LoginContent({
             All together in your own creative space.
           </p>
           <span className="login-art-credit">
-            Nova · The Model Drops collection
+            Drop 001 · Five fictional adult AI models
           </span>
         </div>
       </section>

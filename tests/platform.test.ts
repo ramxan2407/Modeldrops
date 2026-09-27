@@ -80,7 +80,7 @@ for (const backend of ["sqlite", "postgres"]) {
         assert.equal(
           (
             await post("claim", {
-              characterId: "nova",
+              characterId: "valentina",
               acceptedLicense: true,
               userId: "bob",
             })
@@ -88,14 +88,18 @@ for (const backend of ["sqlite", "postgres"]) {
           200,
         );
         assert.equal(
-          (await post("claim", { characterId: "nova", acceptedLicense: true }))
-            .status,
+          (
+            await post("claim", {
+              characterId: "valentina",
+              acceptedLicense: true,
+            })
+          ).status,
           200,
         );
-        await post("favorite", { characterId: "nova" });
+        await post("favorite", { characterId: "valentina" });
         await post("project", { name: "Private QA project" });
         const a: any = await state();
-        assert.deepEqual(a.account.owned, ["nova"]);
+        assert.deepEqual(a.account.owned, ["valentina"]);
         assert.equal(a.account.projects.length, 1);
         assert.equal(a.account.purchases.length, 1);
         who("bob");
@@ -122,7 +126,7 @@ for (const backend of ["sqlite", "postgres"]) {
       async () => {
         const payload = {
           idempotencyKey: crypto.randomUUID(),
-          characterId: "nova",
+          characterId: "valentina",
           modelId: "forma-image",
           prompt: "QA portrait",
           settings: {
@@ -240,7 +244,7 @@ for (const backend of ["sqlite", "postgres"]) {
         assert.equal(
           (
             await mutate("character", {
-              id: "nova",
+              id: "valentina",
               enabled: false,
               featured: false,
               price: 24,
@@ -251,8 +255,12 @@ for (const backend of ["sqlite", "postgres"]) {
         );
         who("bob");
         assert.equal(
-          (await post("claim", { characterId: "nova", acceptedLicense: true }))
-            .status,
+          (
+            await post("claim", {
+              characterId: "valentina",
+              acceptedLicense: true,
+            })
+          ).status,
           404,
         );
       },

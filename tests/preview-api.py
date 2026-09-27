@@ -22,9 +22,9 @@ except urllib.error.HTTPError as e:check('Unauthenticated access rejected',e.cod
 check('Admin role enforced',call('admin')[0]==403)
 check('Cross-origin writes rejected',call('project',{'name':'bad'},'https://untrusted.example')[0]==403)
 check('Payments fail closed',call('checkout',{'packageId':'creator'})[0]==503)
-check('License acceptance required',call('claim',{'characterId':'nova','acceptedLicense':False})[0]==400)
-check('License snapshot purchase',call('claim',{'characterId':'nova','acceptedLicense':True})[0]==200)
-payload={'idempotencyKey':str(uuid.uuid4()),'characterId':'nova','modelId':'forma-image','prompt':'Integration test: cinematic demo frame','settings':{'ratio':'16:9','resolution':'1024','outputs':1,'negative':'','seed':42,'duration':5}}
+check('License acceptance required',call('claim',{'characterId':'valentina','acceptedLicense':False})[0]==400)
+check('License snapshot purchase',call('claim',{'characterId':'valentina','acceptedLicense':True})[0]==200)
+payload={'idempotencyKey':str(uuid.uuid4()),'characterId':'valentina','modelId':'forma-image','prompt':'Integration test: cinematic demo frame','settings':{'ratio':'16:9','resolution':'1024','outputs':1,'negative':'','seed':42,'duration':5}}
 status,g=call('generate',payload);check('Generation enqueued',status==202);gid=g['id']
 status,replayed=call('generate',payload);check('Retry returns same generation',status==200 and replayed['id']==gid)
 _,state=call('state');check('Exactly one credit charge',state['account']['balance']==before-12)

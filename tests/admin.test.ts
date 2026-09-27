@@ -145,18 +145,18 @@ test("user suspension is reversible and cannot lock out privileged operators", a
 test("catalog and model changes persist with audit records and validated bounds", async () => {
   const f = setup();
   await f.superadmin.mutate("character", {
-    id: "nova",
+    id: "valentina",
     price: 42,
     enabled: false,
     featured: true,
     reason: "Temporarily withdraw listing",
   });
   assert.equal(
-    (await catalogFor(f.env.DB)).find((c) => c.id === "nova")!.enabled,
+    (await catalogFor(f.env.DB)).find((c) => c.id === "valentina")!.enabled,
     false,
   );
   assert.equal(
-    (await catalogFor(f.env.DB)).find((c) => c.id === "nova")!.price,
+    (await catalogFor(f.env.DB)).find((c) => c.id === "valentina")!.price,
     42,
   );
   await f.superadmin.mutate("model", {
@@ -230,7 +230,7 @@ test("moderation saves decisions and user notifications", async () => {
     .prepare(
       "INSERT INTO reports(id,user_id,character_id,reason) VALUES(?,?,?,?)",
     )
-    .run(r, "alice", "nova", "Review this listing");
+    .run(r, "alice", "valentina", "Review this listing");
   await f.superadmin.mutate("report", {
     id: r,
     status: "resolved",

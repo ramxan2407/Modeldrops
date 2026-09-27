@@ -1,3 +1,4 @@
+import { characterReferenceInputs } from "@/lib/generation/characters";
 import { z } from "zod";
 import { auth, assertOrigin, bindings, ApiError, fail } from "@/lib/server";
 import {
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
     const d = z
       .object({
         modelId: z.string().max(200),
+        characterId: z.string().max(100).optional(),
         prompt: z.string().max(16000),
         inputs: z.record(z.unknown()),
       })
@@ -46,8 +48,19 @@ export async function POST(request: Request) {
     if (!enabled?.enabled) throw new ApiError(400, "This model is disabled.");
     let input: Record<string, unknown>;
     try {
-      input = imageInput(model, d.prompt, d.inputs);
+      const inputs = d.characterId
+        ? await characterReferenceInputs(
+            bindings().DB,
+            user.userId,
+            d.characterId,
+            d.modelId,
+            d.inputs,
+            new URL(request.url).origin,
+          )
+        : d.inputs;
+      input = imageInput(model, d.prompt, inputs);
     } catch (e) {
+      if (e instanceof ApiError) throw e;
       throw new ApiError(400, (e as Error).message);
     }
     input = await resolveImageReferences(input, user.userId);

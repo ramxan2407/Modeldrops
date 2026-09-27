@@ -167,7 +167,7 @@ export function UserDashboard(p: Props) {
                 <p>Ready to create with, whenever you are.</p>
               </div>
               <button className="text-link" onClick={p.onBrowse}>
-                Browse characters
+                Explore Drop 001
                 <ArrowUpRight size={15} />
               </button>
             </div>
@@ -217,8 +217,9 @@ export function UserDashboard(p: Props) {
                           </Button>
                           <Button
                             variant="secondary"
-                            onClick={() => p.onCreate(c, "video")}
-                            aria-label={`Create video with ${c.name}`}
+                            disabled
+                            title="Character video references are not connected yet"
+                            aria-label={`Video for ${c.name} is coming soon`}
                           >
                             <Video size={16} />
                           </Button>

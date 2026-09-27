@@ -29,5 +29,5 @@ export function inspirationPrompt(value: unknown): string | null {
   const character = characters.find((c) => c.id === parts[0]);
   const style = inspirationStyles.find((s) => s.id === parts[1]);
   if (!character || !style) return null;
-  return `${/^[aeiou]/i.test(character.category) ? "An" : "A"} ${character.category.toLowerCase()} character portrait inspired by ${character.name}: ${character.description} ${style.detail}. No text or logos.`;
+  return `${/^[aeiou]/i.test(character.category) ? "An" : "A"} ${character.category.toLowerCase()} portrait of a fictional adult woman, age ${character.age}, inspired by ${character.name}: ${character.description} ${style.detail}. No text or logos.`;
 }

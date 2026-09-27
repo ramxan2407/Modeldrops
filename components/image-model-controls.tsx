@@ -21,7 +21,8 @@ export const imageQuoteKey = (
   modelId: string,
   prompt: string,
   inputs: Record<string, unknown>,
-) => JSON.stringify([modelId, prompt, inputs]);
+  characterId?: string,
+) => JSON.stringify([modelId, prompt, inputs, characterId || null]);
 export function ImageModelPicker({
   models,
   value,
@@ -57,12 +58,14 @@ export function ImageModelPicker({
   );
 }
 export function ImageModelControls({
+  characterId,
   modelId,
   prompt,
   values,
   onChange,
   onQuote,
 }: {
+  characterId?: string;
   modelId: string;
   prompt: string;
   values: Record<string, unknown> | undefined;
@@ -100,7 +103,7 @@ export function ImageModelControls({
     if (definition && values === undefined)
       onChange(schemaDefaults(definition.schema));
   }, [definition, values, onChange]);
-  const inputKey = imageQuoteKey(modelId, prompt, values || {});
+  const inputKey = imageQuoteKey(modelId, prompt, values || {}, characterId);
   useEffect(() => {
     if (!definition || values === undefined) return;
     const info = {
@@ -113,7 +116,7 @@ export function ImageModelControls({
       fetch("/api/image-models", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ modelId, prompt, inputs: values }),
+        body: JSON.stringify({ modelId, prompt, inputs: values, characterId }),
         signal: abort.signal,
       })
         .then(async (r) => {
@@ -157,21 +160,31 @@ export function ImageModelControls({
       ...(definition.schema["x-order-properties"] || []),
       ...Object.keys(properties),
     ]),
-  ].filter((k) => properties[k] && k !== "prompt" && !managedFields.has(k));
+  ].filter(
+    (k) =>
+      properties[k] &&
+      k !== "prompt" &&
+      !managedFields.has(k) &&
+      !(characterId && mediaField(k, properties[k])),
+  );
   return (
     <div className="image-schema-controls">
       <div className="standard-quality">
         <strong>
-          {definition.endpoint.startsWith("openai/")
-            ? Array.isArray(values.images) && values.images.length
-              ? "Reference image editing"
-              : "Text to image"
-            : "Reference image editing"}
+          {characterId
+            ? "Your model reference"
+            : definition.endpoint.startsWith("openai/")
+              ? Array.isArray(values.images) && values.images.length
+                ? "Reference image editing"
+                : "Text to image"
+              : "Reference image editing"}
         </strong>
         <span>
-          {definition.endpoint.startsWith("openai/")
-            ? "Add optional references to edit, or leave them empty to create from text."
-            : "Upload a reference and describe the changes you want."}{" "}
+          {characterId
+            ? "When the model is available, her approved portrait is attached automatically. Identity consistency varies by image model."
+            : definition.endpoint.startsWith("openai/")
+              ? "Add optional references to edit, or leave them empty to create from text."
+              : "Upload a reference and describe the changes you want."}{" "}
           One image per request.
         </span>
       </div>

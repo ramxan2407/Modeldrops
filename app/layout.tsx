@@ -7,9 +7,9 @@ import "./welcome.css";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: "Model Drops — Your next character. Your next world.",
+  title: "Model Drops — Your signature AI model.",
   description:
-    "Discover original characters and explore a unified AI creation studio.",
+    "Discover Drop 001: five fictional adult AI models for your creator brand. Explore model drops and a private content creation studio.",
   other: {
     "codex-preview": "development",
   },

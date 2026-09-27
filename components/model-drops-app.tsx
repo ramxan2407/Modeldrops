@@ -209,7 +209,7 @@ const navigation = [
   { id: "train-lora", label: "Train LoRA", icon: Upload },
 ];
 const workspace = [
-  { id: "characters", label: "My Characters", icon: Users },
+  { id: "characters", label: "My Models", icon: Users },
   { id: "my-loras", label: "My LoRAs", icon: Layers },
   { id: "library", label: "Creations", icon: Images },
   { id: "projects", label: "Projects", icon: Folder },
@@ -218,8 +218,8 @@ const titles: Record<Page, string> = {
   dashboard: "Overview",
   discover: "Discover",
   studio: "Create content",
-  marketplace: "Character marketplace",
-  characters: "My Characters",
+  marketplace: "Model Drops · Drop 001",
+  characters: "My Models",
   explore: "Explore",
   projects: "Projects",
   library: "My Generations",
@@ -378,7 +378,7 @@ export default function ModelDropsApp({
     [loading, setLoading] = useState(true),
     [loadError, setLoadError] = useState(""),
     [query, setQuery] = useState(""),
-    [category, setCategory] = useState("All characters"),
+    [category, setCategory] = useState("All models"),
     [sort, setSort] = useState("trending");
   const [catalog, setCatalog] =
     useState<(Character & { enabled?: boolean })[]>(defaultCharacters);
@@ -588,9 +588,12 @@ export default function ModelDropsApp({
   };
   const useCharacter = (c: Character) => {
     setSelected(c.id);
+    setMode("image");
+    const imageModel = registry.find((m) => m.type === "image" && m.enabled);
+    if (imageModel) setModelId(imageModel.id);
     setDetail(null);
     setPrompt(
-      `A cinematic portrait of ${c.name}, soft natural light, film grain, rich textures`,
+      `An editorial portrait of the adult woman in the reference image, preserving her facial identity, with soft natural light and realistic skin texture. ${c.name}, age ${c.age}.`,
     );
     navigate("studio");
     history.replaceState(
@@ -616,7 +619,12 @@ export default function ModelDropsApp({
   const liveModel = model.provider === "WaveSpeed";
   const liveImage = liveModel && mode === "image";
   const activeImageInputs = imageInputs[modelId];
-  const quoteKey = imageQuoteKey(modelId, prompt, activeImageInputs || {});
+  const quoteKey = imageQuoteKey(
+    modelId,
+    prompt,
+    activeImageInputs || {},
+    selected || undefined,
+  );
   const quoteReady =
     imageQuote.key === quoteKey && imageQuote.credits !== undefined;
   const promptNeeded = !liveImage || imageQuote.promptRequired !== false;
@@ -640,7 +648,6 @@ export default function ModelDropsApp({
         setNegative("");
       }
       setReference(null);
-      setSelected("");
       if (next.type === "video") setSeed("");
     }
   }, [
@@ -671,24 +678,31 @@ export default function ModelDropsApp({
         : {}),
   };
   const parsedSettings = generationSettings.safeParse(requestedSettings);
-  const settingsError = !parsedSettings.success
-    ? ["width", "height"].includes(
-        String(parsedSettings.error.issues[0].path[0]),
-      )
-      ? "Image width and height must be whole numbers from 256 to 1536 pixels."
-      : parsedSettings.error.issues[0].path[0] === "shots"
-        ? "Give every shot a prompt and a duration from 1 to 15 seconds."
-        : "Check your advanced settings. All values must be within the displayed limits."
-    : liveModel &&
-        mode === "video" &&
-        generationOptions.shotType === "customize" &&
-        generationOptions.shots.length > 0 &&
-        generationOptions.shots.reduce(
-          (sum, shot) => sum + shot.duration,
-          0,
-        ) !== Number(duration)
-      ? "Shot durations must add up to the total video duration."
-      : "";
+  const settingsError =
+    liveModel && selected && mode === "video"
+      ? "Character references are available for images only. Choose Image to create with your model, or clear the model for prompt-based video."
+      : liveModel &&
+          selected &&
+          !characters.find((c) => c.id === selected)?.referenceImage
+        ? "This model’s portrait is being prepared. Generation opens with her drop."
+        : !parsedSettings.success
+          ? ["width", "height"].includes(
+              String(parsedSettings.error.issues[0].path[0]),
+            )
+            ? "Image width and height must be whole numbers from 256 to 1536 pixels."
+            : parsedSettings.error.issues[0].path[0] === "shots"
+              ? "Give every shot a prompt and a duration from 1 to 15 seconds."
+              : "Check your advanced settings. All values must be within the displayed limits."
+          : liveModel &&
+              mode === "video" &&
+              generationOptions.shotType === "customize" &&
+              generationOptions.shots.length > 0 &&
+              generationOptions.shots.reduce(
+                (sum, shot) => sum + shot.duration,
+                0,
+              ) !== Number(duration)
+            ? "Shot durations must add up to the total video duration."
+            : "";
   const cost = liveImage
     ? quoteReady
       ? imageQuote.credits!
@@ -791,7 +805,7 @@ export default function ModelDropsApp({
   const filtered = characters
     .filter(
       (c) =>
-        (category === "All characters" || c.category === category) &&
+        (category === "All models" || c.category === category) &&
         (!query ||
           (c.name + " " + c.creator + " " + c.category + " " + c.tags.join(" "))
             .toLowerCase()
@@ -847,10 +861,7 @@ export default function ModelDropsApp({
         )}
         <div className="character-image-bottom">
           <span>{c.category}</span>
-          <span>
-            <Star size={11} fill="currentColor" />
-            {c.rating}
-          </span>
+          <span>{c.age} · AI</span>
         </div>
         <div className="card-hover">
           <span>
@@ -887,7 +898,7 @@ export default function ModelDropsApp({
         ) : (
           <div className="character-price">
             ${c.price}
-            <small>sample price</small>
+            <small>planned launch price</small>
           </div>
         )}
       </div>
@@ -1128,8 +1139,8 @@ export default function ModelDropsApp({
               <section className="hero">
                 <img
                   className="hero-image"
-                  src="/assets/hero.png"
-                  alt="Original silver-haired character in a cinematic alien landscape"
+                  src={defaultCharacters[0].image}
+                  alt="Drop 001 model preview"
                 />
                 <div className="hero-scrim" />
                 <div className="hero-content">
@@ -1172,12 +1183,12 @@ export default function ModelDropsApp({
                   onClick={() => setDetail(characters[0])}
                 >
                   <span className="hero-avatar">
-                    <img src="/assets/hero.png" alt="" />
+                    <img src={defaultCharacters[0].image} alt="" />
                   </span>
                   <span>
                     <small>MEET YOUR NEXT CHARACTER</small>
                     <strong>
-                      Nova <span>by @studio.north</span>
+                      Valentina <span>by @modeldrops</span>
                     </strong>
                   </span>
                   <ArrowUpRight size={19} />
@@ -1241,14 +1252,14 @@ export default function ModelDropsApp({
             <section className="market-section">
               {heading(
                 page === "discover"
-                  ? "Characters with a story to tell"
+                  ? "Drop 001 · Meet the models"
                   : page === "marketplace"
-                    ? "Find your next main character."
+                    ? "Five models. Your next signature."
                     : titles[page],
                 page === "discover"
-                  ? "Distinctive faces. Consistent worlds. Ready for your imagination."
+                  ? "Five fictional adult women. A focused first collection."
                   : page === "marketplace"
-                    ? "Discover a character. Make it part of your world."
+                    ? "Explore Drop 001. Choose your model before creating with her."
                     : page === "characters"
                       ? "Your collection, ready for its next chapter."
                       : "A collection of characters that caught your eye.",
@@ -1260,9 +1271,7 @@ export default function ModelDropsApp({
                     View marketplace <ArrowRight size={15} />
                   </button>
                 ) : (
-                  <span className="result-count">
-                    {filtered.length} characters
-                  </span>
+                  <span className="result-count">{filtered.length} models</span>
                 ),
               )}
               <div className="filter-bar">
@@ -1273,7 +1282,7 @@ export default function ModelDropsApp({
                       onClick={() => setCategory(c)}
                       className={c === category ? "active" : ""}
                     >
-                      {c === "All characters" && <Layers size={13} />} {c}
+                      {c === "All models" && <Layers size={13} />} {c}
                     </button>
                   ))}
                 </div>
@@ -1283,7 +1292,7 @@ export default function ModelDropsApp({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="trending">Trending</SelectItem>
+                      <SelectItem value="trending">Drop order</SelectItem>
                       <SelectItem value="price">Price: low to high</SelectItem>
                       <SelectItem value="name">Name: A–Z</SelectItem>
                     </SelectContent>
@@ -1311,7 +1320,7 @@ export default function ModelDropsApp({
                     variant="ghost"
                     onClick={() => {
                       setFreeOnly(false);
-                      setCategory("All characters");
+                      setCategory("All models");
                       setQuery("");
                     }}
                   >
@@ -1337,15 +1346,15 @@ export default function ModelDropsApp({
                   action="Explore characters"
                   onClick={() => {
                     setQuery("");
-                    setCategory("All characters");
+                    setCategory("All models");
                     setFreeOnly(false);
                     navigate("marketplace");
                   }}
                 />
               )}
               <p className="artwork-note">
-                Preview collection · Sample prices and ratings · Illustrative
-                artwork, no likeness or commercial rights offered
+                Drop 001 preview · Five fictional adult AI models · Final
+                portraits and paid access coming soon
               </p>
             </section>
           )}
@@ -1372,7 +1381,7 @@ export default function ModelDropsApp({
                   }}
                 >
                   <img
-                    src="/assets/hero.png"
+                    src={defaultCharacters[0].image}
                     alt="Cinematic world building inspiration"
                   />
                   <span className="inspiration-tag">
@@ -1443,16 +1452,15 @@ export default function ModelDropsApp({
               </Tabs>
               <div className="studio-layout">
                 <div className="studio-controls">
-                  {!liveModel && (
+                  {
                     <div className="control-group">
                       <label>
-                        <span>01</span> Your character{" "}
+                        <span>01</span> Your model{" "}
                         <button onClick={() => navigate("marketplace")}>
                           Browse <ArrowUpRight size={12} />
                         </button>
                       </label>
                       <Select
-                        disabled={liveModel}
                         value={selected || "none"}
                         onValueChange={(v) =>
                           setSelected(v === "none" ? "" : v)
@@ -1477,8 +1485,9 @@ export default function ModelDropsApp({
                       </Select>
                       {liveModel && (
                         <small className="field-note">
-                          Prompt-based generation. Character references and
-                          custom LoRAs are not supported by these models.
+                          Owned model portraits are attached to image requests
+                          automatically. Character video references are not
+                          connected yet.
                         </small>
                       )}
                       {selected && (
@@ -1501,7 +1510,7 @@ export default function ModelDropsApp({
                             <span>
                               {account.owned.includes(selected)
                                 ? "In your library"
-                                : "Add to library to generate"}
+                                : "Unlock this model to generate"}
                             </span>
                           </div>
                           {account.owned.includes(selected) ? (
@@ -1522,10 +1531,10 @@ export default function ModelDropsApp({
                         </div>
                       )}
                     </div>
-                  )}
+                  }
                   <div className="control-group studio-model-group">
                     <label>
-                      <span>{liveModel ? "01" : "02"}</span> Generation model
+                      <span>02</span> Generation model
                     </label>
                     {liveImage ? (
                       <ImageModelPicker
@@ -1561,8 +1570,8 @@ export default function ModelDropsApp({
                   {(!liveImage || imageQuote.hasPrompt !== false) && (
                     <div className="control-group">
                       <label htmlFor="prompt">
-                        <span>{liveModel ? "02" : "03"}</span> Describe your
-                        vision <Sparkles size={14} />
+                        <span>03</span> Describe your vision{" "}
+                        <Sparkles size={14} />
                       </label>
                       <Textarea
                         id="prompt"
@@ -1595,6 +1604,7 @@ export default function ModelDropsApp({
                   {liveImage ? (
                     <ImageModelControls
                       key={modelId}
+                      characterId={selected || undefined}
                       modelId={modelId}
                       prompt={prompt}
                       values={activeImageInputs}
@@ -2035,8 +2045,8 @@ export default function ModelDropsApp({
               )}
               <div className="explore-hero">
                 <img
-                  src="/assets/hero.png"
-                  alt="Nova on a cinematic landscape"
+                  src={defaultCharacters[0].image}
+                  alt="Valentina · Drop 001 preview"
                 />
                 <div>
                   <p className="eyebrow">THE CHARACTER STUDY · 001</p>
@@ -2045,7 +2055,7 @@ export default function ModelDropsApp({
                     <br />
                     Unfamiliar worlds.
                   </h1>
-                  <p>Start with Nova. See where your imagination takes her.</p>
+                  <p>Meet Valentina. Build a recognizable creator identity.</p>
                   <Button
                     className="lime-button"
                     onClick={() => setDetail(characters[0])}
@@ -2338,7 +2348,7 @@ export default function ModelDropsApp({
               </div>
               <div className="detail-body">
                 <div className="detail-eyebrow">
-                  <span>DEMO CHARACTER COLLECTION</span>
+                  <span>DROP 001 · FICTIONAL ADULT AI MODELS</span>
                   <button
                     className="icon-button"
                     aria-label="Favorite character"
@@ -2364,26 +2374,35 @@ export default function ModelDropsApp({
                   Created by @{detail.creator}
                 </DialogDescription>
                 <p>{detail.description}</p>
+                {!detail.referenceImage && (
+                  <p role="status">
+                    Coming soon. The final portrait is being prepared; preview
+                    access does not enable character generation or charge a
+                    payment.
+                  </p>
+                )}
                 <div className="tag-row">
                   {detail.tags.map((t) => (
                     <span key={t}>{t}</span>
                   ))}
                 </div>
                 <div className="detail-stats">
+                  <span>{detail.drop}</span>
+                  <span>Age {detail.age} · Fictional adult</span>
                   <span>
-                    <Star size={14} /> {detail.rating}{" "}
-                    <small>sample rating</small>
-                  </span>
-                  <span>
-                    <Images size={14} /> {detail.uses}{" "}
-                    <small>sample creations</small>
+                    {detail.referenceImage
+                      ? "Reference portrait ready"
+                      : "Portrait coming soon"}
                   </span>
                 </div>
                 <div className="license-block">
                   <ShieldCheck size={18} />
                   <div>
                     <strong>Protected character access</strong>
-                    <p>Create in the studio. Character assets stay private.</p>
+                    <p>
+                      Your unlocked model appears in My Models. Reference images
+                      guide identity; a trained LoRA is not included.
+                    </p>
                     <button onClick={() => setModal("license")}>
                       Read preview license <ArrowUpRight size={12} />
                     </button>
@@ -2392,7 +2411,7 @@ export default function ModelDropsApp({
                 <div className="detail-purchase">
                   <span>
                     <strong>${detail.price}</strong>
-                    <small>Illustrative price · no charge in preview</small>
+                    <small>Planned launch price · checkout not connected</small>
                   </span>
                   {account.owned.includes(detail.id) ? (
                     <Button
@@ -2425,7 +2444,7 @@ export default function ModelDropsApp({
                         ) : (
                           <Plus size={16} />
                         )}{" "}
-                        Add demo character
+                        Add preview access
                       </Button>
                     </>
                   )}

@@ -26,59 +26,43 @@ import { ModelDropsBrand } from "@/components/model-drops-brand";
 import { characters, packages } from "@/lib/catalog";
 import { inspirationPrompt, inspirationStyles } from "@/lib/inspiration";
 
-const heroScenes = [
-  {
-    name: "Cinematic",
-    image: "/assets/hero.png",
-    character: "Nova",
-    position: "center 38%",
-    headline: "Your next world.",
-  },
-  {
-    name: "Illustrated",
-    image: "/assets/yuki.jpg",
-    character: "Yuki",
-    position: "center 35%",
-    headline: "A different reality.",
-  },
-  {
-    name: "Playful",
-    image: "/assets/elio.jpg",
-    character: "Elio",
-    position: "center 35%",
-    headline: "A little more magic.",
-  },
-];
+const heroScenes = characters.map((c) => ({
+  name: c.name,
+  image: c.image,
+  character: c.name,
+  position: "center",
+  headline: "Your signature model.",
+}));
 const steps = [
   {
     icon: Users,
-    title: "Find a starting point",
-    text: "Explore the character collection and discover an aesthetic that feels like you.",
-    detail: "Build your cast",
+    title: "Choose your model",
+    text: "Meet the five women in Drop 001 and choose the identity for your creator brand.",
+    detail: "Five models. Five identities.",
     description:
-      "Browse distinctive personalities, compare creative directions, and collect inspiration before opening the Studio.",
-    action: "Explore the cast",
+      "Compare each model’s look and creative direction. Save your favorites while the first collection is being prepared.",
+    action: "Explore the drop",
     href: "#playground",
     tags: ["Character previews", "Creative directions", "Prompt inspiration"],
   },
   {
     icon: ImageIcon,
-    title: "Create your first frame",
-    text: "Turn a direction into a prompt, then choose your image model and settings.",
-    detail: "Make it your own",
+    title: "Unlock your model",
+    text: "At launch, buy model access once, then use generation credits to create.",
+    detail: "Your model. Your workspace.",
     description:
-      "Use Qwen Image Edit for reference-based edits or explore the GPT Image 2.5 models. Review the cost before you generate.",
+      "Checkout is not connected yet. Preview access can be added to your account without payment; it does not unlock unfinished portraits or commercial rights.",
     action: "Try the prompt explorer",
     href: "#playground",
     tags: ["Reference editing", "Model controls", "Upfront credit cost"],
   },
   {
     icon: Film,
-    title: "Bring it to life",
-    text: "Take your next idea into motion with the video workspace.",
+    title: "Create with her",
+    text: "Use her reference portrait, write a scene, and review your credit quote.",
     detail: "Think beyond the frame",
     description:
-      "Explore Kling 3.0 video generation with duration, aspect ratio, sound, and shot-planning controls in your private workspace.",
+      "Owned models use their approved portrait with image editing. Results depend on the generation model; character video references are not connected yet. Prompt-based video remains available.",
     action: "Open the Studio",
     href: "/studio",
     tags: ["Video generation", "Shot planning", "Optional sound"],
@@ -98,11 +82,11 @@ const steps = [
 const faqs = [
   {
     q: "Does this page generate an image?",
-    a: "No. This page uses existing sample artwork to help you explore characters, framing, and prompts. Open the Studio to choose a model, review its credit cost, and submit a real generation.",
+    a: "No. Drop 001 currently uses clearly marked placeholder covers. Final adult AI model portraits must be added before character generation can launch.",
   },
   {
     q: "Can I use the same character across creations?",
-    a: "Character consistency depends on the model and references you use. The landing-page characters are illustrative examples; selecting one does not activate a trained LoRA or grant rights to a person's likeness.",
+    a: "An unlocked model’s approved portrait is attached to image editing requests. This guides facial identity but does not guarantee perfect consistency or activate a trained LoRA. Portraits for the first drop are still being prepared.",
   },
   {
     q: "How does custom LoRA training work?",
@@ -123,7 +107,7 @@ const faqs = [
 ];
 export default function Welcome() {
   const [scene, setScene] = useState(0);
-  const [characterId, setCharacterId] = useState("nova");
+  const [characterId, setCharacterId] = useState(characters[0].id);
   const [filter, setFilter] = useState("All");
   const [styleId, setStyleId] = useState("cinematic");
   const [frame, setFrame] = useState("4 / 5");
@@ -134,11 +118,7 @@ export default function Welcome() {
   const character =
     characters.find((c) => c.id === characterId) ?? characters[0];
   const visibleCharacters = characters.filter(
-    (c) =>
-      filter === "All" ||
-      (filter === "Illustrated"
-        ? ["Anime", "3D"].includes(c.category)
-        : c.category === filter),
+    (c) => filter === "All" || c.category === filter,
   );
   const preset = `${character.id}.${styleId}`;
   const prompt = inspirationPrompt(preset)!;
@@ -165,7 +145,7 @@ export default function Welcome() {
     return () => observer.disconnect();
   }, []);
   const resetExplorer = () => {
-    setCharacterId("nova");
+    setCharacterId(characters[0].id);
     setFilter("All");
     setStyleId("cinematic");
     setFrame("4 / 5");
@@ -212,20 +192,21 @@ export default function Welcome() {
           fetchPriority="high"
         />
         <div className="welcome-hero-copy">
-          <p className="eyebrow">ONE CHARACTER. EVERY POSSIBILITY.</p>
+          <p className="eyebrow">DROP 001 · FIVE FICTIONAL ADULT MODELS</p>
           <h1>
-            Your next character.
+            A model worth following.
             <br />
             <em key={scene}>{currentScene.headline}</em>
           </h1>
           <p>
-            Find your spark. Shape your story.
-            <br />A whole creative world, in one place.
+            Five distinct identities. Your own creative direction.
+            <br />
+            Small drops. A model-first creator studio.
           </p>
           <div className="welcome-hero-actions">
             <Button asChild className="lime-button">
-              <Link prefetch={false} href="/studio">
-                Start creating <Sparkles size={16} />
+              <Link prefetch={false} href="/marketplace">
+                Explore Drop 001 <Sparkles size={16} />
               </Link>
             </Button>
             <Link
@@ -237,7 +218,7 @@ export default function Welcome() {
             </Link>
           </div>
           <fieldset className="welcome-scene-picker">
-            <legend>Pick a world to explore</legend>
+            <legend>Meet the first five</legend>
             <div>
               {heroScenes.map((s, i) => (
                 <button
@@ -252,7 +233,7 @@ export default function Welcome() {
             </div>
           </fieldset>
           <span className="welcome-art-caption" aria-live="polite">
-            {currentScene.character} · Sample artwork
+            {currentScene.character} · Portrait coming soon
           </span>
         </div>
       </section>
@@ -263,11 +244,12 @@ export default function Welcome() {
       >
         <div className="marketing-heading welcome-section-heading">
           <div>
-            <span className="eyebrow">
-              A LITTLE PLAY. A LOT OF POSSIBILITY.
-            </span>
-            <h2 id="explorer-title">Make the first move.</h2>
-            <p>Pick a character. Find a direction. Leave with a prompt.</p>
+            <span className="eyebrow">THE FIRST DROP</span>
+            <h2 id="explorer-title">Meet your next model.</h2>
+            <p>
+              Explore five fictional women, all aged 26+. Choose a model, then
+              build your visual identity.
+            </p>
           </div>
           <button className="welcome-reset" onClick={resetExplorer}>
             <RotateCcw size={14} /> Reset
@@ -278,7 +260,7 @@ export default function Welcome() {
           role="group"
           aria-label="Filter character previews"
         >
-          {["All", "Realistic", "Illustrated", "Fantasy"].map((f) => (
+          {["All", "Editorial", "Lifestyle", "Beauty"].map((f) => (
             <button
               key={f}
               aria-pressed={filter === f}
@@ -349,7 +331,7 @@ export default function Welcome() {
           <div className="welcome-prompt-panel">
             <div className="welcome-character-heading" aria-live="polite">
               <span className="eyebrow">
-                {character.category} · CHARACTER INSPIRATION
+                {character.category} · FICTIONAL ADULT AI MODEL
               </span>
               <h3>{character.name}</h3>
               <p>{character.description}</p>
@@ -380,9 +362,9 @@ export default function Welcome() {
               <Button asChild className="lime-button">
                 <Link
                   prefetch={false}
-                  href={`/studio?inspiration=${encodeURIComponent(preset)}`}
+                  href={`/studio?character=${character.id}&inspiration=${encodeURIComponent(preset)}`}
                 >
-                  Open prompt in Studio <ArrowUpRight size={16} />
+                  Preview model in Studio <ArrowUpRight size={16} />
                 </Link>
               </Button>
               <button
@@ -405,16 +387,16 @@ export default function Welcome() {
               {copyMessage}
             </p>
             <p className="welcome-preview-note">
-              This explorer uses existing artwork, not live generation. Creative
-              direction changes the prompt; crop changes only this preview. Your
-              prompt carries into the Studio after sign-in. Choose a model and
-              review credits there.
+              Drop 001 is in preparation. These covers are placeholders, not
+              finished model portraits. Preview the creative direction now;
+              character generation opens after the reference portraits are
+              ready.
             </p>
           </div>
         </div>
         <p className="artwork-note">
-          Illustrative character collection. Sample artwork does not grant
-          model, commercial, or likeness rights.
+          Every model is a fictional adult AI identity. Launch prices are
+          previews; purchases and commercial licenses are not available yet.
         </p>
       </section>
       <section

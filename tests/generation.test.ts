@@ -658,6 +658,81 @@ for (const backend of ["sqlite", "postgres"]) {
       );
       assert.equal((await post("generate", payload())).status, 503);
       runtime.env.WAVESPEED_API_KEY = "test-key";
+      // Model drop access must be checked before any provider spend.
+      const catalog = await vite.ssrLoadModule("/lib/catalog.ts");
+      assert.equal(catalog.characters.length, 5);
+      assert(
+        catalog.characters.every((c: any) => c.age >= 25 && !c.referenceImage),
+      );
+      let character = catalog.characters[0];
+      const characterPayload = { ...payload(), characterId: character.id };
+      assert.equal((await post("generate", characterPayload)).status, 403);
+      await post("claim", { characterId: character.id, acceptedLicense: true });
+      const beforeCharacter = submissions;
+      assert.equal(
+        (await post("generate", characterPayload)).status,
+        403,
+        "Free preview claims do not unlock paid model generation",
+      );
+      character = catalog.characters[1];
+      characterPayload.characterId = character.id;
+      await db.prepare("INSERT INTO character_purchases(id,user_id,character_id,price_cents,license_version,license_snapshot) VALUES(?,'alice',?,2900,'test-paid','Fixture license')").bind(crypto.randomUUID(), character.id).run();
+      assert.equal((await post("generate", characterPayload)).status, 409);
+      assert.equal(
+        submissions,
+        beforeCharacter,
+        "Unready portraits never reach the provider",
+      );
+      const refs = await vite.ssrLoadModule("/lib/generation/characters.ts");
+      character.referenceImage = "/assets/drops/test-approved.png";
+      try {
+        const input = await refs.characterReferenceInputs(
+          db,
+          "alice",
+          character.id,
+          "wavespeed-qwen-image-edit",
+          { image: "https://other.example/someone.png" },
+          "https://modeldrops.example",
+        );
+        assert.deepEqual(input, {
+          image: "https://modeldrops.example/assets/drops/test-approved.png",
+        });
+        const gpt = await refs.characterReferenceInputs(
+          db,
+          "alice",
+          character.id,
+          "wavespeed:openai/gpt-image-2.5-flare/text-to-image",
+          { images: ["https://other.example/someone.png"] },
+          "https://modeldrops.example",
+        );
+        assert.deepEqual(gpt, {
+          images: ["https://modeldrops.example/assets/drops/test-approved.png"],
+        });
+        await assert.rejects(
+          refs.characterReferenceInputs(
+            db,
+            "bob",
+            character.id,
+            "wavespeed-qwen-image-edit",
+            {},
+            "https://modeldrops.example",
+          ),
+          /Unlock this model/,
+        );
+        await assert.rejects(
+          refs.characterReferenceInputs(
+            db,
+            "alice",
+            character.id,
+            "wavespeed-kling-3",
+            {},
+            "https://modeldrops.example",
+          ),
+          /image editing only/,
+        );
+      } finally {
+        delete character.referenceImage;
+      }
       const scheduler = await vite.ssrLoadModule("/app/api/jobs/route.ts");
       assert.equal(
         (await scheduler.GET(new Request("http://test.local/api/jobs"))).status,
@@ -788,14 +863,27 @@ await test("WaveSpeed input mapping covers sizes, formats, batches, audio pricin
     generationInput("wavespeed-qwen-image-edit", "test", settings, "character"),
   );
 });
-await test("verified WaveSpeed CDN output is accepted without forwarding API credentials",async()=>{
-  const result=await downloadOutput('https://d2h7xmz5gqybh9.cloudfront.net/output/image.png','image',{},async(_url,options)=>{
-    assert.equal(options?.headers,undefined);
-    assert.equal(options?.redirect,'error');
-    return new Response(png,{headers:{'Content-Type':'image/png'}});
-  });
-  assert.equal(result.mime,'image/png');
-  await assert.rejects(()=>downloadOutput('https://another-distribution.cloudfront.net/output/image.png','image',{}),/host/);
+await test("verified WaveSpeed CDN output is accepted without forwarding API credentials", async () => {
+  const result = await downloadOutput(
+    "https://d2h7xmz5gqybh9.cloudfront.net/output/image.png",
+    "image",
+    {},
+    async (_url, options) => {
+      assert.equal(options?.headers, undefined);
+      assert.equal(options?.redirect, "error");
+      return new Response(png, { headers: { "Content-Type": "image/png" } });
+    },
+  );
+  assert.equal(result.mime, "image/png");
+  await assert.rejects(
+    () =>
+      downloadOutput(
+        "https://another-distribution.cloudfront.net/output/image.png",
+        "image",
+        {},
+      ),
+    /host/,
+  );
 });
 await test("WaveSpeed protocol distinguishes rejections, uncertain submissions and terminal failures", async () => {
   const env = { WAVESPEED_API_KEY: "test-key" };
