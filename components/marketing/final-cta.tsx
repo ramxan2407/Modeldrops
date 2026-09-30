@@ -42,7 +42,7 @@ export function FinalCTA() {
           sizes="100vw"
         />
       </div>
-      <div className="md-final-type">
+      <div className="md-final-type" data-motion-reveal>
         <span className="md-kicker">TALENT IS JUST THE BEGINNING.</span>
         <h2>
           YOUR NEXT

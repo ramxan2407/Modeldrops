@@ -72,7 +72,7 @@ export function GenerationDemo() {
         <br />
         <em>TO CONTENT.</em>
       </h2>
-      <div className="md-demo-window">
+      <div className="md-demo-window" data-motion-reveal>
         <div className="md-demo-title">
           <span>MODELDROPS / CREATOR STUDIO</span>
           <span>PRODUCT PREVIEW</span>

@@ -52,7 +52,7 @@ export function PossibilityStory() {
         <br />
         <em>ENDLESS POSSIBILITIES.</em>
       </h2>
-      <div className="md-possibility-stage">
+      <div className="md-possibility-stage" data-motion-reveal>
         <div className="md-identity-study">
           <Image
             src="/assets/hero.png"

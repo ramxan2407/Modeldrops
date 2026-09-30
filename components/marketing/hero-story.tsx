@@ -60,7 +60,7 @@ export function HeroStory() {
         <span>THE DIGITAL TALENT HOUSE</span>
         <span>COLLECTION / 001</span>
       </div>
-      <div className="md-hero-copy">
+      <div className="md-hero-copy" data-motion-reveal>
         <div className="md-hero-opening">
           <span className="md-kicker">A NEW KIND OF CREATIVE PARTNER</span>
           <h1>

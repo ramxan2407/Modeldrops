@@ -114,7 +114,7 @@ export function UseCaseStories() {
             <div className="md-usecase-type">{c.name.toUpperCase()}</div>
             <span>CREATIVE DIRECTION / {c.scene.toUpperCase()}</span>
           </div>
-          <div className="md-usecase-copy">
+          <div className="md-usecase-copy" data-motion-reveal>
             <span className="md-kicker">BUILT FOR {c.name.toUpperCase()}</span>
             <h2>{c.heading}</h2>
             <p>{c.text}</p>

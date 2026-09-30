@@ -4,6 +4,11 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowUpRight, Menu, X } from "lucide-react";
 import { ModelDropsBrand } from "@/components/model-drops-brand";
 import { ThemeToggle } from "@/components/theme-provider";
+import {
+  useReducedStoryMotion,
+  useSystemReducedStoryMotion,
+  toggleStoryMotion,
+} from "@/components/motion/motion-preference";
 const links = [
   ["Models", "/models"],
   ["Create", "/create"],
@@ -13,18 +18,26 @@ const links = [
 ];
 export function MarketingShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const reduced = useReducedStoryMotion();
+  const systemReduced = useSystemReducedStoryMotion();
   const header = useRef<HTMLElement>(null);
   useEffect(() => {
     let previous = window.scrollY,
+      direction = 0,
+      travel = 0,
       frame = 0;
     const update = () => {
       frame = 0;
       const y = window.scrollY;
+      const delta = y - previous;
+      if (Math.sign(delta) !== direction) travel = 0;
+      direction = Math.sign(delta);
+      travel += delta;
       if (header.current) {
         header.current.dataset.compact = String(y > 80);
-        header.current.dataset.hidden = String(
-          !open && y > 500 && y > previous + 4,
-        );
+        if (open || y < 500 || travel < -12)
+          header.current.dataset.hidden = "false";
+        else if (travel > 36) header.current.dataset.hidden = "true";
       }
       previous = y;
     };
@@ -43,7 +56,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
     };
   }, [open]);
   return (
-    <div className="md-public">
+    <div className="md-public" data-reduced-motion={reduced}>
       <a className="md-skip" href="#main-content">
         Skip to content
       </a>
@@ -124,6 +137,24 @@ export function MarketingShell({ children }: { children: ReactNode }) {
         <div className="md-footer-bottom">
           <span>© {new Date().getFullYear()} ModelDrops</span>
           <span>Drop 001 · Fictional adult identities · Launch preview</span>
+          <button
+            className="md-motion-toggle"
+            type="button"
+            aria-pressed={reduced}
+            disabled={systemReduced}
+            title={
+              systemReduced
+                ? "Motion is reduced by your device accessibility settings."
+                : "Turn off scroll animations and interface transitions."
+            }
+            onClick={toggleStoryMotion}
+          >
+            {systemReduced
+              ? "Reduced motion (device)"
+              : reduced
+                ? "Reduced motion on"
+                : "Reduce motion"}
+          </button>
           <a href="#main-content">Back to top ↑</a>
         </div>
       </footer>

@@ -13,12 +13,12 @@ function animateDrop(
   const track = gsap.utils.toArray<HTMLElement>(".md-drop-track")[0];
   if (!track) return;
   const motion = gsap.to(track, {
-    x: () => -Math.max(0, track.scrollWidth - window.innerWidth + 100),
+    x: () => -Math.max(0, track.scrollWidth - element.clientWidth),
     ease: "none",
     scrollTrigger: {
       trigger: element,
       start: "top top",
-      end: () => `+=${Math.max(1000, track.scrollWidth - window.innerWidth)}`,
+      end: () => `+=${Math.max(1000, track.scrollWidth - element.clientWidth)}`,
       pin: true,
       scrub: 0.8,
       invalidateOnRefresh: true,
@@ -54,7 +54,7 @@ export function DropShowcase() {
           View all models ↗
         </Link>
       </div>
-      <div className="md-drop-heading">
+      <div className="md-drop-heading" data-motion-reveal>
         <h2>
           THE <em>DROP.</em>
         </h2>
@@ -64,7 +64,12 @@ export function DropShowcase() {
           Five identities. One first collection.
         </p>
       </div>
-      <div className="md-drop-track">
+      <div
+        className="md-drop-track"
+        role="region"
+        aria-label="Drop 001 character collection"
+        tabIndex={0}
+      >
         {talent.map((m) => (
           <Link className="md-drop-frame" key={m.id} href={`/models/${m.slug}`}>
             <TalentPortrait model={m} />

@@ -21,7 +21,9 @@ The conversion path is discover → profile → review access → purchased char
 
 `components/marketing/` contains separate story sections, cards, filters, navigation and prompt access components. `components/motion/use-story-motion.ts` uses scoped GSAP React cleanup and dynamically loads ScrollTrigger. Desktop sequences pin their outer section and animate descendants with transforms and opacity. Scroll progress does not update React state on every frame. Routes and media-query changes revert their timelines.
 
-Below 960px and with reduced motion, pinned stories become normal document sections, horizontal cards use native scrolling, and scene selectors remain interactive. Navigation, native selects, range comparisons, visible focus, skip links and labeled controls support keyboard use. No custom scrolling or WebGL dependency is needed.
+Pinned storytelling requires a fine pointer with hover and a viewport at least 960px wide and 900px tall. Touch devices, smaller tablets and short laptop/landscape windows use light, one-time entrance motion with native scrolling; character cards remain swipeable and scene selectors remain interactive. Reduced motion disables both story animation and interface transitions. The footer preference persists locally and never overrides an operating-system request to reduce motion. Static/native layouts are also the fallback if the animation module cannot load.
+
+Layout changes and font readiness share a coalesced, document-ordered ScrollTrigger refresh. Mobile browser chrome does not force repeated height-only refreshes. Header hiding requires deliberate directional travel, preventing small wheel/trackpad deltas from flickering it. Navigation, native selects, range comparisons, visible focus, skip links and labeled controls support keyboard use. No custom scrolling or WebGL dependency is needed.
 
 ## Data and generation
 
@@ -45,3 +47,7 @@ The homepage demonstration accurately represents one image per request. No fabri
 - All public routes and five profiles returned successful responses with canonical metadata. Unknown profiles returned 404; `/create` and Studio redirects preserved the selected character.
 - No real purchases, paid generation or production data writes were used for this review.
 - Real-device performance, measured Core Web Vitals and a complete assistive-technology audit remain release checks; they are not claimed from local visual testing.
+
+### Responsive motion follow-up
+
+Browser viewport checks passed at 320×568, 390×844, 844×390, 768×1024, 1024×768, 1280×720, 960×900 and 1440×900. Small/short layouts had no pinned sections, horizontal page overflow or clipped headings. Large desktop had exactly four pinned story sections, each fitting the viewport. Resizing removed and restored those sections without duplicate spacers. Mobile-layout carousel scrolling, scene selection and comparison-range keyboard controls worked. The reduced-motion preference removed pinning, survived reload and restored animations when disabled. Profile navigation cleaned up all pin spacers; returning home recreated exactly four. No browser warnings or errors were observed in these checks. These are browser viewport tests, not physical iOS/Android or frame-rate certification.

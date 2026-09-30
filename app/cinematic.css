@@ -2056,3 +2056,124 @@ body:has(.md-public) .theme-toggle-floating {
     padding-top: 0;
   }
 }
+
+/* Native layouts are the default; only an initialized, roomy desktop opts into pinning. */
+.md-drop:not([data-motion="full"]) {
+  min-height: 0;
+}
+.md-drop:not([data-motion="full"]) .md-drop-track {
+  width: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 6vw;
+  padding-bottom: 24px;
+  overscroll-behavior-x: contain;
+}
+.md-drop:not([data-motion="full"]) .md-drop-frame {
+  scroll-snap-align: start;
+}
+.md-possibilities:not([data-motion="full"]) {
+  min-height: 0;
+}
+.md-possibilities:not([data-motion="full"]) .md-scene-stack {
+  min-height: 0;
+}
+.md-possibilities:not([data-motion="full"]) .md-scene-layer {
+  position: relative;
+  display: none;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+.md-possibilities:not([data-motion="full"]) .md-scene-layer.is-mobile-active {
+  display: flex;
+}
+.md-possibilities:not([data-motion="full"]) .md-scene-mobile-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 25px;
+}
+.md-scene-mobile-tabs button {
+  border: 1px solid #ffffff40;
+  color: #c5c7c0;
+  font-size: 12px;
+  padding: 10px 14px;
+  min-height: 44px;
+}
+.md-scene-mobile-tabs button[aria-pressed="true"] {
+  background: var(--accent);
+  color: #111;
+}
+.md-generation-story:not([data-motion="full"]) {
+  min-height: 0;
+}
+.md-hero:not([data-motion="full"]) .md-hero-next {
+  display: none;
+}
+.md-public [data-motion-reveal] {
+  scroll-margin-top: 100px;
+}
+.md-motion-toggle {
+  min-height: 44px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.md-mobile-nav {
+  max-height: calc(100svh - 100px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.md-mobile-nav a {
+  min-height: 44px;
+}
+.md-public input,
+.md-public textarea,
+.md-public select {
+  font-size: max(16px, 1em);
+}
+.md-public [data-motion="full"] .md-drop-track {
+  will-change: transform;
+}
+.md-public[data-reduced-motion="true"] *,
+.md-public[data-reduced-motion="true"] *::before,
+.md-public[data-reduced-motion="true"] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+.md-public[data-reduced-motion="true"] .md-talent-portrait img,
+.md-public[data-reduced-motion="true"] .md-button {
+  transform: none !important;
+}
+@media (hover: none), (pointer: coarse) {
+  .md-talent-portrait:hover > img,
+  .md-button:hover {
+    transform: none;
+  }
+}
+@media (max-width: 599px) {
+  .md-hero {
+    min-height: 680px;
+  }
+  .md-hero-copy h1 {
+    font-size: clamp(40px, 12.5vw, 72px);
+  }
+  .md-final h2 {
+    font-size: clamp(34px, 11.8vw, 60px);
+  }
+  .md-possibilities .md-display {
+    font-size: clamp(32px, 10.5vw, 48px);
+  }
+  .md-display {
+    font-size: clamp(38px, 12vw, 48px);
+  }
+  .md-profile-hero h1 {
+    font-size: clamp(46px, 15vw, 72px);
+    overflow-wrap: anywhere;
+  }
+  .md-public .md-profile-composer h2 {
+    font-size: clamp(40px, 12vw, 58px);
+  }
+}
