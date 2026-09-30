@@ -3,6 +3,11 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { creativeScenes, useCases } from "@/lib/marketing/catalog";
+import {
+  campaignAssets,
+  campaignPoster,
+} from "@/lib/marketing/campaign-assets";
+import { CinematicMedia } from "./cinematic-media";
 import { useStoryMotion } from "@/components/motion/use-story-motion";
 import type { gsap as Gsap } from "gsap";
 function animateCases(gsap: typeof Gsap) {
@@ -22,7 +27,28 @@ function animateCases(gsap: typeof Gsap) {
 export function CampaignComparison() {
   const [split, setSplit] = useState(48),
     [scene, setScene] = useState(0);
-  const briefs = [creativeScenes[2], creativeScenes[1], creativeScenes[4]];
+  const briefs = [
+    {
+      ...creativeScenes[2],
+      setting:
+        "A volcanic coastline at dusk. Silver sea mist. A restrained warm horizon.",
+    },
+    {
+      ...creativeScenes[0],
+      setting:
+        "Sculptural plaster walls. A charcoal plinth. Long afternoon shadows.",
+    },
+    {
+      ...creativeScenes[4],
+      setting:
+        "A rain-wet city plaza. Glass architecture. Muted green reflections.",
+    },
+  ];
+  const assets = [
+    campaignAssets.coast,
+    campaignAssets.editorial,
+    campaignAssets.street,
+  ];
   return (
     <section className="md-section md-comparison">
       <span className="md-kicker">ACT 05 / MAKE THE IDEA VISIBLE</span>
@@ -46,14 +72,13 @@ export function CampaignComparison() {
       </div>
       <div className="md-comparison-stage">
         <div className="md-concept-image">
-          <Image
-            src="/assets/hero.png"
-            alt="Original cinematic concept artwork used to illustrate a campaign presentation"
-            fill
+          <CinematicMedia
+            key={assets[scene].slug}
+            asset={assets[scene]}
             sizes="90vw"
           />
-          <div>
-            <span>VISUAL DIRECTION / CONCEPT ART</span>
+          <div className="md-concept-caption">
+            <span>AI-GENERATED CAMPAIGN ENVIRONMENT</span>
             <h3>{briefs[scene].label}</h3>
           </div>
         </div>
@@ -85,7 +110,7 @@ export function CampaignComparison() {
       </div>
       <p className="md-disclosure">
         Move the slider to explore the brief and visual treatment. This is a
-        concept presentation, not a live before-and-after generation.
+        generated campaign environment, not a character likeness demonstration.
       </p>
     </section>
   );
@@ -93,6 +118,13 @@ export function CampaignComparison() {
 export function UseCaseStories() {
   const root = useRef<HTMLElement>(null);
   useStoryMotion(root, animateCases);
+  const assets = [
+    campaignAssets.street,
+    campaignAssets.editorial,
+    campaignAssets.editorial,
+    campaignAssets.coast,
+    campaignAssets.street,
+  ];
   return (
     <section
       ref={root}
@@ -110,6 +142,12 @@ export function UseCaseStories() {
               } as React.CSSProperties
             }
           >
+            <Image
+              src={campaignPoster(assets[i])}
+              alt=""
+              fill
+              sizes="(max-width: 959px) 100vw, 50vw"
+            />
             <span className="md-usecase-number">0{i + 1}</span>
             <div className="md-usecase-type">{c.name.toUpperCase()}</div>
             <span>CREATIVE DIRECTION / {c.scene.toUpperCase()}</span>

@@ -1,15 +1,16 @@
 "use client";
 import { useRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useStoryMotion } from "@/components/motion/use-story-motion";
 import type { gsap as Gsap } from "gsap";
+import { CinematicMedia } from "./cinematic-media";
+import { campaignAssets } from "@/lib/marketing/campaign-assets";
 function animateFinal(
   gsap: typeof Gsap,
   _trigger: unknown,
   element: HTMLElement,
 ) {
-  gsap.from(".md-final-image", {
+  gsap.from(".md-final-image .md-cinematic-frame", {
     scale: 1.25,
     yPercent: 10,
     scrollTrigger: {
@@ -35,12 +36,7 @@ export function FinalCTA() {
   return (
     <section className="md-final" ref={root}>
       <div className="md-final-image">
-        <Image
-          src="/assets/hero.png"
-          alt="Original fictional digital character, cinematic concept artwork"
-          fill
-          sizes="100vw"
-        />
+        <CinematicMedia asset={campaignAssets.coast} />
       </div>
       <div className="md-final-type" data-motion-reveal>
         <span className="md-kicker">TALENT IS JUST THE BEGINNING.</span>

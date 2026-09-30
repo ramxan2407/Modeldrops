@@ -1,0 +1,293 @@
+{
+  "approvedCapUsd": 2,
+  "totalQuotedUsd": 1.71,
+  "purpose": "AI-generated campaign environments; not character reference assets or customer results",
+  "tasks": [
+    {
+      "slug": "coastal-dusk",
+      "kind": "image",
+      "endpoint": "openai/gpt-image-2.5-sunburst/text-to-image",
+      "id": "946cf0f3c8c74d0491d84981d3b4a10a",
+      "submittedAt": "2026-09-30T21:27:26.295Z",
+      "quotedUsd": 0.15,
+      "status": "completed",
+      "settings": {
+        "prompt": "Photorealistic dark volcanic coastline at blue hour, sculptural black rocks, silver sea mist, restrained warm horizon, tactile fine grain, sophisticated editorial photography. Empty negative space on the left for website copy. Wide cinematic composition. No people, text, logos or watermark.",
+        "aspect_ratio": "16:9",
+        "resolution": "2k",
+        "quality": "high",
+        "output_format": "jpeg"
+      }
+    },
+    {
+      "slug": "sculptural-studio",
+      "kind": "image",
+      "endpoint": "openai/gpt-image-2.5-sunburst/text-to-image",
+      "id": "b031828c13a64922bd43e0e6743a0cc7",
+      "submittedAt": "2026-09-30T21:27:27.025Z",
+      "quotedUsd": 0.15,
+      "status": "completed",
+      "settings": {
+        "prompt": "Monumental warm-white plaster architectural studio, curved wall and freestanding charcoal plinth, long angled afternoon shadows, warm-white and near-black palette, realistic material texture. Refined fashion campaign set, empty negative space for typography. Wide cinematic composition. No people, text, logos or watermark.",
+        "aspect_ratio": "16:9",
+        "resolution": "2k",
+        "quality": "high",
+        "output_format": "jpeg"
+      }
+    },
+    {
+      "slug": "city-after-dark",
+      "kind": "image",
+      "endpoint": "openai/gpt-image-2.5-sunburst/text-to-image",
+      "id": "4f664583b105449bbc60e846f4880c69",
+      "submittedAt": "2026-09-30T21:27:27.780Z",
+      "quotedUsd": 0.15,
+      "status": "completed",
+      "settings": {
+        "prompt": "Cinematic wet concrete city plaza after rain, architectural glass, blurred distant traffic light, charcoal and muted olive palette with restrained lime reflections. Ground-level editorial wide composition, dark left third for website copy. No people, readable signs, logos or watermark.",
+        "aspect_ratio": "16:9",
+        "resolution": "2k",
+        "quality": "high",
+        "output_format": "jpeg"
+      }
+    },
+    {
+      "slug": "coastal-dusk",
+      "kind": "video",
+      "endpoint": "kwaivgi/kling-v3.0-std/image-to-video",
+      "id": "bc095c8179c448eb98315146b551c8d5",
+      "submittedAt": "2026-09-30T21:30:53.640Z",
+      "quotedUsd": 0.42,
+      "status": "completed",
+      "settings": {
+        "image": "Generated coastal-dusk still from this batch",
+        "prompt": "Locked composition with an almost imperceptible forward drift. Gentle waves and drifting mist. Consistent exposure, no cuts or sudden movement.",
+        "negative_prompt": "people, text, logos, watermarks, flicker, morphing, distorted architecture, cuts, sudden movement",
+        "duration": 5,
+        "sound": false,
+        "cfg_scale": 0.5
+      }
+    },
+    {
+      "slug": "sculptural-studio",
+      "kind": "video",
+      "endpoint": "kwaivgi/kling-v3.0-std/image-to-video",
+      "id": "15dc317bb0bb4739bd8e16f9867fe424",
+      "submittedAt": "2026-09-30T21:30:54.373Z",
+      "quotedUsd": 0.42,
+      "status": "completed",
+      "settings": {
+        "image": "Generated sculptural-studio still from this batch",
+        "prompt": "Slow lateral camera glide, very subtle shifting light. Preserve architecture and straight edges; no morphing, cuts or abrupt exposure shifts.",
+        "negative_prompt": "people, text, logos, watermarks, flicker, morphing, distorted architecture, cuts, sudden movement",
+        "duration": 5,
+        "sound": false,
+        "cfg_scale": 0.5
+      }
+    },
+    {
+      "slug": "city-after-dark",
+      "kind": "video",
+      "endpoint": "kwaivgi/kling-v3.0-std/image-to-video",
+      "id": "7b5b8dfd1a7d4f7082e01e402d76db65",
+      "submittedAt": "2026-09-30T21:30:55.100Z",
+      "quotedUsd": 0.42,
+      "status": "completed",
+      "settings": {
+        "image": "Generated city-after-dark still from this batch",
+        "prompt": "Subtle camera push, gentle reflected light and faint rain in the distance. Preserve architecture, no rapid traffic streaks, cuts or flashes.",
+        "negative_prompt": "people, text, logos, watermarks, flicker, morphing, distorted architecture, cuts, sudden movement",
+        "duration": 5,
+        "sound": false,
+        "cfg_scale": 0.5
+      }
+    }
+  ],
+  "assets": [
+    {
+      "file": "city-after-dark-mobile.mp4",
+      "bytes": 346806,
+      "sha256": "72f3f626e569247b6b6cfe57514799b9b90f31189c43045d346af6ba591298db"
+    },
+    {
+      "file": "city-after-dark.mp4",
+      "bytes": 1079698,
+      "sha256": "4e4d0344f2f2713a5358094e3bd4007a29a6c948210e809011de0339d0519b3a"
+    },
+    {
+      "file": "city-after-dark.webp",
+      "bytes": 245698,
+      "sha256": "e4f93d2d00b2d593959e0dc109319b559e0e1e981173cfebac9717bffe189673"
+    },
+    {
+      "file": "coastal-dusk-mobile.mp4",
+      "bytes": 241524,
+      "sha256": "015783174e6b7e91cb509212616f3c1be88bc65eb344ddbd9c2c58477af4ebd3"
+    },
+    {
+      "file": "coastal-dusk.mp4",
+      "bytes": 864195,
+      "sha256": "dc81692c25593064acaf12f6f65a1d1c931727a7261eed97322d6b06a9f3f262"
+    },
+    {
+      "file": "coastal-dusk.webp",
+      "bytes": 192086,
+      "sha256": "0ef47cea2939cbe42798cb665e85aff8a84707ce574ffb7109dd8bc129f32d9f"
+    },
+    {
+      "file": "sculptural-studio-mobile.mp4",
+      "bytes": 76303,
+      "sha256": "6a2f016312b73a31476c4ae44723d2ec2a077542c38be1aeb417bc4723b2b5ae"
+    },
+    {
+      "file": "sculptural-studio.mp4",
+      "bytes": 319907,
+      "sha256": "43863c55fc56b83f4e45576d5593706a11f0298fe68e9afc052ef5f1ff7ebac3"
+    },
+    {
+      "file": "sculptural-studio.webp",
+      "bytes": 91834,
+      "sha256": "cb1d3ec644dcf557e961c31f1921d39edd5a4f749d09afc2ed257efab99d8714"
+    }
+  ],
+  "renditions": [
+    {
+      "path": "public/assets/campaigns/coastal-dusk.mp4",
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 1280,
+          "height": 720
+        }
+      ],
+      "format": {
+        "duration": "5.041667",
+        "size": "864195"
+      }
+    },
+    {
+      "path": "public/assets/campaigns/coastal-dusk-mobile.mp4",
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 768,
+          "height": 432
+        }
+      ],
+      "format": {
+        "duration": "5.041667",
+        "size": "241524"
+      }
+    },
+    {
+      "path": "public/assets/campaigns/sculptural-studio.mp4",
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 1280,
+          "height": 720
+        }
+      ],
+      "format": {
+        "duration": "5.041667",
+        "size": "319907"
+      }
+    },
+    {
+      "path": "public/assets/campaigns/sculptural-studio-mobile.mp4",
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 768,
+          "height": 432
+        }
+      ],
+      "format": {
+        "duration": "5.041667",
+        "size": "76303"
+      }
+    },
+    {
+      "path": "public/assets/campaigns/city-after-dark.mp4",
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 1280,
+          "height": 720
+        }
+      ],
+      "format": {
+        "duration": "5.041667",
+        "size": "1079698"
+      }
+    },
+    {
+      "path": "public/assets/campaigns/city-after-dark-mobile.mp4",
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 768,
+          "height": 432
+        }
+      ],
+      "format": {
+        "duration": "5.041667",
+        "size": "346806"
+      }
+    }
+  ],
+  "billing": {
+    "verified": true,
+    "totalChargedUsd": 1.71,
+    "charges": [
+      {
+        "taskId": "7b5b8dfd1a7d4f7082e01e402d76db65",
+        "type": "deduct",
+        "usd": 0.42
+      },
+      {
+        "taskId": "15dc317bb0bb4739bd8e16f9867fe424",
+        "type": "deduct",
+        "usd": 0.42
+      },
+      {
+        "taskId": "bc095c8179c448eb98315146b551c8d5",
+        "type": "deduct",
+        "usd": 0.42
+      },
+      {
+        "taskId": "4f664583b105449bbc60e846f4880c69",
+        "type": "deduct",
+        "usd": 0.15
+      },
+      {
+        "taskId": "b031828c13a64922bd43e0e6743a0cc7",
+        "type": "deduct",
+        "usd": 0.15
+      },
+      {
+        "taskId": "946cf0f3c8c74d0491d84981d3b4a10a",
+        "type": "deduct",
+        "usd": 0.15
+      }
+    ]
+  }
+}

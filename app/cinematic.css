@@ -684,17 +684,20 @@
 .md-concept-image {
   position: absolute;
   inset: 0;
+  isolation: isolate;
 }
 .md-concept-image img {
   object-fit: cover;
   object-position: center;
 }
-.md-concept-image > div {
+.md-concept-caption {
   position: absolute;
   left: 50%;
-  bottom: 35px;
+  bottom: 80px;
   right: 25px;
   color: #fff;
+  pointer-events: none;
+  text-shadow: 0 2px 20px #000;
 }
 .md-concept-image span {
   font-size: 9px;
@@ -1838,10 +1841,11 @@ body:has(.md-public) .theme-toggle-floating {
     max-width: 290px;
   }
   .md-concept-image h3 {
-    font-size: 29px;
+    font-size: clamp(20px, 6vw, 29px);
   }
-  .md-concept-image > div {
-    left: 30%;
+  .md-concept-caption {
+    left: 52%;
+    right: 16px;
     bottom: 80px;
   }
   .md-usecase,
@@ -2387,5 +2391,92 @@ body:has(.md-public) .theme-toggle-floating {
     padding: 10px;
     gap: 7px;
     font-size: 10px;
+  }
+}
+
+/* Campaign media keeps still posters readable while motion loads or is disabled. */
+.md-cinematic-media {
+  position: absolute;
+  inset: 0;
+  isolation: isolate;
+}
+.md-cinematic-frame {
+  position: absolute;
+  inset: 0;
+}
+.md-cinematic-frame > img,
+.md-cinematic-frame > video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  inset: 0;
+}
+.md-cinematic-frame > video {
+  opacity: 0;
+  transition: opacity 350ms ease;
+  pointer-events: none;
+}
+.md-cinematic-media[data-ready="true"] video {
+  opacity: 1;
+}
+.md-public .md-media-toggle {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #ffffff50;
+  border-radius: 24px;
+  background: #090909c9;
+  color: #fff;
+  cursor: pointer;
+  font-size: 11px;
+  pointer-events: auto;
+}
+.md-public .md-media-toggle span {
+  font-size: inherit;
+  letter-spacing: normal;
+}
+.md-media-toggle:focus-visible {
+  outline: 2px solid #d2ff58;
+  outline-offset: 4px;
+}
+.md-concept-image::after {
+  content: "";
+  position: absolute;
+  inset: 45% 0 0;
+  background: linear-gradient(transparent, #0009);
+  pointer-events: none;
+}
+.md-concept-caption {
+  z-index: 1;
+}
+.md-usecase-visual > img {
+  object-fit: cover;
+  filter: brightness(0.6);
+}
+.md-usecase-visual > span,
+.md-usecase-visual > .md-usecase-type {
+  position: relative;
+}
+.md-final-image video {
+  filter: brightness(0.4);
+}
+.md-final-type {
+  pointer-events: none;
+}
+.md-final-type a {
+  pointer-events: auto;
+}
+@media (max-width: 599px) {
+  .md-public .md-media-toggle {
+    top: 12px;
+    right: 12px;
+    padding: 8px 12px;
   }
 }
