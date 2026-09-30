@@ -22,7 +22,7 @@ function refreshStory(ScrollTrigger: typeof Trigger) {
   });
 }
 
-/** Full stories on roomy desktops; light reveals on touch/short screens; optional zero motion. */
+/** The same scroll story at every size, with an explicit reduced-motion fallback. */
 export function useStoryMotion(
   root: RefObject<HTMLElement | null>,
   setup: (
@@ -49,38 +49,18 @@ export function useStoryMotion(
           if (disposed) return;
           context.add(() => {
             gsap.registerPlugin(useGSAP, ScrollTrigger);
-            // Mobile browser chrome changes height while scrolling. No mobile story is pinned.
+            // Stable svh frames prevent browser chrome from changing pinned geometry mid-swipe.
             ScrollTrigger.config({ ignoreMobileResize: true });
             const media = gsap.matchMedia();
             media.add(
               {
-                roomy: "(min-width: 960px) and (min-height: 900px)",
-                pointer: "(hover: hover) and (pointer: fine)",
+                mobile: "(max-width: 959px)",
+                landscape: "(orientation: landscape)",
                 any: "all",
               },
-              (match) => {
-                const full =
-                  !!match.conditions?.roomy && !!match.conditions?.pointer;
-                element.setAttribute("data-motion", full ? "full" : "light");
-                let cleanup: void | (() => void);
-                if (full) cleanup = setup(gsap, ScrollTrigger, element);
-                else {
-                  // Never hide content or hijack native swipes. Each reveal plays only once.
-                  element
-                    .querySelectorAll<HTMLElement>("[data-motion-reveal]")
-                    .forEach((target) => {
-                      gsap.from(target, {
-                        y: 18,
-                        duration: 0.65,
-                        ease: "power2.out",
-                        scrollTrigger: {
-                          trigger: target,
-                          start: "top 94%",
-                          once: true,
-                        },
-                      });
-                    });
-                }
+              () => {
+                element.setAttribute("data-motion", "full");
+                const cleanup = setup(gsap, ScrollTrigger, element);
                 refreshStory(ScrollTrigger);
                 return () => {
                   cleanup?.();
@@ -116,4 +96,10 @@ export function useStoryMotion(
     },
     { scope: root, dependencies: [setup, reduced], revertOnUpdate: true },
   );
+}
+
+/** Read the complete section before pinning when a short landscape screen cannot fit it. */
+export function storyPinStart(element: HTMLElement) {
+  return () =>
+    element.offsetHeight > window.innerHeight + 1 ? "bottom bottom" : "top top";
 }

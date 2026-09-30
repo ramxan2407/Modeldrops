@@ -4,7 +4,10 @@ import Link from "next/link";
 import { ArrowUpRight, Check, Sparkles } from "lucide-react";
 import { talent } from "@/lib/marketing/catalog";
 import { TalentPortrait } from "./talent-card";
-import { useStoryMotion } from "@/components/motion/use-story-motion";
+import {
+  useStoryMotion,
+  storyPinStart,
+} from "@/components/motion/use-story-motion";
 import type { gsap as Gsap } from "gsap";
 const example =
   "Editorial streetwear portrait in Tokyo at night. An oversized tailored jacket, cinematic lighting, natural skin texture. Preserve the reference character’s identity.";
@@ -18,7 +21,7 @@ function animateDemo(
   const tl = gsap.timeline({
     scrollTrigger: {
       trigger: element,
-      start: "top top",
+      start: storyPinStart(element),
       end: "+=160%",
       pin: true,
       scrub: 0.5,
@@ -110,6 +113,9 @@ export function GenerationDemo() {
               <b>02</b> Describe the scene
             </label>
             <div className="md-demo-prompt">
+              <p className="md-demo-prompt-measure" aria-hidden="true">
+                {example}
+              </p>
               <p className="md-demo-typed" aria-hidden="true">
                 {example}
               </p>

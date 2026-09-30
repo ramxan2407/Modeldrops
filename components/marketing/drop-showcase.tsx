@@ -2,7 +2,10 @@
 import { useRef } from "react";
 import Link from "next/link";
 import { talent } from "@/lib/marketing/catalog";
-import { useStoryMotion } from "@/components/motion/use-story-motion";
+import {
+  useStoryMotion,
+  storyPinStart,
+} from "@/components/motion/use-story-motion";
 import { TalentPortrait } from "./talent-card";
 import type { gsap as Gsap } from "gsap";
 function animateDrop(
@@ -17,7 +20,7 @@ function animateDrop(
     ease: "none",
     scrollTrigger: {
       trigger: element,
-      start: "top top",
+      start: storyPinStart(element),
       end: () => `+=${Math.max(1000, track.scrollWidth - element.clientWidth)}`,
       pin: true,
       scrub: 0.8,

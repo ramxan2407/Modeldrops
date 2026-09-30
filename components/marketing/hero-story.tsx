@@ -3,7 +3,10 @@ import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowDown, ArrowUpRight } from "lucide-react";
-import { useStoryMotion } from "@/components/motion/use-story-motion";
+import {
+  useStoryMotion,
+  storyPinStart,
+} from "@/components/motion/use-story-motion";
 import type { gsap as Gsap } from "gsap";
 function animateHero(
   gsap: typeof Gsap,
@@ -13,7 +16,7 @@ function animateHero(
   const story = gsap.timeline({
     scrollTrigger: {
       trigger: element,
-      start: "top top",
+      start: storyPinStart(element),
       end: "+=130%",
       scrub: 0.8,
       pin: true,
