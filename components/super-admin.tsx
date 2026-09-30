@@ -604,6 +604,11 @@ export default function SuperAdmin({
                         <td>${c.price}</td>
                         <td>
                           {c.enabled ? "Visible" : "Disabled"}
+                          <small>
+                            {c.referenceImage
+                              ? "Reference approved"
+                              : "Portrait needed · generation blocked"}
+                          </small>
                           {c.featured && <small>Featured</small>}
                         </td>
                         <td>
@@ -933,6 +938,30 @@ export default function SuperAdmin({
                       alt="Character reference awaiting profile save"
                       style={{ maxHeight: 180, objectFit: "contain" }}
                     />
+                  )}
+                  {edit.record.referenceAssetId && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={busy || uploading}
+                      onClick={() =>
+                        setEdit((current) =>
+                          current
+                            ? {
+                                ...current,
+                                record: {
+                                  ...current.record,
+                                  referenceAssetId: null,
+                                  referenceImage: undefined,
+                                  referencePreview: undefined,
+                                },
+                              }
+                            : current,
+                        )
+                      }
+                    >
+                      Remove approved reference
+                    </Button>
                   )}
                   <small>
                     Use an approved fictional adult portrait, PNG, JPG or WebP

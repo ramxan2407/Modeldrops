@@ -583,6 +583,41 @@ for (const backend of ["sqlite", "postgres"]) {
           ).n,
           1,
         );
+        // A revoked entitlement is authoritative even when a legacy paid receipt exists.
+        await f.env.DB.prepare(
+          "INSERT INTO character_purchases(id,user_id,character_id,price_cents,license_version,license_snapshot) VALUES(?,'alice',?,2900,'paid-1','Legacy receipt')",
+        )
+          .bind(crypto.randomUUID(), characterId)
+          .run();
+        await f.env.DB.prepare(
+          "UPDATE character_entitlements SET status='revoked' WHERE user_id='alice' AND character_id=?",
+        )
+          .bind(characterId)
+          .run();
+        const balanceBefore = (await state()).account.balance;
+        assert.equal(
+          await characterAccess(f.env.DB, "alice", characterId, testEnv),
+          false,
+        );
+        assert(!(await state()).account.usableCharacters.includes(characterId));
+        for (const idempotencyKey of [
+          order.idempotencyKey,
+          crypto.randomUUID(),
+        ]) {
+          await assert.rejects(
+            service.complete({ ...order, idempotencyKey }),
+            /no longer active/,
+          );
+        }
+        assert.equal(
+          (
+            await f.env.DB.prepare(
+              "SELECT COUNT(*) n FROM character_orders",
+            ).first<any>()
+          ).n,
+          1,
+        );
+        assert.equal((await state()).account.balance, balanceBefore);
       },
     );
   } finally {

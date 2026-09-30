@@ -110,6 +110,14 @@ export function ImageModelControls({
       hasPrompt: !!definition.schema.properties?.prompt,
       promptRequired: !!definition.schema.required?.includes("prompt"),
     };
+    if (!characterId) {
+      onQuote({
+        key: inputKey,
+        error: "Choose an unlocked model to check the generation price.",
+        ...info,
+      });
+      return;
+    }
     const abort = new AbortController();
     onQuote({ key: inputKey, ...info });
     const timer = setTimeout(() => {
@@ -165,26 +173,16 @@ export function ImageModelControls({
       properties[k] &&
       k !== "prompt" &&
       !managedFields.has(k) &&
-      !(characterId && mediaField(k, properties[k])),
+      !mediaField(k, properties[k]),
   );
   return (
     <div className="image-schema-controls">
       <div className="standard-quality">
-        <strong>
-          {characterId
-            ? "Your model reference"
-            : definition.endpoint.startsWith("openai/")
-              ? Array.isArray(values.images) && values.images.length
-                ? "Reference image editing"
-                : "Text to image"
-              : "Reference image editing"}
-        </strong>
+        <strong>Your model reference</strong>
         <span>
           {characterId
             ? "When the model is available, her approved portrait is attached automatically. Identity consistency varies by image model."
-            : definition.endpoint.startsWith("openai/")
-              ? "Add optional references to edit, or leave them empty to create from text."
-              : "Upload a reference and describe the changes you want."}{" "}
+            : "Choose an unlocked model above. Her approved portrait will be attached automatically."}{" "}
           One image per request.
         </span>
       </div>
@@ -206,6 +204,7 @@ export function ImageModelControls({
       <button
         className="schema-reset"
         type="button"
+        disabled={!characterId}
         onClick={() => setQuoteRevision((v) => v + 1)}
       >
         Refresh price

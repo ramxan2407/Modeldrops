@@ -1,3 +1,5 @@
+import { characterReferenceVersion } from "../characters/reference-version";
+import { resolveCharacterReferenceInputs } from "./characters";
 import { characterAccess } from "../characters/access";
 import { characterAllowed } from "../admin/character-permissions";
 import { catalogFor } from "../admin/service";
@@ -69,7 +71,7 @@ export async function runGenerationJob(id: string, origin: string) {
         .first<{ enabled: number }>();
       const availableCharacter =
         g.character_id &&
-        (await catalogFor(DB)).some(
+        (await catalogFor(DB)).find(
           (c) => c.id === g.character_id && c.enabled,
         );
       if (
@@ -87,6 +89,40 @@ export async function runGenerationJob(id: string, origin: string) {
         );
         return;
       }
+      if (
+        !p.character_reference ||
+        p.character_reference !== characterReferenceVersion(availableCharacter)
+      ) {
+        await terminal(
+          id,
+          "failed",
+          "The character reference changed before generation. Credits returned. Please create a new request.",
+        );
+        return;
+      }
+      // Refresh only the signed URL, retaining the approved portrait and all priced settings.
+      const resolved = await resolveCharacterReferenceInputs(
+        DB,
+        g.user_id,
+        g.character_id,
+        g.model_id,
+        JSON.parse(p.input_json),
+        origin,
+      );
+      if (resolved.reference !== p.character_reference) {
+        await terminal(
+          id,
+          "failed",
+          "The character reference changed before generation. Credits returned. Please create a new request.",
+        );
+        return;
+      }
+      p.input_json = JSON.stringify(resolved.inputs);
+      await DB.prepare(
+        "UPDATE provider_requests SET input_json=? WHERE generation_id=? AND state='ready'",
+      )
+        .bind(p.input_json, id)
+        .run();
       await DB.prepare(
         "UPDATE provider_requests SET state='submitting',updated_at=? WHERE generation_id=? AND state='ready'",
       )

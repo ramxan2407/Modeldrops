@@ -119,6 +119,7 @@ for (const backend of ["sqlite", "postgres"]) {
       storageFailure = false,
       quotePrice = 0.02,
       quoteFailure = false;
+    let lastSubmission: Record<string, unknown> = {};
     const videoRequests = new Set<string>();
     const batchSizes = new Map<string, number>();
     const mediaTypes = new Map<string, string>();
@@ -165,6 +166,7 @@ for (const backend of ["sqlite", "postgres"]) {
             });
       if (options?.method === "POST") {
         submissions++;
+        lastSubmission = JSON.parse(options!.body as string);
         if (submitFailure === "timeout")
           throw new Error("Timeout after acceptance");
         if (submitFailure === "rejected")
@@ -350,11 +352,15 @@ for (const backend of ["sqlite", "postgres"]) {
       const job = await start.json();
       const persistedInput = await db
         .prepare(
-          "SELECT input_json,endpoint FROM provider_requests WHERE generation_id=?",
+          "SELECT input_json,endpoint,character_reference FROM provider_requests WHERE generation_id=?",
         )
         .bind(job.id)
         .first<any>();
       assert.equal(persistedInput.endpoint, "wavespeed-ai/qwen-image/edit");
+      assert.equal(
+        persistedInput.character_reference,
+        "asset:00000000-0000-4000-8000-000000000099",
+      );
       assert.match(
         JSON.parse(persistedInput.input_json).image,
         /^https:\/\/private-storage\.example\.com\//,
@@ -788,38 +794,58 @@ for (const backend of ["sqlite", "postgres"]) {
       }
       const beforeRevocation = await balance(),
         beforeSubmissions = submissions;
-      const pending = { id: crypto.randomUUID() };
-      await db.batch([
-        db
-          .prepare(
-            "INSERT INTO generations(id,user_id,character_id,model_id,prompt,settings,type,cost,idempotency_key,updated_at) VALUES(?,'alice','amara-rose','wavespeed-qwen-image-edit','Queued character request',?,'image',12,?,?)",
-          )
-          .bind(
-            pending.id,
-            JSON.stringify(settings),
-            pending.id,
-            new Date().toISOString(),
-          ),
-        db
-          .prepare("INSERT INTO generation_jobs(id,generation_id) VALUES(?,?)")
-          .bind(pending.id, pending.id),
-        db
-          .prepare(
-            "INSERT INTO provider_requests(generation_id,endpoint,input_json,state,reserved_microusd,created_at,updated_at) VALUES(?,'wavespeed-ai/qwen-image/edit','{}','ready',20000,?,?)",
-          )
-          .bind(pending.id, new Date().toISOString(), new Date().toISOString()),
-        db
-          .prepare(
-            "INSERT INTO credit_transactions(id,user_id,amount,type,description,balance_before,balance_after,idempotency_key,generation_id) VALUES(?,'alice',-12,'generation_charge','Queued reference test',?,?,?,?)",
-          )
-          .bind(
-            pending.id,
-            beforeRevocation,
-            beforeRevocation - 12,
-            pending.id,
-            pending.id,
-          ),
-      ]);
+      const queueReferenceJob = async (reference: string | null) => {
+        const pending = { id: crypto.randomUUID() };
+        const creditBefore = await balance();
+        await db.batch([
+          db
+            .prepare(
+              "INSERT INTO generations(id,user_id,character_id,model_id,prompt,settings,type,cost,idempotency_key,updated_at) VALUES(?,'alice','amara-rose','wavespeed-qwen-image-edit','Queued character request',?,'image',12,?,?)",
+            )
+            .bind(
+              pending.id,
+              JSON.stringify(settings),
+              pending.id,
+              new Date().toISOString(),
+            ),
+          db
+            .prepare(
+              "INSERT INTO generation_jobs(id,generation_id) VALUES(?,?)",
+            )
+            .bind(pending.id, pending.id),
+          db
+            .prepare(
+              "INSERT INTO provider_requests(generation_id,endpoint,input_json,character_reference,state,reserved_microusd,created_at,updated_at) VALUES(?,'wavespeed-ai/qwen-image/edit',?,?,'ready',20000,?,?)",
+            )
+            .bind(
+              pending.id,
+              JSON.stringify({
+                image:
+                  "https://private-storage.example.com/reference.png?expired=1",
+                prompt: "Queued character request",
+                size: "1024*1024",
+                seed: 42,
+              }),
+              reference,
+              new Date().toISOString(),
+              new Date().toISOString(),
+            ),
+          db
+            .prepare(
+              "INSERT INTO credit_transactions(id,user_id,amount,type,description,balance_before,balance_after,idempotency_key,generation_id) VALUES(?,'alice',-12,'generation_charge','Queued reference test',?,?,?,?)",
+            )
+            .bind(
+              pending.id,
+              creditBefore,
+              creditBefore - 12,
+              pending.id,
+              pending.id,
+            ),
+        ]);
+        return pending;
+      };
+      const approvedReference = "asset:00000000-0000-4000-8000-000000000099";
+      const pending = await queueReferenceJob(approvedReference);
       await db
         .prepare(
           "INSERT INTO character_permissions(user_id,character_id,can_view,can_generate) VALUES('alice','amara-rose',1,0)",
@@ -844,6 +870,79 @@ for (const backend of ["sqlite", "postgres"]) {
             .first<any>()
         ).status,
         "failed",
+      );
+      await db
+        .prepare(
+          "UPDATE character_permissions SET can_generate=1 WHERE user_id='alice' AND character_id='amara-rose'",
+        )
+        .run();
+      // Changed or missing snapshots must never silently switch a paid request to a new identity.
+      for (const snapshot of [
+        "asset:00000000-0000-4000-8000-000000000098",
+        null,
+      ]) {
+        const before = await balance();
+        const queued = await queueReferenceJob(snapshot);
+        await tick(queued.id);
+        await tick(queued.id);
+        assert.equal(
+          submissions,
+          beforeSubmissions,
+          "Reference changes never spend provider balance",
+        );
+        assert.equal(
+          await balance(),
+          before,
+          "Stale references refund exactly once",
+        );
+        const failed = await db
+          .prepare("SELECT status,error FROM generations WHERE id=?")
+          .bind(queued.id)
+          .first<any>();
+        assert.equal(failed.status, "failed");
+        assert.match(failed.error, /reference changed/);
+        assert.equal(
+          (
+            await db
+              .prepare(
+                "SELECT COUNT(*) n FROM credit_transactions WHERE generation_id=? AND type='generation_refund'",
+              )
+              .bind(queued.id)
+              .first<any>()
+          ).n,
+          1,
+        );
+      }
+      // Re-sign the same approved asset at submission time while preserving all priced settings.
+      const refreshBalance = await balance();
+      const refresh = await queueReferenceJob(approvedReference);
+      (runtime.env.BUCKET as any).signedRead = async () =>
+        "https://private-storage.example.com/reference.png?signature=fresh";
+      await tick(refresh.id);
+      assert.equal(submissions, beforeSubmissions + 1);
+      assert.deepEqual(lastSubmission, {
+        image:
+          "https://private-storage.example.com/reference.png?signature=fresh",
+        prompt: "Queued character request",
+        size: "1024*1024",
+        seed: 42,
+      });
+      await tick(refresh.id);
+      await tick(refresh.id);
+      assert.equal(
+        submissions,
+        beforeSubmissions + 1,
+        "Delivery does not resubmit the refreshed request",
+      );
+      assert.equal(await balance(), refreshBalance - 12);
+      assert.equal(
+        (
+          await db
+            .prepare("SELECT status FROM generations WHERE id=?")
+            .bind(refresh.id)
+            .first<any>()
+        ).status,
+        "completed",
       );
       const scheduler = await vite.ssrLoadModule("/app/api/jobs/route.ts");
       assert.equal(

@@ -3,7 +3,7 @@ import {
   characterAllowed,
   visibleCharacters,
 } from "@/lib/admin/character-permissions";
-import { characterReferenceInputs } from "@/lib/generation/characters";
+import { resolveCharacterReferenceInputs } from "@/lib/generation/characters";
 import { imageEndpoint } from "@/lib/generation/images";
 import { quoteImage } from "@/lib/generation/quote";
 import { resolveImageReferences } from "@/lib/generation/references";
@@ -362,9 +362,10 @@ export async function POST(request: Request) {
         )
           throw new ApiError(503, "Choose an available generation model.");
         let providerInput: unknown;
+        let characterReference: string | null = null;
         if (live) {
           try {
-            const identity = await characterReferenceInputs(
+            const resolved = await resolveCharacterReferenceInputs(
               DB,
               id,
               d.characterId,
@@ -372,6 +373,8 @@ export async function POST(request: Request) {
               d.settings.providerInputs || {},
               new URL(request.url).origin,
             );
+            const identity = resolved.inputs;
+            characterReference = resolved.reference;
             providerInput = generationInput(
               m.id,
               d.prompt,
@@ -526,11 +529,12 @@ export async function POST(request: Request) {
             ...(live
               ? [
                   DB.prepare(
-                    "INSERT INTO provider_requests(generation_id,endpoint,input_json,reserved_microusd,created_at,updated_at) SELECT ?,?,?,CASE WHEN COALESCE(SUM(reserved_microusd),0)+?<=? AND (SELECT COUNT(*) FROM generations WHERE user_id=? AND status IN ('queued','processing'))<=3 THEN CAST(? AS bigint) ELSE NULL END,?,? FROM provider_requests WHERE created_at>=? AND generation_id IN (SELECT g.id FROM generations g JOIN ai_models m ON m.id=g.model_id WHERE m.provider='WaveSpeed')",
+                    "INSERT INTO provider_requests(generation_id,endpoint,input_json,character_reference,reserved_microusd,created_at,updated_at) SELECT ?,?,?,?,CASE WHEN COALESCE(SUM(reserved_microusd),0)+?<=? AND (SELECT COUNT(*) FROM generations WHERE user_id=? AND status IN ('queued','processing'))<=3 THEN CAST(? AS bigint) ELSE NULL END,?,? FROM provider_requests WHERE created_at>=? AND generation_id IN (SELECT g.id FROM generations g JOIN ai_models m ON m.id=g.model_id WHERE m.provider='WaveSpeed')",
                   ).bind(
                     gen,
                     endpoint,
                     JSON.stringify(providerInput),
+                    characterReference,
                     reserve,
                     dailyLimit(bindings()),
                     id,

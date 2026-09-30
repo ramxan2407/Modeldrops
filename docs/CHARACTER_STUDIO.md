@@ -20,12 +20,16 @@ A future payment adapter must create payment-mode orders and entitlements only a
 - The server checks availability, user permissions and an active paid/test entitlement.
 - Client-provided identity images are replaced by the approved character reference.
 - Workers recheck ownership, permission, account suspension and availability before paid submission; rejected queued jobs refund reserved credits.
+- Every new request records the approved reference identity. If that reference changes or is removed before submission, the job fails with one credit refund and no provider spend. Signed URLs are refreshed for the same reference immediately before submission. Already-submitted jobs continue polling without being resubmitted.
+- Revoked entitlements cannot fall back to older paid receipts. Checkout retries do not reactivate revoked access.
 - Character access, uploaded references and outputs are user-scoped; reference administration is super-admin-only.
 - Existing credit reservation, polling, private output storage and idempotent refunds remain in use.
 
+The dashboard separates usable models from historical license and preview records. Retired character links show an unavailable notice in Studio. Checkout can refresh a stale price or recover from a failed library refresh without charging or creating another order.
+
 ## Deployment
 
-New database installations include migration `004_character_checkout.sql`. Existing environments run `node --env-file=<isolated-env-file> scripts/migrate-character-checkout.mjs` after the character-management migration. No production migration or configuration is applied as part of this development change. The five launch profiles still require approved portraits. Test data and mocked generation fixtures are not production assets or output validation.
+New database installations include migrations `004_character_checkout.sql` and `005_character_reference_snapshot.sql`. Existing environments run `node --env-file=<isolated-env-file> scripts/migrate-character-checkout.mjs` after the character-management and provider-job migrations. The command applies both additive migrations. Ready jobs created before reference snapshots were introduced are cancelled with a refund; already-submitted jobs retain their original delivery flow. No production migration or configuration is applied as part of this development change. The five launch profiles still require approved portraits. Test data and mocked generation fixtures are not production assets or output validation.
 
 Video API specification: https://wavespeed.ai/docs/docs-api/kwaivgi/kwaivgi-kling-v3.0-std-image-to-video
 Pricing reference: https://wavespeed.ai/models/kwaivgi/kling-v3.0-std/image-to-video

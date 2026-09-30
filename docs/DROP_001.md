@@ -10,14 +10,14 @@ The built-in image-generation tool rejected the portrait requests. No new photog
 
 Selected model identities now persist in the Studio. The server resolves a selected model to its reviewed reference portrait, checks account ownership and paid access, and supplies that reference to Qwen Image Edit or GPT Image editing. Price quotes include the selected identity. Client-supplied portrait references cannot replace the selected model's identity reference. Free preview claims do not unlock paid character generation. Missing portraits fail before any credits are reserved.
 
-Character-specific video generation is not connected; prompt-based Kling video remains working. These image workflows use references, not trained LoRAs, and cannot guarantee perfect identity consistency.
+Character-specific video uses Kling 3.0 Standard image-to-video with the same approved portrait as the first frame. Studio requires an unlocked character for both images and video. These workflows use references, not trained LoRAs, and cannot guarantee perfect identity consistency.
 
 ## Before a public model launch
 
-1. Supply five original, non-explicit portraits of fictional adult women. Save the reviewed PNG/JPEG/WebP files in `public/assets/drops/`, then set each entry's `image` and `referenceImage` in `lib/catalog.ts`. The latter must refer to a real image rather than an SVG cover. Change the corresponding coming-soon copy after this is complete.
-2. Connect real model checkout and verified payment fulfillment. Only a server-verified successful payment may create a paid active `character_purchases` record with the reviewed license snapshot. Existing free `demo-1` records must never count as paid access.
+1. Supply five original, non-explicit portraits of fictional adult women. In Super Admin → Characters → Edit, upload and approve each JPG/PNG/WebP reference. Approved portraits stay in private storage and replace the placeholder in the authenticated catalog. Public welcome artwork is separate and must be reviewed before launch.
+2. Connect real model checkout and verified payment fulfillment. Only a server-verified successful payment may create a payment-mode `character_orders` record and active `character_entitlements` record with the reviewed license snapshot. Existing free `demo-1` records must never count as paid access. Test checkout is available only when explicitly enabled outside production.
 3. Confirm final prices and commercial license terms, then test purchase → My Models → quote → reference-based generation.
-4. Add an image-to-video workflow separately before promising identity-preserving model videos.
+4. Validate actual image and video outputs with the approved references before making likeness claims. The automated and local UI checks use mocked generation; they do not validate real model quality.
 
 ## Attempted portrait direction
 

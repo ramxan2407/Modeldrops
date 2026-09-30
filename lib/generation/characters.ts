@@ -1,3 +1,4 @@
+import { characterReferenceVersion } from "../characters/reference-version";
 import { characterAllowed } from "../admin/character-permissions";
 import { catalogFor } from "../admin/service";
 import { characterAccess } from "../characters/access";
@@ -5,14 +6,14 @@ import { ApiError, bindings } from "../server";
 import { imageDefinition } from "./images";
 
 /** Resolve the owned catalog identity on the server; never trust a client portrait URL. */
-export async function characterReferenceInputs(
+export async function resolveCharacterReferenceInputs(
   db: D1Database,
   userId: string,
   characterId: string,
   modelId: string,
   inputs: Record<string, unknown>,
   origin: string,
-): Promise<Record<string, unknown>> {
+): Promise<{ inputs: Record<string, unknown>; reference: string }> {
   if (!(await characterAllowed(db, userId, characterId, "generate")))
     throw new ApiError(
       403,
@@ -64,7 +65,16 @@ export async function characterReferenceInputs(
     element_list: _elements,
     ...settings
   } = inputs;
-  return definition?.endpoint.startsWith("openai/")
-    ? { ...settings, images: [url] }
-    : { ...settings, image: url };
+  return {
+    reference: characterReferenceVersion(character)!,
+    inputs: definition?.endpoint.startsWith("openai/")
+      ? { ...settings, images: [url] }
+      : { ...settings, image: url },
+  };
+}
+
+export async function characterReferenceInputs(
+  ...args: Parameters<typeof resolveCharacterReferenceInputs>
+) {
+  return (await resolveCharacterReferenceInputs(...args)).inputs;
 }

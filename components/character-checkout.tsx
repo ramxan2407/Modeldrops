@@ -31,6 +31,7 @@ export function CharacterCheckout({
     [error, setError] = useState(""),
     [accepted, setAccepted] = useState(false),
     [busy, setBusy] = useState(false);
+  const [revision, setRevision] = useState(0);
   const key = useRef("");
   const saving = useRef(false);
   useEffect(() => {
@@ -48,18 +49,25 @@ export function CharacterCheckout({
         if (!r.ok) throw Error(d.error || "Could not load checkout.");
         return d;
       })
-      .then(setQuote)
+      .then((data) => {
+        if (!controller.signal.aborted) setQuote(data);
+      })
       .catch((e) => {
         if (!controller.signal.aborted) setError(e.message);
       });
     return () => controller.abort();
-  }, [character?.id]);
+  }, [character?.id, revision]);
   async function complete() {
     if (!quote || saving.current) return;
     saving.current = true;
     setBusy(true);
     setError("");
     try {
+      if (quote.owned) {
+        await onComplete(quote.characterId);
+        onClose();
+        return;
+      }
       const r = await fetch("/api/characters/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -132,17 +140,15 @@ export function CharacterCheckout({
             <Button
               disabled={
                 busy ||
-                !accepted ||
-                !quote.ready ||
-                quote.mode !== "test" ||
-                quote.owned
+                (!quote.owned &&
+                  (!accepted || !quote.ready || quote.mode !== "test"))
               }
               onClick={complete}
             >
               {busy
                 ? "Unlocking…"
                 : quote.owned
-                  ? "Already unlocked"
+                  ? "Open Creator Studio"
                   : quote.mode === "test"
                     ? "Confirm test access"
                     : "Payments coming soon"}
@@ -151,7 +157,18 @@ export function CharacterCheckout({
         ) : (
           !error && <p role="status">Loading checkout…</p>
         )}
-        {error && <p role="alert">{error}</p>}
+        {error && (
+          <>
+            <p role="alert">{error}</p>
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={() => setRevision((r) => r + 1)}
+            >
+              Refresh access and price
+            </Button>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

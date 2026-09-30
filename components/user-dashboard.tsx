@@ -410,6 +410,43 @@ export function UserDashboard(p: Props) {
               Manage projects
             </button>
           </section>
+          {p.purchases.some(
+            (record) => !p.owned.includes(record.characterId),
+          ) && (
+            <section className="dashboard-projects">
+              <div className="dashboard-section-title">
+                <h2>Previous access records</h2>
+              </div>
+              <p>
+                Saved licenses and preview claims stay available here. These
+                records do not unlock current Studio models.
+              </p>
+              {p.purchases
+                .filter((record) => !p.owned.includes(record.characterId))
+                .map((record) => (
+                  <button
+                    className="dashboard-project"
+                    key={record.characterId}
+                    onClick={() => p.onLicense(record)}
+                  >
+                    <ShieldCheck size={17} />
+                    <div>
+                      <strong>
+                        {p.characters.find((c) => c.id === record.characterId)
+                          ?.name || record.characterId}
+                      </strong>
+                      <small>
+                        {record.licenseVersion === "demo-1"
+                          ? "Preview claim"
+                          : "Saved license"}{" "}
+                        · View record
+                      </small>
+                    </div>
+                    <ArrowUpRight size={14} />
+                  </button>
+                ))}
+            </section>
+          )}
           <div className="dashboard-privacy">
             <ShieldCheck size={20} />
             <div>

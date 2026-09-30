@@ -15,10 +15,11 @@ export async function characterAccess(
 ) {
   const row = await db
     .prepare(
-      "SELECT o.mode,o.status FROM character_entitlements e JOIN character_orders o ON o.id=e.order_id WHERE e.user_id=? AND e.character_id=? AND e.status='active'",
+      "SELECT o.mode,o.status,e.status AS entitlement_status FROM character_entitlements e JOIN character_orders o ON o.id=e.order_id WHERE e.user_id=? AND e.character_id=?",
     )
     .bind(userId, characterId)
-    .first<{ mode: string; status: string }>();
+    .first<{ mode: string; status: string; entitlement_status: string }>();
+  if (row?.entitlement_status === "revoked") return false;
   if (row)
     return row.mode === "payment"
       ? row.status === "paid"

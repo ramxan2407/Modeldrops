@@ -63,8 +63,29 @@ export class CharacterCheckout {
         Number(previous.amount_cents) !== d.expectedAmountCents
       )
         throw new ApiError(409, "This checkout key belongs to another order.");
+      if (
+        !(await characterAccess(this.db, this.userId, d.characterId, this.env))
+      )
+        throw new ApiError(
+          403,
+          "This access is no longer active. Contact support before checking out again.",
+        );
       return { id: previous.id, characterId: d.characterId, test: true };
     }
+    const inactive = await this.db
+      .prepare(
+        "SELECT o.id FROM character_orders o LEFT JOIN character_entitlements e ON e.order_id=o.id WHERE o.user_id=? AND o.character_id=? AND o.mode='test'",
+      )
+      .bind(this.userId, d.characterId)
+      .first();
+    if (
+      inactive &&
+      !(await characterAccess(this.db, this.userId, d.characterId, this.env))
+    )
+      throw new ApiError(
+        403,
+        "This access is no longer active. Contact support before checking out again.",
+      );
     const quote = await this.quote(d.characterId);
     if (!quote.ready)
       throw new ApiError(

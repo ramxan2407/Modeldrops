@@ -114,7 +114,6 @@ import LoraWorkspace from "@/components/lora-workspace";
 import { ModelDropsBrand } from "@/components/model-drops-brand";
 import { safeWorkspaceReturnTo } from "@/lib/navigation";
 import {
-  characters as defaultCharacters,
   categories,
   models as defaultModels,
   packages as defaultPackages,
@@ -388,20 +387,17 @@ export default function ModelDropsApp({
   const [catalog, setCatalog] = useState<(Character & { enabled?: boolean })[]>(
     [],
   );
+  const unlocked = account.usableCharacters || [];
+  const [unavailableModel, setUnavailableModel] = useState(false);
   const characters = catalog.filter(
-    (c) => c.enabled !== false || account.owned.includes(c.id),
+    (c) => c.enabled !== false || unlocked.includes(c.id),
   );
   const [detail, setDetail] = useState<Character | null>(null),
     [modal, setModal] = useState<
       "credits" | "project" | "notifications" | "license" | "help" | null
     >(null),
     [busy, setBusy] = useState(false),
-    [selected, setSelected] = useState(
-      initialCharacter &&
-        defaultCharacters.some((c) => c.id === initialCharacter)
-        ? initialCharacter
-        : "",
-    ),
+    [selected, setSelected] = useState(initialCharacter || ""),
     [mode, setMode] = useState("image"),
     [modelId, setModelId] = useState("forma-image"),
     [prompt, setPrompt] = useState(initialPrompt),
@@ -466,6 +462,17 @@ export default function ModelDropsApp({
       setLoading(false);
     }
   }, []);
+  useEffect(() => {
+    if (
+      !loading &&
+      !loadError &&
+      selected &&
+      !characters.some((c) => c.id === selected)
+    ) {
+      setSelected("");
+      setUnavailableModel(true);
+    }
+  }, [loading, loadError, selected, catalog]);
   useEffect(() => {
     refresh();
     const path = location.pathname.slice(1).split("/")[0];
@@ -597,6 +604,7 @@ export default function ModelDropsApp({
     c: Character,
     outputMode: "image" | "video" = "image",
   ) => {
+    setUnavailableModel(false);
     setSelected(c.id);
     setMode(outputMode);
     setReference(null);
@@ -819,7 +827,7 @@ export default function ModelDropsApp({
             .toLowerCase()
             .includes(query.toLowerCase())) &&
         (!freeOnly || c.price === 0) &&
-        (page !== "characters" || account.owned.includes(c.id)) &&
+        (page !== "characters" || unlocked.includes(c.id)) &&
         (page !== "favorites" || account.favorites.includes(c.id)),
     )
     .sort((a, b) =>
@@ -899,7 +907,7 @@ export default function ModelDropsApp({
           </button>
           <span className="creator-handle">by @{c.creator}</span>
         </div>
-        {account.owned.includes(c.id) ? (
+        {unlocked.includes(c.id) ? (
           <button className="owned-create" onClick={() => useCharacter(c)}>
             Create <ArrowUpRight size={13} />
           </button>
@@ -1350,7 +1358,7 @@ export default function ModelDropsApp({
                   }
                   text={
                     page === "characters"
-                      ? "Explore the marketplace and add a demo character to begin."
+                      ? "Explore the marketplace and review character access to begin."
                       : "Try another category or search term."
                   }
                   action="Explore characters"
@@ -1470,13 +1478,27 @@ export default function ModelDropsApp({
                           Browse <ArrowUpRight size={12} />
                         </button>
                       </label>
+                      {unavailableModel && (
+                        <p className="field-note" role="status">
+                          That model is no longer available in this drop. Choose
+                          an unlocked model from your library. Your earlier
+                          creations and license records are preserved.
+                        </p>
+                      )}
+                      {!loading && !unlocked.length && (
+                        <p className="field-note" role="status">
+                          No models unlocked yet. Browse the collection and
+                          review access before creating.
+                        </p>
+                      )}
                       <Select
                         value={selected || "none"}
-                        onValueChange={(v) =>
-                          setSelected(v === "none" ? "" : v)
-                        }
+                        onValueChange={(v) => {
+                          setUnavailableModel(false);
+                          setSelected(v === "none" ? "" : v);
+                        }}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger aria-label="Your character">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1490,7 +1512,7 @@ export default function ModelDropsApp({
                             .map((c) => (
                               <SelectItem key={c.id} value={c.id}>
                                 {c.name}
-                                {account.owned.includes(c.id)
+                                {unlocked.includes(c.id)
                                   ? " · In your library"
                                   : " · Preview only"}
                               </SelectItem>
@@ -1505,46 +1527,50 @@ export default function ModelDropsApp({
                           that image.
                         </small>
                       )}
-                      {selected && (
-                        <div className="selected-character">
-                          <img
-                            src={
-                              characters.find((c) => c.id === selected)?.image
-                            }
-                            style={{
-                              objectPosition: characters.find(
-                                (c) => c.id === selected,
-                              )?.position,
-                            }}
-                            alt="Selected character"
-                          />
-                          <div>
-                            <strong>
-                              {characters.find((c) => c.id === selected)?.name}
-                            </strong>
-                            <span>
-                              {account.owned.includes(selected)
-                                ? "In your library"
-                                : "Unlock this model to generate"}
-                            </span>
-                          </div>
-                          {account.owned.includes(selected) ? (
-                            <ShieldCheck size={18} />
-                          ) : (
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={() =>
-                                setDetail(
-                                  characters.find((c) => c.id === selected)!,
-                                )
+                      {selected &&
+                        characters.some((c) => c.id === selected) && (
+                          <div className="selected-character">
+                            <img
+                              src={
+                                characters.find((c) => c.id === selected)?.image
                               }
-                            >
-                              Add
-                            </Button>
-                          )}
-                        </div>
-                      )}
+                              style={{
+                                objectPosition: characters.find(
+                                  (c) => c.id === selected,
+                                )?.position,
+                              }}
+                              alt="Selected character"
+                            />
+                            <div>
+                              <strong>
+                                {
+                                  characters.find((c) => c.id === selected)
+                                    ?.name
+                                }
+                              </strong>
+                              <span>
+                                {unlocked.includes(selected)
+                                  ? "In your library"
+                                  : "Unlock this model to generate"}
+                              </span>
+                            </div>
+                            {unlocked.includes(selected) ? (
+                              <ShieldCheck size={18} />
+                            ) : (
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() =>
+                                  setDetail(
+                                    characters.find((c) => c.id === selected)!,
+                                  )
+                                }
+                              >
+                                Review access
+                              </Button>
+                            )}
+                          </div>
+                        )}
                     </div>
                   }
                   <div className="control-group studio-model-group">
@@ -1628,7 +1654,7 @@ export default function ModelDropsApp({
                     />
                   ) : liveModel ? (
                     <GenerationControls
-                      characterReference={!!selected}
+                      characterReference
                       type={mode}
                       ratios={model.ratios}
                       ratio={ratio}
@@ -1808,7 +1834,7 @@ export default function ModelDropsApp({
                       (promptNeeded && !prompt.trim()) ||
                       (liveImage && !quoteReady) ||
                       cost > account.balance ||
-                      (!!selected && !account.owned.includes(selected)) ||
+                      (!!selected && !unlocked.includes(selected)) ||
                       !model.enabled ||
                       selectedUnavailable
                     }
@@ -1834,14 +1860,14 @@ export default function ModelDropsApp({
                     </p>
                   )}
                   {((promptNeeded && !prompt.trim()) ||
-                    (!!selected && !account.owned.includes(selected)) ||
+                    (!!selected && !unlocked.includes(selected)) ||
                     cost > account.balance ||
                     !model.enabled ||
                     selectedUnavailable) && (
                     <p className="generation-guidance" role="status">
                       {selectedUnavailable
                         ? "This character is currently unavailable. Choose another character."
-                        : !!selected && !account.owned.includes(selected)
+                        : !!selected && !unlocked.includes(selected)
                           ? "Add this character to your library to continue."
                           : !model.enabled
                             ? "Choose an available generation model."
@@ -2653,7 +2679,7 @@ export default function ModelDropsApp({
                 {
                   n: "01",
                   title: "Find your character",
-                  text: "Explore the marketplace. Add a demo character to your library.",
+                  text: "Choose a character and review its access terms. An unlock adds it to your library; generation uses credits separately.",
                 },
                 {
                   n: "02",
@@ -2803,11 +2829,15 @@ export default function ModelDropsApp({
         character={checkoutCharacter}
         onClose={() => setCheckoutCharacter(null)}
         onComplete={async (id) => {
-          await refresh();
+          const updated = await refresh();
+          if (!updated?.usableCharacters?.includes(id))
+            throw new Error(
+              "Access is saved, but your library could not refresh. Retry to open Studio.",
+            );
           const c = characters.find((c) => c.id === id);
           if (c) useCharacter(c);
           toast.success(
-            "Test access unlocked. Choose image or video to start.",
+            "Character access is ready. Choose image or video to start.",
           );
         }}
       />
@@ -2839,7 +2869,9 @@ export default function ModelDropsApp({
                 <span>Paid</span>
                 <strong>
                   {purchaseLicense.priceCents === 0
-                    ? "Free demo access"
+                    ? purchaseLicense.licenseVersion === "test-1"
+                      ? "Test access · no payment"
+                      : "Preview access · no payment"
                     : `$${(purchaseLicense.priceCents / 100).toFixed(2)}`}
                 </strong>
               </div>
