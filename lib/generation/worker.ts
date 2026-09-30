@@ -5,7 +5,8 @@ import { characterAllowed } from "../admin/character-permissions";
 import { catalogFor } from "../admin/service";
 import { bindings } from "@/lib/server";
 import { refundJob, runDemoJob } from "@/lib/demo-worker";
-import { WaveSpeedClient, RejectedSubmission } from "./client";
+import { RejectedSubmission } from "./client";
+import { generationProvider } from "./provider";
 import { downloadOutput } from "./media";
 import { generationEnabled } from "./models";
 
@@ -27,7 +28,6 @@ export async function runGenerationJob(id: string, origin: string) {
     .bind(new Date(Date.now() + 120000).toISOString(), id, now)
     .run();
   if (!claim.meta.changes) return;
-  const provider = new WaveSpeedClient(env);
   let p = await DB.prepare(
     "SELECT * FROM provider_requests WHERE generation_id=?",
   )
@@ -55,6 +55,7 @@ export async function runGenerationJob(id: string, origin: string) {
         );
       return;
     }
+    const provider = generationProvider(g.provider, env);
     if (["submitting", "uncertain"].includes(p.state) && !p.request_id) {
       await review(
         id,

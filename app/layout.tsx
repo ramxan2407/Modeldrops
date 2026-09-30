@@ -4,6 +4,7 @@ import "./admin.css";
 import "./theme.css";
 import "./design-system.css";
 import "./welcome.css";
+import "./cinematic.css";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {

@@ -30,6 +30,7 @@ type Creation = {
   type: string;
   status: string;
   createdAt: string;
+  live?: boolean;
 };
 type Props = {
   characters: Character[];
@@ -143,7 +144,7 @@ export function UserDashboard(p: Props) {
             action: p.onProjects,
           },
           {
-            label: "Available demo credits",
+            label: "Available credits",
             value: p.balance,
             icon: Zap,
             action: p.onCredits,
@@ -295,7 +296,7 @@ export function UserDashboard(p: Props) {
                         ) : (
                           <ImageIcon size={12} />
                         )}
-                        DEMO
+                        {g.live ? "AI GENERATED" : "DEMO"}
                       </span>
                     </div>
                     <p>{g.prompt}</p>

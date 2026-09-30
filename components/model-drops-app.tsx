@@ -1,4 +1,10 @@
 "use client";
+import { takeStudioDraft } from "@/lib/characters/studio-draft";
+import { StudioCharacterSelector } from "@/components/studio-character-selector";
+import {
+  defaultStudioCharacter,
+  studioCharacterLibrary,
+} from "@/lib/characters/studio-selection";
 import { CharacterCheckout } from "@/components/character-checkout";
 import { GenerationControls } from "@/components/generation-controls";
 import { defaultGenerationOptions, optionsFor } from "@/lib/generation/options";
@@ -10,7 +16,13 @@ import {
 } from "@/components/image-model-controls";
 import { calculateCredits, generationSettings } from "@/lib/pricing";
 import { uploadFile } from "@/lib/upload-client";
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import {
   ArrowUpRight,
   ArrowRight,
@@ -388,6 +400,15 @@ export default function ModelDropsApp({
     [],
   );
   const unlocked = account.usableCharacters || [];
+  const purchasedCharacters = useMemo(
+    () =>
+      studioCharacterLibrary(
+        catalog,
+        account.usableCharacters || [],
+        account.purchases,
+      ),
+    [catalog, account.usableCharacters, account.purchases],
+  );
   const [unavailableModel, setUnavailableModel] = useState(false);
   const characters = catalog.filter(
     (c) => c.enabled !== false || unlocked.includes(c.id),
@@ -463,16 +484,49 @@ export default function ModelDropsApp({
     }
   }, []);
   useEffect(() => {
-    if (
-      !loading &&
-      !loadError &&
-      selected &&
-      !characters.some((c) => c.id === selected)
-    ) {
-      setSelected("");
-      setUnavailableModel(true);
+    if (loading || loadError) return;
+    const next = defaultStudioCharacter(purchasedCharacters, selected);
+    if (next !== selected) {
+      setUnavailableModel(Boolean(selected));
+      setSelected(next);
+      setReference(null);
     }
-  }, [loading, loadError, selected, catalog]);
+  }, [loading, loadError, selected, purchasedCharacters]);
+  useEffect(() => {
+    if (page !== "studio" || loading || loadError) return;
+    // Keep reloads and shared Studio links tied to the selected, verified character.
+    const url = new URL(window.location.href);
+    if (purchasedCharacters.some((c) => c.id === selected)) {
+      url.searchParams.set("character", selected);
+    } else if (!selected) {
+      url.searchParams.delete("character");
+    } else return;
+    if (url.href !== window.location.href)
+      history.replaceState({}, "", url.pathname + url.search + url.hash);
+  }, [page, selected, loading, loadError, purchasedCharacters]);
+  const openedProfile = useRef("");
+  useEffect(() => {
+    if (loading || loadError || page !== "marketplace") return;
+    const id = new URLSearchParams(location.search).get("character");
+    if (id && openedProfile.current !== id) {
+      const character = catalog.find((c) => c.id === id);
+      if (character) {
+        setDetail(character);
+        openedProfile.current = id;
+      }
+    }
+  }, [page, catalog, loading, loadError]);
+  useEffect(() => {
+    if (
+      page !== "studio" ||
+      loading ||
+      loadError ||
+      !purchasedCharacters.some((c) => c.id === selected)
+    )
+      return;
+    const draft = takeStudioDraft(selected);
+    if (draft) setPrompt(draft);
+  }, [page, selected, loading, loadError, purchasedCharacters]);
   useEffect(() => {
     refresh();
     const path = location.pathname.slice(1).split("/")[0];
@@ -529,6 +583,10 @@ export default function ModelDropsApp({
     }
   }, [page, loading]);
   const navigate = useCallback((p: Page) => {
+    if (p === "explore") {
+      window.location.assign("/explore");
+      return;
+    }
     setPage(p);
     setQuery("");
     setActiveProject(null);
@@ -615,9 +673,10 @@ export default function ModelDropsApp({
     }
     setDetail(null);
     setPrompt(
-      outputMode === "video"
-        ? "Subtle natural movement, a gentle smile, soft cinematic lighting. Preserve the woman’s facial identity and appearance from the reference image."
-        : `An editorial portrait of the adult woman in the reference image, preserving her facial identity, with soft natural light and realistic skin texture.`,
+      takeStudioDraft(c.id) ||
+        (outputMode === "video"
+          ? "Subtle natural movement, a gentle smile, soft cinematic lighting. Preserve the woman’s facial identity and appearance from the reference image."
+          : `An editorial portrait of the adult woman in the reference image, preserving her facial identity, with soft natural light and realistic skin texture.`),
     );
     navigate("studio");
     history.replaceState(
@@ -640,7 +699,7 @@ export default function ModelDropsApp({
     !!selected && catalog.some((c) => c.id === selected && c.enabled === false);
   const model =
     registry.find((m) => m.id === modelId) || registry[0] || defaultModels[0];
-  const liveModel = model.provider === "WaveSpeed";
+  const liveModel = model.provider !== "Demo";
   const liveImage = liveModel && mode === "image";
   const activeImageInputs = imageInputs[modelId];
   const quoteKey = imageQuoteKey(
@@ -1444,10 +1503,10 @@ export default function ModelDropsApp({
               <div className="studio-heading">
                 <div>
                   <p className="eyebrow">MODEL DROPS STUDIO</p>
-                  <h1>Your vision. In full detail.</h1>
+                  <h1>YOUR NEXT FRAME.</h1>
                   <p className="studio-subtitle">
-                    Choose your model, fine-tune your frame, and make something
-                    original.
+                    Choose a purchased character, describe your scene, and make
+                    something original.
                   </p>
                 </div>
                 <span className="demo-pill">
@@ -1470,109 +1529,19 @@ export default function ModelDropsApp({
               </Tabs>
               <div className="studio-layout">
                 <div className="studio-controls">
-                  {
-                    <div className="control-group">
-                      <label>
-                        <span>01</span> Your model{" "}
-                        <button onClick={() => navigate("marketplace")}>
-                          Browse <ArrowUpRight size={12} />
-                        </button>
-                      </label>
-                      {unavailableModel && (
-                        <p className="field-note" role="status">
-                          That model is no longer available in this drop. Choose
-                          an unlocked model from your library. Your earlier
-                          creations and license records are preserved.
-                        </p>
-                      )}
-                      {!loading && !unlocked.length && (
-                        <p className="field-note" role="status">
-                          No models unlocked yet. Browse the collection and
-                          review access before creating.
-                        </p>
-                      )}
-                      <Select
-                        value={selected || "none"}
-                        onValueChange={(v) => {
-                          setUnavailableModel(false);
-                          setSelected(v === "none" ? "" : v);
-                        }}
-                      >
-                        <SelectTrigger aria-label="Your character">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">
-                            Choose an unlocked model
-                          </SelectItem>
-                          {characters
-                            .filter((c) =>
-                              (account.usableCharacters || []).includes(c.id),
-                            )
-                            .map((c) => (
-                              <SelectItem key={c.id} value={c.id}>
-                                {c.name}
-                                {unlocked.includes(c.id)
-                                  ? " · In your library"
-                                  : " · Preview only"}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                      {liveModel && (
-                        <small className="field-note">
-                          Your approved character reference is attached
-                          automatically to every image and video request. Video
-                          starts from the reference portrait; framing follows
-                          that image.
-                        </small>
-                      )}
-                      {selected &&
-                        characters.some((c) => c.id === selected) && (
-                          <div className="selected-character">
-                            <img
-                              src={
-                                characters.find((c) => c.id === selected)?.image
-                              }
-                              style={{
-                                objectPosition: characters.find(
-                                  (c) => c.id === selected,
-                                )?.position,
-                              }}
-                              alt="Selected character"
-                            />
-                            <div>
-                              <strong>
-                                {
-                                  characters.find((c) => c.id === selected)
-                                    ?.name
-                                }
-                              </strong>
-                              <span>
-                                {unlocked.includes(selected)
-                                  ? "In your library"
-                                  : "Unlock this model to generate"}
-                              </span>
-                            </div>
-                            {unlocked.includes(selected) ? (
-                              <ShieldCheck size={18} />
-                            ) : (
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() =>
-                                  setDetail(
-                                    characters.find((c) => c.id === selected)!,
-                                  )
-                                }
-                              >
-                                Review access
-                              </Button>
-                            )}
-                          </div>
-                        )}
-                    </div>
-                  }
+                  <StudioCharacterSelector
+                    characters={purchasedCharacters}
+                    selected={selected}
+                    loading={loading}
+                    error={!!loadError}
+                    replacedSelection={unavailableModel}
+                    onChange={(id) => {
+                      setUnavailableModel(false);
+                      setSelected(id);
+                      setReference(null);
+                    }}
+                    onBrowse={() => navigate("marketplace")}
+                  />
                   <div className="control-group studio-model-group">
                     <label>
                       <span>02</span> Generation model
@@ -1830,6 +1799,8 @@ export default function ModelDropsApp({
                     className="lime-button generate-button"
                     disabled={
                       busy ||
+                      loading ||
+                      !!loadError ||
                       !!settingsError ||
                       (promptNeeded && !prompt.trim()) ||
                       (liveImage && !quoteReady) ||
@@ -2121,7 +2092,7 @@ export default function ModelDropsApp({
               )}
               <div className="balance-banner">
                 <div>
-                  <span>YOUR DEMO BALANCE</span>
+                  <span>YOUR CREDIT BALANCE</span>
                   <h1>
                     <Zap size={30} />
                     {count(account.balance)} <small>credits</small>
@@ -2137,8 +2108,8 @@ export default function ModelDropsApp({
               <div className="notice">
                 <ShieldCheck size={17} />
                 <p>
-                  Live payments are not enabled. Demo credits have no monetary
-                  value.
+                  Payments are not enabled. Review your credit activity below;
+                  generation uses your available account balance.
                 </p>
               </div>
               {heading("Credit activity", "Your credit usage and adjustments.")}

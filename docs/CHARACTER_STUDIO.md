@@ -25,7 +25,7 @@ A future payment adapter must create payment-mode orders and entitlements only a
 - Character access, uploaded references and outputs are user-scoped; reference administration is super-admin-only.
 - Existing credit reservation, polling, private output storage and idempotent refunds remain in use.
 
-The dashboard separates usable models from historical license and preview records. Retired character links show an unavailable notice in Studio. Checkout can refresh a stale price or recover from a failed library refresh without charging or creating another order.
+The dashboard separates usable models from historical license and preview records. Studio starts with a purchased-character selector sourced only from server-verified access. It preserves a valid selection and otherwise defaults to the newest ready, permitted purchase, falling back to a pending owned character with a readiness notice. Disabled, hidden and unowned characters are absent from the selector. Retired or unowned character links show a notice when a replacement is selected. The URL follows the selected character, and image/video switching preserves it. Empty libraries show a browse action and cannot generate. Checkout can refresh a stale price or recover from a failed library refresh without charging or creating another order.
 
 ## Deployment
 

@@ -27,6 +27,113 @@ body {
   font-family: var(--md-font);
   letter-spacing: -0.012em;
 }
+.studio-character-picker {
+  padding: 18px;
+  margin-bottom: 22px;
+  border: 1px solid var(--md-line-strong);
+  border-radius: 18px;
+  background: var(--md-inset);
+}
+.studio-character-picker-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.studio-character-picker-heading label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.studio-character-picker-heading label span {
+  font-size: 11px;
+  color: var(--md-focus);
+}
+.studio-character-picker button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 36px;
+  color: var(--md-focus);
+  font-size: 12px;
+  cursor: pointer;
+}
+.studio-character-picker p,
+.studio-character-picker small {
+  display: block;
+  margin: 8px 0 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--md-secondary);
+}
+.studio-character-picker small {
+  margin-bottom: 0;
+}
+.studio-character-picker select {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid var(--md-line-strong);
+  border-radius: var(--md-radius-control);
+  background: var(--md-surface);
+  color: var(--md-label);
+  font-size: 16px;
+  cursor: pointer;
+}
+.studio-character-picker select:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+.studio-character-picker :is(select, button):focus-visible {
+  outline: 2px solid var(--md-focus);
+  outline-offset: 3px;
+}
+.studio-character-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+.studio-character-identity img {
+  width: 56px;
+  height: 66px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+.studio-character-identity > div {
+  min-width: 0;
+  flex: 1;
+}
+.studio-character-identity strong,
+.studio-character-identity span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.studio-character-identity strong {
+  font-size: 15px;
+  color: var(--md-label);
+}
+.studio-character-identity span {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--md-secondary);
+}
+.studio-character-identity > svg {
+  flex-shrink: 0;
+  color: var(--md-focus);
+}
+.studio-character-empty {
+  display: grid;
+  justify-items: start;
+  gap: 9px;
+  margin-top: 14px;
+  color: var(--md-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+}
 button,
 input,
 textarea,
