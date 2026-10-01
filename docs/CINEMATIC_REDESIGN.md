@@ -25,6 +25,8 @@ The same cinematic timelines run on desktop, tablets and phones: hero zoom/cross
 
 The footer's Reduce motion control and the system reduced-motion preference replace pinned stories with normal document sections, native horizontal cards and interactive scene selectors. Navigation, native selects, range comparisons, visible focus, skip links and labeled controls support keyboard use. No custom scrolling or WebGL dependency is needed.
 
+The opening header pairs the existing concept portrait with an editorial “Meet your next muse” headline, a compact floating navigation bar, direct collection/Studio links, and a collection discovery rail. Its existing scroll zoom and headline crossfade are retained. Mobile navigation includes account actions, current-route indicators and Escape-to-close with focus restoration. No new header video or paid generation was requested for this redesign.
+
 ## Data and generation
 
 The public talent adapter preserves the existing five character IDs and derives cards and filters from catalog data. Server ownership and permissions remain authoritative. The Studio lists only catalog-visible characters in the authenticated account's verified `usableCharacters`; preview claims cannot unlock it. It honors a valid requested character or defaults to the newest ready purchase, shows pending/restricted access explicitly, and retains the selection across image/video modes.
@@ -48,3 +50,4 @@ The homepage demonstration accurately represents one image per request. No fabri
 - No real purchases, paid generation or production data writes were used for this review.
 - Mobile motion follow-up: full timelines and no document overflow verified at 320×568, 390×844, 844×390, 768×1024, 1280×720 and 1440×900. At 390×844, verified the hero headline crossfade, casting through Scarlett, later scene crossfades and the completed demo result. Reduced motion removed all four pin spacers; re-enabling restored them.
 - Real-device performance, measured Core Web Vitals and a complete assistive-technology audit remain release checks; they are not claimed from local visual testing.
+- Header redesign: production build/type checking and targeted ESLint passed; browser layouts verified at 1440×900, 1280×720, 390×844 and 320×568, plus mobile menu, Escape focus restoration, headline crossfade, collection anchor and reduced-motion fallback.

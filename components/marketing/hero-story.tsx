@@ -44,7 +44,7 @@ export function HeroStory() {
   useStoryMotion(root, animateHero);
   return (
     <section
-      className="md-hero"
+      className="md-hero md-hero-editorial"
       ref={root}
       aria-label="Meet the next generation of digital talent"
     >
@@ -60,49 +60,54 @@ export function HeroStory() {
       </div>
       <div className="md-hero-shade" />
       <div className="md-hero-top">
-        <span>THE DIGITAL TALENT HOUSE</span>
-        <span>COLLECTION / 001</span>
+        <span className="md-hero-eyebrow">
+          <i aria-hidden="true" /> THE DIGITAL TALENT HOUSE
+        </span>
+        <Link href="/models" className="md-hero-drop-label">
+          DROP 001 <span>LAUNCH PREVIEW</span> <ArrowUpRight size={13} />
+        </Link>
       </div>
       <div className="md-hero-copy" data-motion-reveal>
         <div className="md-hero-opening">
-          <span className="md-kicker">A NEW KIND OF CREATIVE PARTNER</span>
           <h1>
-            REAL PEOPLE
+            Meet your
             <br />
-            AREN’T YOUR
-            <br />
-            <em>ONLY OPTION.</em>
+            next <em>muse.</em>
           </h1>
         </div>
         <div className="md-hero-next" aria-hidden="true">
           <h2>
-            MEET THE NEXT
+            One identity.
             <br />
-            GENERATION OF
-            <br />
-            <em>DIGITAL TALENT.</em>
+            <em>Endless stories.</em>
           </h2>
         </div>
       </div>
       <div className="md-hero-bottom">
         <div>
           <p>
-            Discover original AI identities.
-            <br />
-            Bring your creative direction to life.
+            Five original AI identities.
+            <br />A new way to bring your vision to life.
           </p>
           <div className="md-actions">
             <Link href="/models" className="md-button">
               Explore models <ArrowUpRight size={18} />
             </Link>
             <Link href="/create" className="md-text-link">
-              Start creating <ArrowUpRight size={16} />
+              Creator Studio <ArrowUpRight size={16} />
             </Link>
           </div>
         </div>
-        <a href="#the-drop" className="md-scroll-cue">
-          SCROLL TO DISCOVER <ArrowDown size={17} />
+      </div>
+      <div className="md-hero-footer">
+        <a href="#the-drop" className="md-hero-collection">
+          <span className="md-hero-index">01—05</span>
+          <span>Discover the first collection</span>
+          <ArrowDown size={17} />
         </a>
+        <span className="md-hero-footer-note">
+          A FACE. A POINT OF VIEW. YOUR NEXT CHAPTER.
+        </span>
       </div>
       <small className="md-art-caption">
         Original concept artwork · launch portraits in preparation

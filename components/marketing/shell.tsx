@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowUpRight, Menu, X } from "lucide-react";
 import { ModelDropsBrand } from "@/components/model-drops-brand";
@@ -11,13 +12,14 @@ import {
 } from "@/components/motion/motion-preference";
 const links = [
   ["Models", "/models"],
-  ["Create", "/create"],
   ["Explore", "/explore"],
   ["Pricing", "/pricing"],
   ["Resources", "/resources"],
 ];
 export function MarketingShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const menuButton = useRef<HTMLButtonElement>(null);
   const reduced = useReducedStoryMotion();
   const systemReduced = useSystemReducedStoryMotion();
   const header = useRef<HTMLElement>(null);
@@ -45,7 +47,10 @@ export function MarketingShell({ children }: { children: ReactNode }) {
       if (!frame) frame = requestAnimationFrame(update);
     };
     const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape" && open) {
+        setOpen(false);
+        menuButton.current?.focus();
+      }
     };
     window.addEventListener("scroll", scroll, { passive: true });
     window.addEventListener("keydown", key);
@@ -60,13 +65,25 @@ export function MarketingShell({ children }: { children: ReactNode }) {
       <a className="md-skip" href="#main-content">
         Skip to content
       </a>
-      <header className="md-nav" ref={header}>
+      <header
+        className="md-nav md-nav-refined"
+        ref={header}
+        data-menu-open={open}
+      >
         <Link href="/welcome" aria-label="ModelDrops home">
           <ModelDropsBrand />
         </Link>
         <nav className="md-desktop-nav" aria-label="Main navigation">
           {links.map(([label, href]) => (
-            <Link key={href} href={href}>
+            <Link
+              key={href}
+              href={href}
+              aria-current={
+                pathname === href || pathname.startsWith(`${href}/`)
+                  ? "page"
+                  : undefined
+              }
+            >
               {label}
             </Link>
           ))}
@@ -81,6 +98,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
           </Link>
           <button
             className="md-menu-button"
+            ref={menuButton}
             aria-expanded={open}
             aria-controls="md-mobile-nav"
             aria-label={open ? "Close menu" : "Open menu"}
@@ -96,12 +114,32 @@ export function MarketingShell({ children }: { children: ReactNode }) {
             aria-label="Mobile navigation"
           >
             {links.map(([label, href]) => (
-              <Link onClick={() => setOpen(false)} key={href} href={href}>
+              <Link
+                onClick={() => setOpen(false)}
+                key={href}
+                href={href}
+                aria-current={
+                  pathname === href || pathname.startsWith(`${href}/`)
+                    ? "page"
+                    : undefined
+                }
+              >
                 {label}
                 <ArrowUpRight size={18} />
               </Link>
             ))}
-            <Link href="/login">Log in</Link>
+            <div className="md-mobile-account">
+              <Link onClick={() => setOpen(false)} href="/login">
+                Log in
+              </Link>
+              <Link
+                onClick={() => setOpen(false)}
+                href="/create"
+                className="md-button"
+              >
+                Start creating <ArrowUpRight size={16} />
+              </Link>
+            </div>
           </nav>
         )}
       </header>
