@@ -3,7 +3,7 @@ import { assertOrigin } from "@/lib/server";
 import { z } from "zod";
 import { loraService, loraFailure, boundedBytes } from "@/lib/lora/http";
 import { deliverTrainingEmails } from "@/lib/lora/email";
-import { LoraError } from "@/lib/lora/types";
+import { LoraError, statuses } from "@/lib/lora/types";
 export async function GET(request: Request) {
   try {
     const service = await loraService();
@@ -39,75 +39,46 @@ export async function POST(request: Request) {
       .object({ action: z.string(), data: z.record(z.unknown()).default({}) })
       .safeParse(payload);
     if (!parsed.success) throw new LoraError(400, "Invalid training request.");
-    const { action, data } = parsed.data as {
-      action: string;
-      data: Record<string, any>;
-    };
-    if (
-      [
-        "update-draft",
-        "discard-draft",
-        "remove-file",
-        "submit",
-        "status",
-        "complete-upload",
-        "delete-lora",
-      ].includes(action) &&
-      !z.string().uuid().safeParse(data.id).success
-    )
-      throw new LoraError(400, "A valid record ID is required.");
-    if (
-      action === "status" &&
-      (!Number.isSafeInteger(data.revision) ||
-        typeof data.status !== "string" ||
-        (data.reason !== undefined && typeof data.reason !== "string"))
-    )
-      throw new LoraError(400, "Invalid status update.");
-    if (
-      action === "start-upload" &&
-      (!z.string().uuid().safeParse(data.requestId).success ||
-        typeof data.name !== "string" ||
-        typeof data.size !== "number")
-    )
-      throw new LoraError(400, "Invalid upload details.");
+    const { action, data } = parsed.data;
+    const recordId = () => z.string().uuid().parse(data.id);
     let result;
     switch (action) {
       case "draft":
         result = await service.createDraft(data);
         break;
       case "update-draft":
-        result = await service.updateDraft(data.id, data);
+        result = await service.updateDraft(recordId(), data);
         break;
       case "discard-draft":
-        result = await service.deleteDraft(data.id);
+        result = await service.deleteDraft(recordId());
         break;
       case "remove-file":
-        result = await service.removeFile(data.id);
+        result = await service.removeFile(recordId());
         break;
       case "submit":
-        result = await service.submit(data.id);
+        result = await service.submit(recordId());
         break;
       case "status":
         result = await service.transition(
-          data.id,
-          data.revision,
-          data.status,
-          data.reason || "",
+          recordId(),
+          z.number().int().parse(data.revision),
+          z.enum(statuses).parse(data.status),
+          z.string().optional().parse(data.reason) || "",
           data.delivery,
         );
         break;
       case "start-upload":
         result = await service.startWeights(
-          data.requestId,
-          data.name,
-          data.size,
+          z.string().uuid().parse(data.requestId),
+          z.string().parse(data.name),
+          z.number().parse(data.size),
         );
         break;
       case "complete-upload":
-        result = await service.completeWeights(data.id);
+        result = await service.completeWeights(recordId());
         break;
       case "delete-lora":
-        result = await service.deleteLora(data.id);
+        result = await service.deleteLora(recordId());
         break;
       case "settings":
         result = await service.setSettings(data);

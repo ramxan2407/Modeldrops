@@ -59,6 +59,12 @@ try {
       "utf8",
     ),
   );
+  await client.query(
+    await readFile(
+      new URL("../migrations/vercel/006_demo_credits.sql", import.meta.url),
+      "utf8",
+    ),
+  );
   await client.query("COMMIT");
   console.log(
     "Model Drops workspace schema created successfully. Existing Supabase Auth is unchanged.",

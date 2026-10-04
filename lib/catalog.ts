@@ -1,4 +1,6 @@
 export type Character = {
+  demoCreditPrice?: number;
+  approvalStatus?: "pending" | "approved" | "rejected";
   id: string;
   name: string;
   creator: string;

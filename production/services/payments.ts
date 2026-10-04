@@ -64,7 +64,15 @@ export async function createCreditCheckout(
     [candidate, userId, p.price_cents, p.currency, p.credits, p.id, key],
   );
   const payment = (
-    await db.query("SELECT * FROM payments WHERE idempotency_key=$1", [key])
+    await db.query<{
+      id: string;
+      user_id: string;
+      package_id: string;
+      status: string;
+      currency: string;
+      amount_cents: number;
+      credits_snapshot: number;
+    }>("SELECT * FROM payments WHERE idempotency_key=$1", [key])
   ).rows[0];
   if (payment.user_id !== userId || payment.package_id !== packageId)
     throw new Error("Idempotency key conflict");

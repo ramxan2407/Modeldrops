@@ -28,7 +28,10 @@ function setup() {
   };
 }
 const rejected = (p: Promise<unknown>, status: number) =>
-  assert.rejects(p, (e: any) => e instanceof AdminError && e.status === status);
+  assert.rejects(
+    p,
+    (e: unknown) => e instanceof AdminError && e.status === status,
+  );
 test("super admin and training admin permissions are separate and fail closed", async () => {
   const f = setup();
   assert.equal(roleFor({}, "admin"), "user");
@@ -44,7 +47,10 @@ test("super admin and training admin permissions are separate and fail closed", 
     }),
     403,
   );
-  assert.equal(((await f.superadmin.state("users")) as any).rows.length, 3);
+  assert.equal(
+    ((await f.superadmin.state("users")) as { rows: unknown[] }).rows.length,
+    3,
+  );
   const service = new LoraService(
     { ...f.env, ADMIN_USER_IDS: "", SUPER_ADMIN_USER_IDS: "admin" },
     { userId: "admin", email: "admin@example.test" },
@@ -237,7 +243,8 @@ test("moderation saves decisions and user notifications", async () => {
     reason: "Listing issue corrected",
   });
   assert.equal(
-    ((await f.superadmin.state("moderation")) as any).reports.length,
+    ((await f.superadmin.state("moderation")) as { reports: unknown[] }).reports
+      .length,
     0,
   );
 });
@@ -259,14 +266,18 @@ test("every admin view loads, pagination is bounded and search escapes wildcards
     f.sql
       .prepare("INSERT INTO users(id,name,email) VALUES(?,?,?)")
       .run("test-" + i, "Person", "person" + i + "@example.test");
-  const first: any = await f.superadmin.state("users", "person", 0),
-    second: any = await f.superadmin.state("users", "person", 1);
+  const first = await f.superadmin.state("users", "person", 0),
+    second = await f.superadmin.state("users", "person", 1);
+  assert(
+    first.rows && second.rows && "hasMore" in first && "hasMore" in second,
+  );
   assert.equal(first.rows.length, 25);
   assert.equal(first.hasMore, true);
   assert.equal(second.rows.length, 5);
   assert.equal(second.hasMore, false);
   assert.equal(
-    ((await f.superadmin.state("users", "%")) as any).rows.length,
+    ((await f.superadmin.state("users", "%")) as { rows: unknown[] }).rows
+      .length,
     0,
   );
   await rejected(f.superadmin.state("users", "", -1), 400);

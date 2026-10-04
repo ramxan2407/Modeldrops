@@ -1,6 +1,14 @@
+import {
+  activeWallet,
+  demoEnabled,
+  initialDemoCredits,
+  type Wallet,
+  type DemoEnvironment,
+} from "./credits";
 import { env } from "cloudflare:workers";
 import { getAppUser } from "@/lib/app-auth";
-import { roleFor, sameOrigin } from "./admin/policy";
+import { roleFor } from "./admin/policy";
+import { sameOrigin } from "./server-origin";
 import {
   generationModels,
   generationConfigured,
@@ -17,23 +25,24 @@ export class ApiError extends Error {
 }
 export const uid = () => crypto.randomUUID();
 export function bindings() {
-  const e = env as unknown as GenerationEnvironment & {
-    DB: D1Database;
-    DEMO_ASSET?: () => Promise<ArrayBuffer>;
-    BUCKET: R2Bucket;
-    ADMIN_USER_IDS?: string;
-    SUPER_ADMIN_USER_IDS?: string;
-    JOB_RUNNER_SECRET?: string;
-    CRON_SECRET?: string;
-    WELCOME_CREDITS?: string;
-    RESEND_API_KEY?: string;
-    LORA_EMAIL_FROM?: string;
-    LORA_ADMIN_EMAILS?: string;
-    APP_ORIGIN?: string;
-    CHARACTER_TEST_CHECKOUT?: string;
-    VERCEL_ENV?: string;
-    MAX_LORA_UPLOAD_BYTES?: string;
-  };
+  const e = env as unknown as GenerationEnvironment &
+    DemoEnvironment & {
+      DB: D1Database;
+      DEMO_ASSET?: () => Promise<ArrayBuffer>;
+      BUCKET: R2Bucket;
+      ADMIN_USER_IDS?: string;
+      SUPER_ADMIN_USER_IDS?: string;
+      JOB_RUNNER_SECRET?: string;
+      CRON_SECRET?: string;
+      WELCOME_CREDITS?: string;
+      RESEND_API_KEY?: string;
+      LORA_EMAIL_FROM?: string;
+      LORA_ADMIN_EMAILS?: string;
+      APP_ORIGIN?: string;
+      CHARACTER_TEST_CHECKOUT?: string;
+      VERCEL_ENV?: string;
+      MAX_LORA_UPLOAD_BYTES?: string;
+    };
   if (!e.DB) throw new ApiError(503, "Workspace storage is not configured.");
   return e;
 }
@@ -53,9 +62,7 @@ export async function auth() {
 }
 export async function initialize(user: Awaited<ReturnType<typeof auth>>) {
   const { DB, WELCOME_CREDITS } = bindings();
-  const welcomeCredits = Number(
-    WELCOME_CREDITS ?? (generationConfigured(bindings()) ? "0" : "1840"),
-  );
+  const welcomeCredits = Number(WELCOME_CREDITS ?? "0");
   if (
     !Number.isSafeInteger(welcomeCredits) ||
     welcomeCredits < 0 ||
@@ -65,6 +72,10 @@ export async function initialize(user: Awaited<ReturnType<typeof auth>>) {
       503,
       "Account credit configuration requires administrator review.",
     );
+  const wallet = activeWallet(bindings());
+  const allocation = demoEnabled(bindings())
+    ? initialDemoCredits(bindings())
+    : welcomeCredits;
   const known = await DB.prepare("SELECT id FROM ai_models").all<{
     id: string;
   }>();
@@ -98,17 +109,16 @@ export async function initialize(user: Awaited<ReturnType<typeof auth>>) {
         "INSERT OR IGNORE INTO credit_packages(id,name,price,credits) VALUES(?,?,?,?)",
       ).bind(p.id, p.name, p.price, p.credits),
     ),
-    DB.prepare(
-      "INSERT OR IGNORE INTO credit_transactions(id,user_id,amount,type,description,balance_before,balance_after,idempotency_key) VALUES(?,?,?,'promotion',?,0,?,?)",
-    ).bind(
-      uid(),
+    ledgerStatement(
       user.userId,
-      welcomeCredits,
-      generationConfigured(bindings())
-        ? "Welcome to Model Drops"
-        : "Welcome to Model Drops · demo credits",
-      welcomeCredits,
-      `welcome:${user.userId}`,
+      allocation,
+      "promotion",
+      wallet === "demo" ? "Demo testing credits" : "Welcome to Model Drops",
+      wallet === "demo"
+        ? `demo-welcome:${user.userId}`
+        : `welcome:${user.userId}`,
+      null,
+      wallet,
     ),
   ];
   await DB.batch(statements);
@@ -148,10 +158,11 @@ export function ledgerStatement(
   description: string,
   key: string,
   generationId: string | null = null,
+  wallet: Wallet = activeWallet(bindings()),
 ) {
   return bindings()
     .DB.prepare(
-      `INSERT OR IGNORE INTO credit_transactions(id,user_id,amount,type,generation_id,description,balance_before,balance_after,idempotency_key) SELECT ?,?,?,?,?,?,COALESCE(SUM(amount),0),COALESCE(SUM(amount),0)+?,? FROM credit_transactions WHERE user_id=?`,
+      `INSERT INTO credit_transactions(id,user_id,amount,type,generation_id,description,balance_before,balance_after,idempotency_key,wallet) SELECT ?,?,?,?,?,?,COALESCE(SUM(amount),0),COALESCE(SUM(amount),0)+?,?,? FROM credit_transactions WHERE user_id=? AND wallet=? ON CONFLICT(idempotency_key) DO NOTHING`,
     )
     .bind(
       uid(),
@@ -162,6 +173,8 @@ export function ledgerStatement(
       description,
       amount,
       key,
+      wallet,
       userId,
+      wallet,
     );
 }

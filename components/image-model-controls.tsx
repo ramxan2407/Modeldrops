@@ -57,28 +57,30 @@ export function ImageModelPicker({
     </div>
   );
 }
-export function ImageModelControls({
-  characterId,
-  modelId,
-  prompt,
-  values,
-  onChange,
-  onQuote,
-}: {
+type ControlsProps = {
   characterId?: string;
   modelId: string;
   prompt: string;
   values: Record<string, unknown> | undefined;
   onChange: (v: Record<string, unknown>) => void;
   onQuote: (q: ImageQuote) => void;
-}) {
+};
+export function ImageModelControls(props: ControlsProps) {
+  return <ModelControlsSession key={props.modelId} {...props} />;
+}
+function ModelControlsSession({
+  characterId,
+  modelId,
+  prompt,
+  values,
+  onChange,
+  onQuote,
+}: ControlsProps) {
   const [quoteRevision, setQuoteRevision] = useState(0);
   const [definition, setDefinition] = useState<ImageDefinition | null>(null),
     [error, setError] = useState("");
   useEffect(() => {
     let active = true;
-    setDefinition(null);
-    setError("");
     fetch(`/api/image-models?id=${encodeURIComponent(modelId)}`)
       .then(async (r) => {
         const d = (await r.json()) as {
@@ -149,7 +151,16 @@ export function ImageModelControls({
       clearTimeout(timer);
       abort.abort();
     };
-  }, [definition, inputKey, onQuote, quoteRevision]); // inputKey includes all price-relevant inputs.
+  }, [
+    definition,
+    inputKey,
+    onQuote,
+    quoteRevision,
+    characterId,
+    modelId,
+    prompt,
+    values,
+  ]); // inputKey includes all price-relevant inputs.
   if (error)
     return (
       <p role="alert" className="settings-error">
@@ -409,7 +420,7 @@ function SchemaField({
           ))}
         </div>
         <small>
-          Optional output dimensions in pixels. Leave blank to use the model's
+          Optional output dimensions in pixels. Leave blank to use the model’s
           default.
         </small>
       </div>

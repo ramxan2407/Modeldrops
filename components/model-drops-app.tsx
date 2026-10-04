@@ -1,4 +1,5 @@
 "use client";
+import { useRouter } from "next/navigation";
 import { takeStudioDraft } from "@/lib/characters/studio-draft";
 import { StudioCharacterSelector } from "@/components/studio-character-selector";
 import {
@@ -24,9 +25,9 @@ import React, {
   useMemo,
 } from "react";
 import {
+  type LucideIcon,
   ArrowUpRight,
   ArrowRight,
-  ArrowLeft,
   Search,
   Plus,
   Compass,
@@ -39,7 +40,6 @@ import {
   ChevronDown,
   ChevronRight,
   Play,
-  Star,
   Check,
   CheckCheck,
   SlidersHorizontal,
@@ -55,22 +55,15 @@ import {
   ShieldCheck,
   Globe,
   MoreHorizontal,
-  X,
   LoaderCircle,
   Upload,
   Download,
   RefreshCw,
-  Clock,
-  Coins,
   Lock,
   LayoutDashboard,
   Film,
   Clapperboard,
-  Camera,
-  Menu,
-  CheckCircle2,
   Flag,
-  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -175,6 +168,7 @@ type Project = {
   createdAt: string;
 };
 type Account = {
+  demoMode?: boolean;
   balance: number;
   owned: string[];
   favorites: string[];
@@ -199,10 +193,16 @@ type Account = {
     licenseVersion: string;
     licenseSnapshot: string;
     priceCents: number;
+    creditsSpent?: number;
   }[];
   defaultPrivate: boolean;
   creatorStatus?: string;
-  listings?: any[];
+  listings?: {
+    id: string;
+    name: string;
+    description: string;
+    status: string;
+  }[];
 };
 const emptyAccount: Account = {
   balance: 0,
@@ -245,7 +245,14 @@ const titles: Record<Page, string> = {
   "my-loras": "My LoRAs",
   "admin-training": "Training administration",
 };
-async function api(action: string, data?: unknown) {
+type PlatformState = {
+  account: Account;
+  models: typeof defaultModels;
+  packages: typeof defaultPackages;
+  characters: Character[];
+  error?: string;
+};
+async function api<T = unknown>(action: string, data?: unknown) {
   const r = await fetch(
     "/api/platform" + (data === undefined ? "?action=" + action : ""),
     data === undefined
@@ -256,7 +263,7 @@ async function api(action: string, data?: unknown) {
           body: JSON.stringify({ action, data }),
         },
   );
-  let result: any;
+  let result: T & { error?: string };
   try {
     result = await r.json();
   } catch {
@@ -283,7 +290,7 @@ function NavButton({
 }: {
   id: string;
   label: string;
-  icon: any;
+  icon: LucideIcon;
   page: Page;
   navigate: (p: Page) => void;
 }) {
@@ -305,7 +312,6 @@ function NavButton({
   );
 }
 function WorkspaceMoreMenu({
-  isAdmin,
   isSuperAdmin,
   onNavigate,
 }: {
@@ -386,6 +392,7 @@ export default function ModelDropsApp({
   initialCharacter?: string;
   initialPrompt?: string;
 }) {
+  const router = useRouter();
   const [page, setPage] = useState<Page>(initialPage),
     [account, setAccount] = useState<Account>(emptyAccount),
     [loading, setLoading] = useState(true),
@@ -399,7 +406,10 @@ export default function ModelDropsApp({
   const [catalog, setCatalog] = useState<(Character & { enabled?: boolean })[]>(
     [],
   );
-  const unlocked = account.usableCharacters || [];
+  const unlocked = useMemo(
+    () => account.usableCharacters || [],
+    [account.usableCharacters],
+  );
   const purchasedCharacters = useMemo(
     () =>
       studioCharacterLibrary(
@@ -409,24 +419,27 @@ export default function ModelDropsApp({
       ),
     [catalog, account.usableCharacters, account.purchases],
   );
-  const [unavailableModel, setUnavailableModel] = useState(false);
-  const characters = catalog.filter(
-    (c) => c.enabled !== false || unlocked.includes(c.id),
+
+  const characters = useMemo(
+    () => catalog.filter((c) => c.enabled !== false || unlocked.includes(c.id)),
+    [catalog, unlocked],
   );
-  const [detail, setDetail] = useState<Character | null>(null),
+  const [detailChoice, chooseDetail] = useState<Character | null | undefined>(
+      undefined,
+    ),
     [modal, setModal] = useState<
       "credits" | "project" | "notifications" | "license" | "help" | null
     >(null),
     [busy, setBusy] = useState(false),
-    [selected, setSelected] = useState(initialCharacter || ""),
+    [selectedChoice, setSelected] = useState(initialCharacter || ""),
     [mode, setMode] = useState("image"),
-    [modelId, setModelId] = useState("forma-image"),
+    [modelChoice, setModelId] = useState("forma-image"),
     [prompt, setPrompt] = useState(initialPrompt),
-    [negative, setNegative] = useState(""),
-    [ratio, setRatio] = useState("16:9"),
-    [resolution, setResolution] = useState("1024"),
-    [outputs, setOutputs] = useState("1"),
-    [seed, setSeed] = useState(""),
+    [negativeChoice, setNegative] = useState(""),
+    [ratioChoice, setRatio] = useState("16:9"),
+    [resolutionChoice, setResolution] = useState("1024"),
+    [outputChoice, setOutputs] = useState("1"),
+    [seedChoice, setSeed] = useState(""),
     [duration, setDuration] = useState("5"),
     [advanced, setAdvanced] = useState(false),
     [projectName, setProjectName] = useState(""),
@@ -436,18 +449,46 @@ export default function ModelDropsApp({
     [libraryFilter, setLibraryFilter] = useState("all"),
     [registry, setRegistry] = useState(defaultModels),
     [creditPackages, setCreditPackages] = useState(defaultPackages),
-    [profileName, setProfileName] = useState(""),
-    [privateDefault, setPrivateDefault] = useState(true),
+    [profileDraft, setProfileName] = useState<string | null>(null),
+    [privateDraft, setPrivateDefault] = useState<boolean | null>(null),
     [creatorName, setCreatorName] = useState(""),
     [creatorDescription, setCreatorDescription] = useState(""),
     [rights, setRights] = useState(false),
-    [licenseAccepted, setLicenseAccepted] = useState(false),
+    [, setLicenseAccepted] = useState(false),
     [filterOpen, setFilterOpen] = useState(false),
     [freeOnly, setFreeOnly] = useState(false),
     [reference, setReference] = useState<string | null>(null),
     [purchaseLicense, setPurchaseLicense] = useState<PurchaseRecord | null>(
       null,
     );
+  const selected = defaultStudioCharacter(purchasedCharacters, selectedChoice);
+  const unavailableModel = !!selectedChoice && selectedChoice !== selected;
+  const detail =
+    detailChoice === undefined && page === "marketplace"
+      ? (catalog.find((c) => c.id === initialCharacter) ?? null)
+      : (detailChoice ?? null);
+  const setDetail = (value: Character | null) => chooseDetail(value);
+  const profileName = profileDraft ?? account.name;
+  const privateDefault = privateDraft ?? account.defaultPrivate;
+  const model =
+    registry.find(
+      (m) => m.id === modelChoice && m.type === mode && m.enabled,
+    ) ||
+    registry.find((m) => m.type === mode && m.enabled) ||
+    registry[0] ||
+    defaultModels[0];
+  const modelId = model.id;
+  const ratio = model.ratios.includes(ratioChoice)
+    ? ratioChoice
+    : model.ratios[0];
+  const resolution = model.resolutions.includes(resolutionChoice)
+    ? resolutionChoice
+    : model.resolutions[0];
+  const outputs = model.provider === "WaveSpeed" ? "1" : outputChoice;
+  const negative =
+    model.provider === "WaveSpeed" && mode === "image" ? "" : negativeChoice;
+  const seed =
+    model.provider === "WaveSpeed" && mode === "video" ? "" : seedChoice;
   const [generationOptions, setGenerationOptions] = useState(
     defaultGenerationOptions,
   );
@@ -457,41 +498,50 @@ export default function ModelDropsApp({
   const [imageQuote, setImageQuote] = useState<ImageQuote>({ key: "" });
   const idempotency = useRef<string | null>(null),
     searchRef = useRef<HTMLInputElement>(null);
-  const refresh = useCallback(async () => {
-    try {
-      const data = await api("state");
-      setAccount(data.account);
-      setRegistry(data.models);
-      setCreditPackages(data.packages);
-      setCatalog(data.characters || []);
-      setLoadError("");
-      return data.account as Account;
-    } catch (e) {
-      if ([401, 403].includes((e as Error & { status?: number }).status || 0))
-        setAccount(emptyAccount);
-      if ((e as Error & { status?: number }).status === 401) {
-        window.location.replace(
-          "/login?returnTo=" +
-            encodeURIComponent(
-              safeWorkspaceReturnTo(location.pathname + location.search),
-            ),
-        );
-      }
-      setLoadError((e as Error).message);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-  useEffect(() => {
-    if (loading || loadError) return;
-    const next = defaultStudioCharacter(purchasedCharacters, selected);
-    if (next !== selected) {
-      setUnavailableModel(Boolean(selected));
-      setSelected(next);
-      setReference(null);
-    }
-  }, [loading, loadError, selected, purchasedCharacters]);
+  const draftLoaded = useRef(false);
+  const refresh = useCallback(
+    () =>
+      api<PlatformState>("state")
+        .then((data) => {
+          setAccount(data.account);
+          if (!draftLoaded.current) {
+            draftLoaded.current = true;
+            const choice =
+              new URLSearchParams(location.search).get("character") || "";
+            const library = studioCharacterLibrary(
+              data.characters,
+              data.account.usableCharacters || [],
+              data.account.purchases,
+            );
+            const characterId = defaultStudioCharacter(library, choice);
+            const draft = characterId && takeStudioDraft(characterId);
+            if (draft) setPrompt(draft);
+          }
+          setRegistry(data.models);
+          setCreditPackages(data.packages);
+          setCatalog(data.characters || []);
+          setLoadError("");
+          return data.account;
+        })
+        .catch((e: unknown) => {
+          if (
+            [401, 403].includes((e as Error & { status?: number }).status || 0)
+          )
+            setAccount(emptyAccount);
+          if ((e as Error & { status?: number }).status === 401) {
+            window.location.replace(
+              "/login?returnTo=" +
+                encodeURIComponent(
+                  safeWorkspaceReturnTo(location.pathname + location.search),
+                ),
+            );
+          }
+          setLoadError((e as Error).message);
+          return null;
+        })
+        .finally(() => setLoading(false)),
+    [],
+  );
   useEffect(() => {
     if (page !== "studio" || loading || loadError) return;
     // Keep reloads and shared Studio links tied to the selected, verified character.
@@ -504,33 +554,8 @@ export default function ModelDropsApp({
     if (url.href !== window.location.href)
       history.replaceState({}, "", url.pathname + url.search + url.hash);
   }, [page, selected, loading, loadError, purchasedCharacters]);
-  const openedProfile = useRef("");
-  useEffect(() => {
-    if (loading || loadError || page !== "marketplace") return;
-    const id = new URLSearchParams(location.search).get("character");
-    if (id && openedProfile.current !== id) {
-      const character = catalog.find((c) => c.id === id);
-      if (character) {
-        setDetail(character);
-        openedProfile.current = id;
-      }
-    }
-  }, [page, catalog, loading, loadError]);
-  useEffect(() => {
-    if (
-      page !== "studio" ||
-      loading ||
-      loadError ||
-      !purchasedCharacters.some((c) => c.id === selected)
-    )
-      return;
-    const draft = takeStudioDraft(selected);
-    if (draft) setPrompt(draft);
-  }, [page, selected, loading, loadError, purchasedCharacters]);
   useEffect(() => {
     refresh();
-    const path = location.pathname.slice(1).split("/")[0];
-    if (path in titles) setPage(path as Page);
     const pop = () => {
       setQuery("");
       setActiveProject(null);
@@ -576,23 +601,20 @@ export default function ModelDropsApp({
     }, 30000);
     return () => clearInterval(timer);
   }, [refresh]);
-  useEffect(() => {
-    if (page === "settings" && !loading) {
-      setProfileName(account.name);
-      setPrivateDefault(account.defaultPrivate);
-    }
-  }, [page, loading]);
-  const navigate = useCallback((p: Page) => {
-    if (p === "explore") {
-      window.location.assign("/explore");
-      return;
-    }
-    setPage(p);
-    setQuery("");
-    setActiveProject(null);
-    history.pushState({}, "", "/" + p);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  const navigate = useCallback(
+    (p: Page) => {
+      if (p === "explore") {
+        router.push("/explore");
+        return;
+      }
+      setPage(p);
+      setQuery("");
+      setActiveProject(null);
+      history.pushState({}, "", "/" + p);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [router],
+  );
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "j") {
@@ -604,7 +626,22 @@ export default function ModelDropsApp({
     return () => window.removeEventListener("keydown", handler);
   }, [navigate]);
   useEffect(() => {
-    const ctx = (document as any).modelContext;
+    const ctx = (
+      document as Document & {
+        modelContext?: {
+          registerTool: (
+            tool: {
+              name: string;
+              description: string;
+              inputSchema: object;
+              annotations: object;
+              execute: (input: { query?: unknown }) => Promise<unknown>;
+            },
+            options: { signal: AbortSignal },
+          ) => unknown;
+        };
+      }
+    ).modelContext;
     if (!ctx?.registerTool) return;
     const life = new AbortController();
     Promise.resolve(
@@ -620,17 +657,18 @@ export default function ModelDropsApp({
             additionalProperties: false,
           },
           annotations: { readOnlyHint: false, untrustedContentHint: false },
-          execute: async (input: any) => {
+          execute: async (input: { query?: unknown }) => {
             if (typeof input.query !== "string" || input.query.length > 200)
               throw new Error("Query must be text under 200 characters");
+            const query = input.query;
             navigate("marketplace");
-            setQuery(input.query);
+            setQuery(query);
             return {
               characters: characters
                 .filter((c) =>
                   (c.name + " " + c.tags.join(" "))
                     .toLowerCase()
-                    .includes(input.query.toLowerCase()),
+                    .includes(query.toLowerCase()),
                 )
                 .map((c) => ({ id: c.id, name: c.name })),
             };
@@ -640,7 +678,7 @@ export default function ModelDropsApp({
       ),
     ).catch(() => {});
     return () => life.abort();
-  }, [navigate, catalog]);
+  }, [navigate, characters]);
   const action = async (fn: () => Promise<void>) => {
     if (busy) return;
     setBusy(true);
@@ -658,11 +696,10 @@ export default function ModelDropsApp({
       await refresh();
     });
   };
-  const useCharacter = (
+  const openCharacterStudio = (
     c: Character,
     outputMode: "image" | "video" = "image",
   ) => {
-    setUnavailableModel(false);
     setSelected(c.id);
     setMode(outputMode);
     setReference(null);
@@ -697,8 +734,6 @@ export default function ModelDropsApp({
   };
   const selectedUnavailable =
     !!selected && catalog.some((c) => c.id === selected && c.enabled === false);
-  const model =
-    registry.find((m) => m.id === modelId) || registry[0] || defaultModels[0];
   const liveModel = model.provider !== "Demo";
   const liveImage = liveModel && mode === "image";
   const activeImageInputs = imageInputs[modelId];
@@ -716,33 +751,6 @@ export default function ModelDropsApp({
       setImageInputs((previous) => ({ ...previous, [modelId]: value })),
     [modelId],
   );
-  useEffect(() => {
-    const next =
-      registry.find((m) => m.id === modelId && m.type === mode && m.enabled) ||
-      registry.find((m) => m.type === mode && m.enabled);
-    if (!next) return;
-    if (next.id !== modelId) setModelId(next.id);
-    if (!next.ratios.includes(ratio)) setRatio(next.ratios[0]);
-    if (!next.resolutions.includes(resolution))
-      setResolution(next.resolutions[0]);
-    if (next.provider === "WaveSpeed") {
-      setOutputs("1");
-      if (next.type === "image") {
-        setNegative("");
-      }
-      setReference(null);
-      if (next.type === "video") setSeed("");
-    }
-  }, [
-    registry,
-    modelId,
-    mode,
-    ratio,
-    resolution,
-    outputs,
-    generationOptions.width,
-    generationOptions.height,
-  ]);
   const requestedSettings = {
     ratio,
     resolution,
@@ -967,13 +975,20 @@ export default function ModelDropsApp({
           <span className="creator-handle">by @{c.creator}</span>
         </div>
         {unlocked.includes(c.id) ? (
-          <button className="owned-create" onClick={() => useCharacter(c)}>
+          <button
+            className="owned-create"
+            onClick={() => openCharacterStudio(c)}
+          >
             Create <ArrowUpRight size={13} />
           </button>
         ) : (
           <div className="character-price">
-            ${c.price}
-            <small>planned launch price</small>
+            {account.demoMode
+              ? `${c.demoCreditPrice ?? 300} credits`
+              : `$${c.price}`}
+            <small>
+              {c.referenceImage ? "Character access" : "Awaiting approval"}
+            </small>
           </div>
         )}
       </div>
@@ -1051,7 +1066,8 @@ export default function ModelDropsApp({
               />
             </div>
             <button onClick={() => setModal("credits")}>
-              <Plus size={14} /> Buy credits
+              <Plus size={14} />{" "}
+              {account.demoMode ? "Demo credits" : "Buy credits"}
             </button>
           </div>
           <button
@@ -1143,6 +1159,23 @@ export default function ModelDropsApp({
         <main
           className={"page-content " + (page === "studio" ? "studio-page" : "")}
         >
+          {account.demoMode && (
+            <div
+              className="notice"
+              role="status"
+              style={{ marginBottom: "1rem" }}
+            >
+              <Zap size={17} />
+              <p>
+                <strong>
+                  Demo workspace · {count(account.balance)} credits
+                </strong>
+                <br />
+                Buy an approved character, then create her images and videos in
+                Studio. No real payments are collected.
+              </p>
+            </div>
+          )}
           {loadError && (
             <div className="error-banner" role="alert">
               {loadError}
@@ -1174,7 +1207,7 @@ export default function ModelDropsApp({
               projects={account.projects}
               loading={loading}
               onCreate={(c, kind) => {
-                useCharacter(c, kind);
+                openCharacterStudio(c, kind);
               }}
               onBrowse={() => navigate("marketplace")}
               onModels={() => navigate("characters")}
@@ -1430,8 +1463,9 @@ export default function ModelDropsApp({
                 />
               )}
               <p className="artwork-note">
-                Drop 001 preview · Five fictional adult AI models · Final
-                portraits and paid access coming soon
+                {account.demoMode
+                  ? "Demo marketplace · Purchase approved characters with credits, then create in Studio."
+                  : "Drop 001 · Five fictional adult AI models · Availability follows portrait approval."}
               </p>
             </section>
           )}
@@ -1536,7 +1570,6 @@ export default function ModelDropsApp({
                     error={!!loadError}
                     replacedSelection={unavailableModel}
                     onChange={(id) => {
-                      setUnavailableModel(false);
                       setSelected(id);
                       setReference(null);
                     }}
@@ -2108,8 +2141,9 @@ export default function ModelDropsApp({
               <div className="notice">
                 <ShieldCheck size={17} />
                 <p>
-                  Payments are not enabled. Review your credit activity below;
-                  generation uses your available account balance.
+                  {account.demoMode
+                    ? "Demo mode: use credits for character access and generation. Ask an administrator for a top-up. No money is charged."
+                    : "Payments are not enabled. Review your credit activity below; generation uses your available account balance."}
                 </p>
               </div>
               {heading("Credit activity", "Your credit usage and adjustments.")}
@@ -2423,7 +2457,11 @@ export default function ModelDropsApp({
                 </div>
                 <div className="detail-purchase">
                   <span>
-                    <strong>${detail.price}</strong>
+                    <strong>
+                      {account.demoMode
+                        ? `${detail.demoCreditPrice ?? 300} demo credits`
+                        : `$${detail.price}`}
+                    </strong>
                     <small>
                       Character access · generation credits separate
                     </small>
@@ -2431,7 +2469,7 @@ export default function ModelDropsApp({
                   {(account.usableCharacters || []).includes(detail.id) ? (
                     <Button
                       className="lime-button"
-                      onClick={() => useCharacter(detail)}
+                      onClick={() => openCharacterStudio(detail)}
                     >
                       Create with {detail.name} <ArrowUpRight size={16} />
                     </Button>
@@ -2475,7 +2513,9 @@ export default function ModelDropsApp({
         >
           <DialogTitle>
             {modal === "credits"
-              ? "Make room for more imagination."
+              ? account.demoMode
+                ? "Your demo credits"
+                : "Make room for more imagination."
               : modal === "project"
                 ? "Start a new project."
                 : modal === "notifications"
@@ -2486,7 +2526,9 @@ export default function ModelDropsApp({
           </DialogTitle>
           <DialogDescription>
             {modal === "credits"
-              ? "Simple packages. More possibilities."
+              ? account.demoMode
+                ? `${count(account.balance)} credits available for character access and content creation.`
+                : "Simple packages. More possibilities."
               : modal === "project"
                 ? "A dedicated space for your next big idea."
                 : modal === "notifications"
@@ -2500,39 +2542,42 @@ export default function ModelDropsApp({
               <div className="notice">
                 <ShieldCheck size={16} />
                 <p>
-                  Payments are not connected. These packages are previews and no
-                  money will be charged.
+                  {account.demoMode
+                    ? "Demo credits are provided for testing. Ask a super admin to top up your balance. No real payments are collected."
+                    : "Payments are not connected. These packages are previews and no money will be charged."}
                 </p>
               </div>
-              <div className="package-grid">
-                {creditPackages.map((p, i) => (
-                  <div
-                    className={"package " + (i === 1 ? "recommended" : "")}
-                    key={p.id}
-                  >
-                    {i === 1 && <span className="popular">MOST POPULAR</span>}
-                    <h3>{p.name}</h3>
-                    <strong>
-                      ${p.price}
-                      <small>one time</small>
-                    </strong>
-                    <p>
-                      <Zap size={15} />
-                      {count(p.credits)} credits
-                    </p>
-                    <Button
-                      variant={i === 1 ? "default" : "secondary"}
-                      onClick={() =>
-                        action(async () => {
-                          await api("checkout", { packageId: p.id });
-                        })
-                      }
+              {!account.demoMode && (
+                <div className="package-grid">
+                  {creditPackages.map((p, i) => (
+                    <div
+                      className={"package " + (i === 1 ? "recommended" : "")}
+                      key={p.id}
                     >
-                      Buy {p.name}
-                    </Button>
-                  </div>
-                ))}
-              </div>
+                      {i === 1 && <span className="popular">MOST POPULAR</span>}
+                      <h3>{p.name}</h3>
+                      <strong>
+                        ${p.price}
+                        <small>one time</small>
+                      </strong>
+                      <p>
+                        <Zap size={15} />
+                        {count(p.credits)} credits
+                      </p>
+                      <Button
+                        variant={i === 1 ? "default" : "secondary"}
+                        onClick={() =>
+                          action(async () => {
+                            await api("checkout", { packageId: p.id });
+                          })
+                        }
+                      >
+                        Buy {p.name}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <button
                 className="text-link"
                 onClick={() => {
@@ -2806,7 +2851,7 @@ export default function ModelDropsApp({
               "Access is saved, but your library could not refresh. Retry to open Studio.",
             );
           const c = characters.find((c) => c.id === id);
-          if (c) useCharacter(c);
+          if (c) openCharacterStudio(c);
           toast.success(
             "Character access is ready. Choose image or video to start.",
           );
@@ -2839,11 +2884,13 @@ export default function ModelDropsApp({
                 <strong>{purchaseLicense.licenseVersion}</strong>
                 <span>Paid</span>
                 <strong>
-                  {purchaseLicense.priceCents === 0
-                    ? purchaseLicense.licenseVersion === "test-1"
-                      ? "Test access · no payment"
-                      : "Preview access · no payment"
-                    : `$${(purchaseLicense.priceCents / 100).toFixed(2)}`}
+                  {purchaseLicense.licenseVersion === "demo-credits-1"
+                    ? `${purchaseLicense.creditsSpent ?? 0} demo credits`
+                    : purchaseLicense.priceCents === 0
+                      ? purchaseLicense.licenseVersion === "test-1"
+                        ? "Test access · no payment"
+                        : "Preview access · no payment"
+                      : `$${(purchaseLicense.priceCents / 100).toFixed(2)}`}
                 </strong>
               </div>
               <p>
@@ -2879,7 +2926,7 @@ function Empty({
   action,
   onClick,
 }: {
-  icon: any;
+  icon: LucideIcon;
   title: string;
   text: string;
   action?: string;

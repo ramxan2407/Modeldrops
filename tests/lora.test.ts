@@ -1,3 +1,4 @@
+import type { TrainingStatus } from "../lib/lora/types";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { fixture, png } from "./helpers/lora-fixture";
@@ -14,7 +15,7 @@ const draft = {
 const rejects = (promise: Promise<unknown>, status: number) =>
   assert.rejects(
     promise,
-    (e: any) => e instanceof LoraError && e.status === status,
+    (e: unknown) => e instanceof LoraError && e.status === status,
   );
 async function submitted(f: ReturnType<typeof fixture>) {
   const r = await f.alice.createDraft(draft);
@@ -23,7 +24,11 @@ async function submitted(f: ReturnType<typeof fixture>) {
   await f.alice.submit(r.id);
   return r.id;
 }
-async function advance(f: ReturnType<typeof fixture>, id: string, status: any) {
+async function advance(
+  f: ReturnType<typeof fixture>,
+  id: string,
+  status: TrainingStatus,
+) {
   const r = await f.admin.request(id);
   return f.admin.transition(id, r.revision, status);
 }
@@ -211,8 +216,8 @@ test("outbox retains unconfigured mail, leases concurrency, retries failures wit
   f.env.RESEND_API_KEY = "test";
   f.env.LORA_EMAIL_FROM = "test@example.test";
   const sent: string[] = [];
-  const fetcher = (async (_url: any, init: any) => {
-    sent.push(init.headers["Idempotency-Key"]);
+  const fetcher = (async (_url: string | URL | Request, init?: RequestInit) => {
+    sent.push(new Headers(init?.headers).get("Idempotency-Key")!);
     return Response.json({ id: "receipt" });
   }) as typeof fetch;
   await Promise.all([

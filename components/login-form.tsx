@@ -22,6 +22,7 @@ export function LoginForm({
     [message, setMessage] = useState(""),
     [visible, setVisible] = useState(false);
   function change(next: Mode) {
+    if (busy) return;
     setMode(next);
     setError("");
     setMessage("");
@@ -200,6 +201,7 @@ export function LoginForm({
           <button
             type="button"
             className="forgot-password"
+            disabled={busy}
             onClick={() => change("reset")}
           >
             Forgot password?
@@ -243,6 +245,7 @@ export function LoginForm({
           <button
             type="button"
             className="auth-back"
+            disabled={busy}
             onClick={() => change("signin")}
           >
             Back to sign in

@@ -99,7 +99,7 @@ test("Input schemas reject unknown controls, invalid enums, required references,
 });
 test("Live quotes use actual input pricing, preserve the retail rate, and fail closed", async () => {
   const endpoint = "wavespeed-ai/qwen-image/text-to-image";
-  let sent: any;
+  let sent: unknown;
   const fetcher: typeof fetch = async (url, init) => {
     assert(String(url).endsWith("/model/price"));
     sent = JSON.parse(init!.body as string);

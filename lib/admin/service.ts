@@ -1,3 +1,4 @@
+import { activeWallet, defaultCharacterCredits } from "../credits";
 import { z } from "zod";
 import { characters } from "../catalog";
 import { roleFor, type RoleBindings } from "./policy";
@@ -16,6 +17,8 @@ const profile = z.object({
   description: z.string().trim().min(1).max(2000),
   age: z.number().int().min(18).max(100),
   category: text,
+  demoCreditPrice: z.number().int().min(1).max(100000).optional(),
+  approvalStatus: z.enum(["pending", "approved", "rejected"]).optional(),
   referenceAssetId: z.string().uuid().nullable().optional(),
 });
 const schemas = {
@@ -84,16 +87,27 @@ export const adminSections = [
 ] as const;
 export type AdminSection = (typeof adminSections)[number];
 export async function catalogFor(db: D1Database) {
-  const rows = await db.prepare("SELECT * FROM character_controls").all<any>();
+  const rows = await db.prepare("SELECT * FROM character_controls").all<{
+    id: string;
+    profile: string | null;
+    enabled: number;
+    featured: number;
+    price: number;
+  }>();
   return characters.map((c) => {
     const r = rows.results.find((r) => r.id === c.id);
     const managed: Partial<z.infer<typeof profile>> = r?.profile
       ? profile.parse(JSON.parse(r.profile))
       : {};
+    const approvalStatus =
+      managed.approvalStatus ??
+      (managed.referenceAssetId ? "approved" : "pending");
     return {
       ...c,
       ...managed,
-      ...(managed.referenceAssetId
+      demoCreditPrice: managed.demoCreditPrice ?? defaultCharacterCredits,
+      approvalStatus,
+      ...(managed.referenceAssetId && approvalStatus === "approved"
         ? {
             referenceImage: `/api/characters/reference?id=${encodeURIComponent(c.id)}`,
             image: `/api/characters/reference?id=${encodeURIComponent(c.id)}`,
@@ -102,7 +116,11 @@ export async function catalogFor(db: D1Database) {
       enabled: r ? !!r.enabled : true,
       featured: r ? !!r.featured : c.badge === "FEATURED",
       price: r ? r.price : c.price,
-      badge: r?.featured ? "FEATURED" : c.badge,
+      badge: r?.featured
+        ? "FEATURED"
+        : approvalStatus === "approved"
+          ? "AVAILABLE"
+          : c.badge,
     };
   });
 }
@@ -126,6 +144,7 @@ export class AdminService {
       search.length > 120
     )
       throw new AdminError(400, "Invalid dashboard filter.");
+    const wallet = activeWallet(this.roles);
     const limit = 25,
       offset = page * limit;
     const match = "%" + search.replace(/[\\%_]/g, "\\$&") + "%";
@@ -134,7 +153,7 @@ export class AdminService {
         await this.db
           .prepare(sql)
           .bind(...values)
-          .all<any>()
+          .all<Record<string, unknown>>()
       ).results;
     const paged = async (sql: string, values: unknown[] = []) => {
       const rows = await list(sql + " LIMIT ? OFFSET ?", [
@@ -148,7 +167,7 @@ export class AdminService {
       case "overview": {
         const metrics = await this.db
           .prepare(
-            `SELECT (SELECT COUNT(*) FROM users) users, (SELECT COUNT(*) FROM users WHERE suspended=1) suspended, (SELECT COALESCE(SUM(amount),0) FROM credit_transactions) credits, (SELECT COUNT(*) FROM generations) generations, (SELECT COUNT(*) FROM generations WHERE status='failed') failed, (SELECT COUNT(*) FROM training_requests WHERE status NOT IN ('draft','completed','rejected')) training, (SELECT COUNT(*) FROM reports WHERE status='open') reports, (SELECT COUNT(*) FROM creator_listings WHERE status='pending_review') submissions`,
+            `SELECT (SELECT COUNT(*) FROM users) users, (SELECT COUNT(*) FROM users WHERE suspended=1) suspended, (SELECT COALESCE(SUM(amount),0) FROM credit_transactions WHERE wallet='${wallet}') credits, (SELECT COUNT(*) FROM generations) generations, (SELECT COUNT(*) FROM generations WHERE status='failed') failed, (SELECT COUNT(*) FROM training_requests WHERE status NOT IN ('draft','completed','rejected')) training, (SELECT COUNT(*) FROM reports WHERE status='open') reports, (SELECT COUNT(*) FROM creator_listings WHERE status='pending_review') submissions`,
           )
           .first();
         return { metrics };
@@ -156,7 +175,7 @@ export class AdminService {
       case "users":
         return {
           ...(await paged(
-            `SELECT u.id,u.name,u.email,u.suspended,u.created_at,COALESCE((SELECT SUM(amount) FROM credit_transactions WHERE user_id=u.id),0) balance, (SELECT COUNT(*) FROM generations WHERE user_id=u.id) generations FROM users u WHERE (u.name LIKE ? ESCAPE '\\' OR u.email LIKE ? ESCAPE '\\' OR u.id LIKE ? ESCAPE '\\') ORDER BY u.created_at DESC,u.id`,
+            `SELECT u.id,u.name,u.email,u.suspended,u.created_at,COALESCE((SELECT SUM(amount) FROM credit_transactions WHERE user_id=u.id AND wallet='${wallet}'),0) balance, (SELECT COUNT(*) FROM generations WHERE user_id=u.id) generations FROM users u WHERE (u.name LIKE ? ESCAPE '\\' OR u.email LIKE ? ESCAPE '\\' OR u.id LIKE ? ESCAPE '\\') ORDER BY u.created_at DESC,u.id`,
             [match, match, match],
           )),
           roles: this.rolesSummary(),
@@ -165,7 +184,7 @@ export class AdminService {
         };
       case "credits":
         return paged(
-          `SELECT t.*,u.email FROM credit_transactions t JOIN users u ON u.id=t.user_id WHERE (u.email LIKE ? ESCAPE '\\' OR t.user_id LIKE ? ESCAPE '\\') ORDER BY t.created_at DESC,t.id`,
+          `SELECT t.*,u.email FROM credit_transactions t JOIN users u ON u.id=t.user_id WHERE t.wallet='${wallet}' AND (u.email LIKE ? ESCAPE '\\' OR t.user_id LIKE ? ESCAPE '\\') ORDER BY t.created_at DESC,t.id`,
           [match, match],
         );
       case "payments":
@@ -224,12 +243,13 @@ export class AdminService {
   }
   async mutate(action: string, input: unknown) {
     this.guard();
+    const wallet = activeWallet(this.roles);
     const schema = schemas[action as keyof typeof schemas];
     if (!schema) throw new AdminError(400, "Unknown administration action.");
     const parsed = schema.safeParse(input);
     if (!parsed.success)
       throw new AdminError(400, parsed.error.issues[0].message);
-    const d = parsed.data as any;
+    const d = parsed.data;
     const audit = () =>
       this.db
         .prepare(
@@ -246,13 +266,14 @@ export class AdminService {
       const row = await this.db
         .prepare(`SELECT * FROM ${table} WHERE id=?`)
         .bind(d.id)
-        .first<any>();
+        .first();
       if (!row)
         throw new AdminError(404, "Record not found. Refresh the dashboard.");
       return row;
     };
     switch (action) {
       case "user": {
+        const d = schemas.user.parse(input);
         await find("users");
         if (d.id === this.actor || roleFor(this.roles, d.id) !== "user")
           throw new AdminError(
@@ -268,15 +289,19 @@ export class AdminService {
         break;
       }
       case "credits": {
+        const d = schemas.credits.parse(input);
         await find("users");
-        const key = `admin:${this.actor}:${d.key}`;
+        const key =
+          wallet === "demo"
+            ? `admin-demo:${this.actor}:${d.key}`
+            : `admin:${this.actor}:${d.key}`;
         const replay = async () => {
           const prior = await this.db
             .prepare(
               "SELECT user_id,amount,description FROM credit_transactions WHERE idempotency_key=?",
             )
             .bind(key)
-            .first<any>();
+            .first<{ user_id: string; amount: number; description: string }>();
           if (!prior) return false;
           if (
             prior.user_id !== d.id ||
@@ -294,7 +319,7 @@ export class AdminService {
           await this.db.batch([
             this.db
               .prepare(
-                `INSERT INTO credit_transactions(id,user_id,amount,type,description,balance_before,balance_after,idempotency_key) SELECT ?,?,?,'admin_adjustment',?,COALESCE(SUM(amount),0),COALESCE(SUM(amount),0)+?,? FROM credit_transactions WHERE user_id=?`,
+                `INSERT INTO credit_transactions(id,user_id,amount,type,description,balance_before,balance_after,idempotency_key,wallet) SELECT ?,?,?,'admin_adjustment',?,COALESCE(SUM(amount),0),COALESCE(SUM(amount),0)+?,?,? FROM credit_transactions WHERE user_id=? AND wallet=?`,
               )
               .bind(
                 crypto.randomUUID(),
@@ -303,7 +328,9 @@ export class AdminService {
                 d.reason,
                 d.amount,
                 key,
+                wallet,
                 d.id,
+                wallet,
               ),
             audit(),
             this.db
@@ -330,7 +357,8 @@ export class AdminService {
         }
         break;
       }
-      case "model":
+      case "model": {
+        const d = schemas.model.parse(input);
         await find("ai_models");
         await this.db.batch([
           this.db
@@ -339,7 +367,9 @@ export class AdminService {
           audit(),
         ]);
         break;
-      case "package":
+      }
+      case "package": {
+        const d = schemas.package.parse(input);
         await find("credit_packages");
         await this.db.batch([
           this.db
@@ -350,7 +380,9 @@ export class AdminService {
           audit(),
         ]);
         break;
+      }
       case "character_permission": {
+        const d = schemas.character_permission.parse(input);
         await find("users");
         if (
           d.characterId !== "*" &&
@@ -373,6 +405,15 @@ export class AdminService {
         break;
       }
       case "character": {
+        const d = schemas.character.parse(input);
+        if (
+          d.profile?.approvalStatus === "approved" &&
+          !d.profile.referenceAssetId
+        )
+          throw new AdminError(
+            400,
+            "Upload a reference portrait before approving this character.",
+          );
         if (d.profile?.referenceAssetId) {
           const existing = (await catalogFor(this.db)).find(
             (c) => c.id === d.id,
@@ -410,6 +451,7 @@ export class AdminService {
         break;
       }
       case "listing": {
+        const d = schemas.listing.parse(input);
         await find("creator_listings");
         await this.db.batch([
           this.db
@@ -428,7 +470,8 @@ export class AdminService {
         ]);
         break;
       }
-      case "report":
+      case "report": {
+        const d = schemas.report.parse(input);
         await find("reports");
         await this.db.batch([
           this.db
@@ -437,6 +480,7 @@ export class AdminService {
           audit(),
         ]);
         break;
+      }
     }
     return { ok: true };
   }

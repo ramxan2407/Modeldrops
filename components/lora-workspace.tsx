@@ -10,7 +10,6 @@ import {
   Clock,
   Copy,
   Download,
-  FileImage,
   FlaskConical,
   ImagePlus,
   Layers,
@@ -86,7 +85,7 @@ const date = (s: string | null) =>
     : "Not submitted";
 const fileUrl = (id: string, download = false) =>
   `/api/lora/file?id=${encodeURIComponent(id)}${download ? "&download=1" : ""}`;
-async function api<T = any>(action: string, data?: unknown): Promise<T> {
+async function api<T = unknown>(action: string, data?: unknown): Promise<T> {
   const response = await fetch(
     data === undefined ? "/api/lora" + action : "/api/lora",
     {
@@ -167,17 +166,21 @@ type Detail = {
   events: TrainingEvent[];
   lora: TrainedLora | null;
 };
-export default function LoraWorkspace({
-  view,
-  isAdmin,
-  onNavigate,
-  onRefresh,
-}: {
+type WorkspaceProps = {
   view: LoraView;
   isAdmin: boolean;
   onNavigate: (view: LoraView) => void;
   onRefresh: () => void;
-}) {
+};
+export default function LoraWorkspace(props: WorkspaceProps) {
+  return <WorkspaceSession key={`${props.view}:${props.isAdmin}`} {...props} />;
+}
+function WorkspaceSession({
+  view,
+  isAdmin,
+  onNavigate,
+  onRefresh,
+}: WorkspaceProps) {
   const [state, setState] = useState<LoraState | null>(null),
     [error, setError] = useState(""),
     [loading, setLoading] = useState(true),
@@ -189,21 +192,21 @@ export default function LoraWorkspace({
     [maxMb, setMaxMb] = useState(10),
     [busy, setBusy] = useState(false);
   const admin = view === "admin-training";
-  const refresh = useCallback(async () => {
-    try {
-      setError("");
-      const result = await api<LoraState>(admin ? "?admin=1" : "");
-      setState(result);
-      setMaxMb(result.maxImageMb);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }, [admin]);
+  const refresh = useCallback(
+    () =>
+      api<LoraState>(admin ? "?admin=1" : "")
+        .then((result) => {
+          setError("");
+          setState(result);
+          setMaxMb(result.maxImageMb);
+        })
+        .catch((e: unknown) => {
+          setError((e as Error).message);
+        })
+        .finally(() => setLoading(false)),
+    [admin],
+  );
   useEffect(() => {
-    setState(null);
-    setLoading(true);
     void refresh();
   }, [refresh]);
   useEffect(() => {
@@ -635,7 +638,7 @@ export default function LoraWorkspace({
             onClick={async () => {
               setBusy(true);
               try {
-                const result = await api("send-emails", {});
+                const result = await api<{ sent: number }>("send-emails", {});
                 toast.success(`${result.sent} emails sent`);
                 await refresh();
               } catch (e) {
@@ -769,7 +772,7 @@ function TrainingForm({
     try {
       let requestId = draftId;
       if (!requestId) {
-        requestId = (await api("draft", form)).id;
+        requestId = (await api<{ id: string }>("draft", form)).id;
         setDraftId(requestId);
       } else await api("update-draft", { ...form, id: requestId });
       for (const item of images) {
@@ -1205,7 +1208,10 @@ function RequestDetail({
       recommendedPrompt: r.reference_prompt,
       description: "",
     });
-  const weightSession = useRef<{ file: File; id: string } | null>(null);
+  const [weightSession, setWeightSession] = useState<{
+    file: File;
+    id: string;
+  } | null>(null);
   const mutate = async (action: string, data: unknown) => {
     setBusy(true);
     try {
@@ -1230,18 +1236,21 @@ function RequestDetail({
     setBusy(true);
     setProgress(0);
     try {
-      if (!weightSession.current || weightSession.current.file !== file)
-        weightSession.current = {
+      let session = weightSession;
+      if (!session || session.file !== file) {
+        session = {
           file,
           id: (
-            await api("start-upload", {
+            await api<{ id: string }>("start-upload", {
               requestId: r.id,
               name: file.name,
               size: file.size,
             })
           ).id,
         };
-      const uploadId = weightSession.current.id;
+        setWeightSession(session);
+      }
+      const uploadId = session.id;
       const saved = await api<{ parts: number[] }>("?upload=" + uploadId);
       const total = Math.ceil(file.size / PART_SIZE);
       for (let i = 0; i < total; i++) {
@@ -1267,7 +1276,7 @@ function RequestDetail({
       }
       await api("complete-upload", { id: uploadId });
       setDelivery((d) => ({ ...d, fileId: uploadId }));
-      weightSession.current = null;
+      setWeightSession(null);
       await onChange();
       toast.success("LoRA file uploaded");
     } catch (e) {
@@ -1451,11 +1460,11 @@ function RequestDetail({
                 <span>Uploading model · {progress}%</span>
               </div>
             )}
-            {weightSession.current && progress === null && (
+            {weightSession && progress === null && (
               <button
                 type="button"
                 className="lora-button"
-                onClick={() => uploadWeights(weightSession.current!.file)}
+                onClick={() => uploadWeights(weightSession!.file)}
               >
                 Resume model upload
               </button>

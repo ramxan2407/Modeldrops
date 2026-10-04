@@ -31,9 +31,7 @@ export function verifiedSupabaseIdentity(
     provider: "supabase" as const,
   };
 }
-export function isSameOriginAuthRequest(request: Request) {
-  return request.headers.get("origin") === new URL(request.url).origin;
-}
+export { isSameOriginRequest as isSameOriginAuthRequest } from "./request-origin";
 export function authDestination(value: unknown) {
   return safeWorkspaceReturnTo(value);
 }

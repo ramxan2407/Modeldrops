@@ -1,3 +1,4 @@
+import { demoEnabled } from "@/lib/credits";
 import { auth, initialize, bindings, assertOrigin, fail } from "@/lib/server";
 import {
   AdminService,
@@ -33,6 +34,7 @@ export async function GET(request: Request) {
     return Response.json(
       {
         ...data,
+        demoMode: demoEnabled(env),
         ...(section === "integrations"
           ? {
               generationJobs: (

@@ -44,6 +44,12 @@ export async function postgresFixture() {
       "utf8",
     ),
   );
+  await pg.exec(
+    await readFile(
+      new URL("../../migrations/vercel/006_demo_credits.sql", import.meta.url),
+      "utf8",
+    ),
+  );
   const db = new PostgresDatabase({
     transaction: (fn) =>
       pg.transaction(async (tx) => {

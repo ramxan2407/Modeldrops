@@ -1,4 +1,4 @@
-import { bindings, uid, ledgerStatement } from "@/lib/server";
+import { bindings, uid } from "@/lib/server";
 /** Demo-only durable outbox runner. Real provider work belongs in a separate durable queue consumer. */
 export async function runDemoJob(id: string, origin: string) {
   const { DB, BUCKET, DEMO_ASSET } = bindings();
@@ -11,7 +11,13 @@ export async function runDemoJob(id: string, origin: string) {
   if (!claim) return;
   const g = await DB.prepare("SELECT * FROM generations WHERE id=?")
     .bind(id)
-    .first<any>();
+    .first<{
+      id: string;
+      user_id: string;
+      status: string;
+      cost: number;
+      credit_wallet: "demo" | "standard";
+    }>();
   if (!g || !["queued", "processing"].includes(g.status)) return;
   await DB.prepare(
     "UPDATE generations SET status='processing',updated_at=? WHERE id=? AND status='queued'",
@@ -26,11 +32,13 @@ export async function runDemoJob(id: string, origin: string) {
       .bind(id)
       .first<{ status: string }>();
     if (current?.status !== "processing") return;
-    const bytes = DEMO_ASSET ? await DEMO_ASSET() : await (async () => {
-      const image = await fetch(new URL("/assets/hero.png", origin));
-      if (!image.ok) throw new Error("Sample asset unavailable");
-      return image.arrayBuffer();
-    })();
+    const bytes = DEMO_ASSET
+      ? await DEMO_ASSET()
+      : await (async () => {
+          const image = await fetch(new URL("/assets/hero.png", origin));
+          if (!image.ok) throw new Error("Sample asset unavailable");
+          return image.arrayBuffer();
+        })();
     if (bytes.byteLength > 12 * 1024 * 1024)
       throw new Error("Sample asset too large");
     const key = `private/${g.user_id}/generations/${id}.png`;
@@ -71,14 +79,20 @@ export async function refundJob(
   const { DB } = bindings();
   const g = await DB.prepare("SELECT * FROM generations WHERE id=?")
     .bind(id)
-    .first<any>();
+    .first<{
+      id: string;
+      user_id: string;
+      status: string;
+      cost: number;
+      credit_wallet: "demo" | "standard";
+    }>();
   if (!g) return;
   await DB.batch([
     DB.prepare(
       "UPDATE generations SET status=?,updated_at=? WHERE id=? AND status IN ('queued','processing')",
     ).bind(status, new Date().toISOString(), id),
     DB.prepare(
-      `INSERT OR IGNORE INTO credit_transactions(id,user_id,amount,type,generation_id,description,balance_before,balance_after,idempotency_key) SELECT ?,?,?, 'generation_refund',?,?,COALESCE(SUM(amount),0),COALESCE(SUM(amount),0)+?,? FROM credit_transactions WHERE user_id=? HAVING EXISTS(SELECT 1 FROM generations WHERE id=? AND status IN ('failed','cancelled'))`,
+      `INSERT OR IGNORE INTO credit_transactions(id,user_id,amount,type,generation_id,description,balance_before,balance_after,idempotency_key,wallet) SELECT ?,?,?, 'generation_refund',?,?,COALESCE(SUM(amount),0),COALESCE(SUM(amount),0)+?,?,? FROM credit_transactions WHERE user_id=? AND wallet=? HAVING EXISTS(SELECT 1 FROM generations WHERE id=? AND status IN ('failed','cancelled'))`,
     ).bind(
       uid(),
       g.user_id,
@@ -87,7 +101,9 @@ export async function refundJob(
       message,
       g.cost,
       `refund:${id}`,
+      g.credit_wallet,
       g.user_id,
+      g.credit_wallet,
       id,
     ),
     DB.prepare(

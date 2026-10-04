@@ -1,3 +1,4 @@
+import type { CookieOptions } from "@supabase/ssr";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createAuthClient } from "../lib/supabase/client-factory";
@@ -63,7 +64,7 @@ test("Authentication writes require an exact Origin header", () => {
   );
 });
 test("Official SDK stores secure HttpOnly cookies and revalidates identity remotely", async () => {
-  const jar = new Map<string, { value: string; options: any }>();
+  const jar = new Map<string, { value: string; options: CookieOptions }>();
   const calls: string[] = [];
   const jwt =
     [
@@ -116,7 +117,9 @@ test("Official SDK stores secure HttpOnly cookies and revalidates identity remot
   };
   const cookieAdapter = {
     getAll: () => [...jar].map(([name, c]) => ({ name, value: c.value })),
-    setAll: (values: any[]) => {
+    setAll: (
+      values: { name: string; value: string; options: CookieOptions }[],
+    ) => {
       for (const c of values) jar.set(c.name, c);
     },
   };

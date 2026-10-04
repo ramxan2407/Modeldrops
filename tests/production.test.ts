@@ -151,7 +151,7 @@ let generationId: string;
 await test("Enqueue atomically reserves credits and creates a durable job", async () => {
   const r = await enqueueGeneration(db, user, input);
   generationId = r.id;
-  const b = await pg.query<any>(
+  const b = await pg.query<{ balance: number }>(
     "SELECT balance FROM credit_wallets WHERE user_id=$1",
     [user],
   );
@@ -165,7 +165,7 @@ await test("Enqueue atomically reserves credits and creates a durable job", asyn
 await test("Generation retry cannot charge twice", async () => {
   const r = await enqueueGeneration(db, user, input);
   assert.equal(r.id, generationId);
-  const b = await pg.query<any>(
+  const b = await pg.query<{ balance: number }>(
     "SELECT balance FROM credit_wallets WHERE user_id=$1",
     [user],
   );
@@ -204,7 +204,7 @@ await test("Generation refunds are idempotent", async () => {
   await db.transaction((tx) =>
     refundGeneration(tx, generationId, "test_cancel"),
   );
-  const b = await pg.query<any>(
+  const b = await pg.query<{ balance: number }>(
     "SELECT balance FROM credit_wallets WHERE user_id=$1",
     [user],
   );
@@ -258,7 +258,7 @@ const event = {
 await test("Paid Stripe event credits the snapshotted amount", async () => {
   const s = signed(event);
   await processStripeWebhook(db, s.raw, s.signature, secret, false);
-  const b = await pg.query<any>(
+  const b = await pg.query<{ balance: number }>(
     "SELECT balance FROM credit_wallets WHERE user_id=$1",
     [user],
   );
@@ -270,7 +270,7 @@ await test("Repeated Stripe event does not duplicate payment", async () => {
     await processStripeWebhook(db, s.raw, s.signature, secret, false),
     { duplicate: true },
   );
-  const b = await pg.query<any>(
+  const b = await pg.query<{ balance: number }>(
     "SELECT balance FROM credit_wallets WHERE user_id=$1",
     [user],
   );
@@ -283,7 +283,7 @@ await test("Separate success events for one payment also do not double-credit", 
     type: "checkout.session.async_payment_succeeded",
   });
   await processStripeWebhook(db, s.raw, s.signature, secret, false);
-  const b = await pg.query<any>(
+  const b = await pg.query<{ balance: number }>(
     "SELECT balance FROM credit_wallets WHERE user_id=$1",
     [user],
   );

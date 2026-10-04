@@ -58,13 +58,12 @@ export async function resolveCharacterReferenceInputs(
     url = await bucket.signedRead(asset.storage_key);
   }
   // Reference identity comes exclusively from the approved catalog asset.
-  const {
-    image: _image,
-    images: _images,
-    end_image: _end,
-    element_list: _elements,
-    ...settings
-  } = inputs;
+  const settings = Object.fromEntries(
+    Object.entries(inputs).filter(
+      ([key]) =>
+        !["image", "images", "end_image", "element_list"].includes(key),
+    ),
+  );
   return {
     reference: characterReferenceVersion(character)!,
     inputs: definition?.endpoint.startsWith("openai/")

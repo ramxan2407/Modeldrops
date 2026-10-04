@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { characters } from "@/lib/catalog";
 import { ShieldCheck } from "lucide-react";
 import { redirect } from "next/navigation";
@@ -37,13 +38,13 @@ async function LoginContent({
           src={characters[0].image}
           alt="Valentina · Drop 001 portrait coming soon"
         />
-        <a
+        <Link
           className="login-brand"
           href="/welcome"
           aria-label="Model Drops home"
         >
           <ModelDropsBrand />
-        </a>
+        </Link>
         <div className="login-story-copy">
           <span className="eyebrow">YOUR CHARACTERS. YOUR CREATIVE WORLD.</span>
           <h1>
@@ -62,13 +63,13 @@ async function LoginContent({
         </div>
       </section>
       <section className="login-form-panel">
-        <a
+        <Link
           href="/welcome"
           className="login-mobile-brand"
           aria-label="Model Drops home"
         >
           <ModelDropsBrand />
-        </a>
+        </Link>
         <div className="login-card">
           <LoginForm
             ready={!!config}
@@ -94,7 +95,7 @@ async function LoginContent({
           </p>
         </div>
         <div className="login-footer">
-          <a href="/welcome">About Model Drops</a>
+          <Link href="/welcome">About Model Drops</Link>
           <span>Your creative workspace.</span>
         </div>
       </section>

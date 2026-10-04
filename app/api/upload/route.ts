@@ -1,5 +1,5 @@
 import { stagedUpload } from "@/lib/upload-transfer";
-import { sameOrigin } from "@/lib/admin/policy";
+import { sameOrigin } from "@/lib/server-origin";
 import { auth, initialize, bindings, ApiError, fail, uid } from "@/lib/server";
 export async function POST(request: Request) {
   try {
@@ -42,8 +42,9 @@ export async function POST(request: Request) {
       "SELECT COUNT(*) AS n FROM generation_assets WHERE user_id=? AND generation_id IS NULL",
     )
       .bind(user.userId)
-      .first<any>();
-    if (n.n >= 50) throw new ApiError(429, "Preview reference limit reached");
+      .first<{ n: number }>();
+    if ((n?.n ?? 0) >= 50)
+      throw new ApiError(429, "Preview reference limit reached");
     const id = uid(),
       storageKey = `private/${user.userId}/references/${id}`;
     await BUCKET.put(storageKey, bytes, {

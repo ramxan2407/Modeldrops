@@ -22,6 +22,7 @@ export type PurchaseRecord = {
   licenseVersion: string;
   licenseSnapshot: string;
   priceCents: number;
+  creditsSpent?: number;
 };
 type Creation = {
   id: string;
@@ -439,7 +440,9 @@ export function UserDashboard(p: Props) {
                       <small>
                         {record.licenseVersion === "demo-1"
                           ? "Preview claim"
-                          : "Saved license"}{" "}
+                          : record.licenseVersion === "demo-credits-1"
+                            ? `${record.creditsSpent ?? 0} demo credits`
+                            : "Saved license"}{" "}
                         · View record
                       </small>
                     </div>

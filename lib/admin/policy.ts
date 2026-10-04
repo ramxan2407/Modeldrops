@@ -1,4 +1,5 @@
 export type RoleBindings = {
+  DEMO_MODE?: string;
   ADMIN_USER_IDS?: string;
   SUPER_ADMIN_USER_IDS?: string;
 };
@@ -26,6 +27,4 @@ export function roleFor(env: RoleBindings, userId: string) {
       ? "training_admin"
       : "user";
 }
-export function sameOrigin(request: Request) {
-  return request.headers.get("origin") === new URL(request.url).origin;
-}
+export { isSameOriginRequest as sameOrigin } from "../request-origin";

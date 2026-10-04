@@ -16,7 +16,9 @@
     "typecheck": "tsc --noEmit",
     "build:vercel": "next build --webpack",
     "dev:vercel": "next dev --webpack",
-    "db:migrate:vercel": "node --env-file=.env.vercel.local scripts/migrate-vercel.mjs"
+    "start:vercel": "next start",
+    "db:migrate:vercel": "node --env-file=.env.vercel.local scripts/migrate-vercel.mjs",
+    "demo:local": "node --import tsx tests/demo-ui/server.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1137.0",
@@ -36,7 +38,7 @@
     "gsap": "^3.15.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^1.31.0",
-    "next": "16.3.4",
+    "next": "16.3.8",
     "next-themes": "^0.4.6",
     "pg": "^8.23.0",
     "radix-ui": "^1.6.7",
@@ -64,7 +66,7 @@
     "@vitejs/plugin-rsc": "0.5.26",
     "drizzle-kit": "0.31.10",
     "eslint": "9.39.4",
-    "eslint-config-next": "16.3.4",
+    "eslint-config-next": "16.3.8",
     "prettier": "^3.9.8",
     "react-server-dom-webpack": "19.2.6",
     "tailwindcss": "4.2.1",

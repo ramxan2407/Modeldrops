@@ -1,10 +1,13 @@
-import { waitUntil } from "cloudflare:workers";
+import { env as runtimeEnv, waitUntil } from "cloudflare:workers";
 import { bindings, ApiError, fail } from "@/lib/server";
 import { runGenerationJob } from "@/lib/generation/worker";
 /** Scheduler recovery endpoint; deployment must supply JOB_RUNNER_SECRET and a periodic external invocation. */
 export async function POST(request: Request) {
   try {
-    const { DB, JOB_RUNNER_SECRET, CRON_SECRET } = bindings();
+    const { JOB_RUNNER_SECRET, CRON_SECRET } = runtimeEnv as unknown as {
+      JOB_RUNNER_SECRET?: string;
+      CRON_SECRET?: string;
+    };
     if (
       !(JOB_RUNNER_SECRET || CRON_SECRET) ||
       ![JOB_RUNNER_SECRET, CRON_SECRET]
@@ -15,11 +18,12 @@ export async function POST(request: Request) {
         )
     )
       throw new ApiError(401, "Unauthorized");
+    const { DB } = bindings();
     const jobs = await DB.prepare(
       "SELECT generation_id FROM generation_jobs WHERE status='queued' OR (status='processing' AND lease_until<?) ORDER BY created_at LIMIT 3",
     )
       .bind(new Date().toISOString())
-      .all<any>();
+      .all<{ generation_id: string }>();
     for (const j of jobs.results)
       waitUntil(runGenerationJob(j.generation_id, new URL(request.url).origin));
     return Response.json({ scheduled: jobs.results.length });

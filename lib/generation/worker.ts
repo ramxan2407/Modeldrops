@@ -17,7 +17,16 @@ export async function runGenerationJob(id: string, origin: string) {
     "SELECT g.*,m.provider FROM generations g JOIN ai_models m ON m.id=g.model_id WHERE g.id=?",
   )
     .bind(id)
-    .first<any>();
+    .first<{
+      id: string;
+      user_id: string;
+      model_id: string;
+      status: string;
+      provider: string;
+      character_id: string;
+      type: "image" | "video";
+      settings: string;
+    }>();
   if (!g || !["queued", "processing"].includes(g.status)) return;
   if (g.provider === "Demo") return runDemoJob(id, origin);
   if (g.provider === "WaveSpeed" && !generationEnabled(env)) return;
@@ -32,7 +41,14 @@ export async function runGenerationJob(id: string, origin: string) {
     "SELECT * FROM provider_requests WHERE generation_id=?",
   )
     .bind(id)
-    .first<any>();
+    .first<{
+      state: string;
+      request_id: string | null;
+      character_reference: string | null;
+      input_json: string;
+      endpoint: string;
+      updated_at: string;
+    }>();
   if (!p) return;
   try {
     await DB.prepare(
@@ -80,6 +96,7 @@ export async function runGenerationJob(id: string, origin: string) {
         account.suspended ||
         !model?.enabled ||
         !availableCharacter ||
+        !availableCharacter.referenceImage ||
         !(await characterAccess(DB, g.user_id, g.character_id, env)) ||
         !(await characterAllowed(DB, g.user_id, g.character_id, "generate"))
       ) {

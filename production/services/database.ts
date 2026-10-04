@@ -1,8 +1,8 @@
-import { Pool, type PoolClient } from "pg";
+import { Pool } from "pg";
 export interface Sql {
-  query<T extends Record<string, any> = Record<string, any>>(
+  query<T extends Record<string, unknown> = Record<string, unknown>>(
     sql: string,
-    values?: any[],
+    values?: unknown[],
   ): Promise<{ rows: T[] }>;
 }
 export interface Database extends Sql {
@@ -19,9 +19,9 @@ export class PostgresDatabase implements Database {
       idleTimeoutMillis: 30000,
     });
   }
-  async query<T extends Record<string, any> = Record<string, any>>(
+  async query<T extends Record<string, unknown> = Record<string, unknown>>(
     sql: string,
-    values?: any[],
+    values?: unknown[],
   ) {
     const result = await this.pool.query<T>(sql, values);
     return { rows: result.rows };

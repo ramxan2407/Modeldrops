@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  type LucideIcon,
   ShieldCheck,
   RefreshCw,
   Search,
@@ -25,6 +26,74 @@ import {
 } from "@/lib/generation/presentation";
 import { uploadFile } from "@/lib/upload-client";
 import { toast } from "sonner";
+type AdminRecord = {
+  id: string;
+  name?: string;
+  email?: string;
+  description?: string;
+  created_at?: string;
+  status?: string;
+  type?: string;
+  provider?: string;
+  balance?: number;
+  suspended?: number;
+  amount?: number;
+  balance_after?: number;
+  credits?: number;
+  price?: number;
+  price_cents?: number;
+  amount_cents?: number;
+  credits_spent?: number;
+  currency?: string;
+  action?: string;
+  character_id?: string;
+  user_id?: string;
+  entity_id?: string;
+  metadata?: string;
+  reason?: string;
+  mode?: string;
+  enabled?: number | boolean;
+  featured?: number | boolean;
+  creator?: string;
+  image?: string;
+  age?: number;
+  category?: string;
+  demoCreditPrice?: number;
+  approvalStatus?: string;
+  referenceAssetId?: string | null;
+  referenceImage?: string;
+  referencePreview?: string;
+  characterId?: string;
+  canView?: boolean;
+  canGenerate?: boolean;
+};
+type AdminState = {
+  _section?: string;
+  demoMode: boolean;
+  rows: AdminRecord[];
+  hasMore?: boolean;
+  metrics: Record<string, number>;
+  roles: Record<string, string>;
+  permissions: {
+    user_id: string;
+    character_id: string;
+    can_view: number;
+    can_generate: number;
+  }[];
+  orders: AdminRecord[];
+  packages: AdminRecord[];
+  reports: AdminRecord[];
+  characters: AdminRecord[];
+  generationJobs: {
+    id: string;
+    user_id: string;
+    request_id: string | null;
+    state: string;
+    error: string | null;
+    status: string;
+  }[];
+  integrations: { name: string; status: string; detail: string }[];
+};
 const sections = [
   "Overview",
   "Users",
@@ -36,9 +105,9 @@ const sections = [
   "Activity",
   "Integrations",
 ];
-const fmt = (n: number) => (n || 0).toLocaleString();
-const date = (s: string) => new Date(s).toLocaleString();
-async function call(url: string, data?: unknown) {
+const fmt = (n?: number) => (n || 0).toLocaleString();
+const date = (s?: string) => (s ? new Date(s).toLocaleString() : "—");
+async function call<T = unknown>(url: string, data?: unknown) {
   const r = await fetch(
     url,
     data === undefined
@@ -49,7 +118,7 @@ async function call(url: string, data?: unknown) {
           body: JSON.stringify(data),
         },
   );
-  const body: any = await r.json();
+  const body: T & { error?: string } = await r.json();
   if (!r.ok) throw new Error(body.error || "Unable to load administration.");
   return body;
 }
@@ -64,7 +133,7 @@ export default function SuperAdmin({
     [page, setPage] = useState(0),
     [search, setSearch] = useState(""),
     [query, setQuery] = useState("");
-  const [data, setData] = useState<any>(null),
+  const [data, setData] = useState<AdminState | null>(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
@@ -72,7 +141,7 @@ export default function SuperAdmin({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [edit, setEdit] = useState<{
     action: string;
-    record: any;
+    record: AdminRecord;
     title: string;
   } | null>(null);
   const saving = useRef(false),
@@ -83,7 +152,7 @@ export default function SuperAdmin({
     setLoading(true);
     setError("");
     try {
-      const next = await call(
+      const next = await call<AdminState>(
         "/api/admin?" +
           new URLSearchParams({ section, search: query, page: String(page) }),
       );
@@ -97,11 +166,12 @@ export default function SuperAdmin({
   useEffect(() => {
     setData(null);
     void load();
+    const requests = request;
     return () => {
-      request.current++;
+      requests.current++;
     };
   }, [load]);
-  function open(action: string, record: any, title: string) {
+  function open(action: string, record: AdminRecord, title: string) {
     creditKey.current = crypto.randomUUID();
     setEdit({ action, record, title });
   }
@@ -110,7 +180,10 @@ export default function SuperAdmin({
     if (!edit || saving.current || uploading) return;
     const f = new FormData(event.currentTarget),
       value = (k: string) => String(f.get(k) || "");
-    const d: any = { id: edit.record.id, reason: value("reason") };
+    const d: Record<string, unknown> = {
+      id: edit.record.id,
+      reason: value("reason"),
+    };
     if (edit.action === "credits") {
       d.amount = Number(value("amount"));
       d.key = creditKey.current;
@@ -134,6 +207,8 @@ export default function SuperAdmin({
         age: Number(value("age")),
         category: value("category"),
         referenceAssetId: edit.record.referenceAssetId || null,
+        demoCreditPrice: Number(value("demoCreditPrice")),
+        approvalStatus: value("approvalStatus"),
       };
     }
     if (edit.action === "character_permission") {
@@ -194,7 +269,8 @@ export default function SuperAdmin({
         <AlertTriangle size={18} />
         <span>
           <strong>Preview environment.</strong> Credits and character access are
-          demo data. Payments and live generation are not connected.
+          workspace data. Character access, credits and approvals are controlled
+          here. Real payments are not connected.
         </span>
         <button
           onClick={() => {
@@ -262,16 +338,22 @@ export default function SuperAdmin({
               {section === "overview" && (
                 <>
                   <div className="admin-metrics">
-                    {[
-                      [Users, "Users", data.metrics.users],
-                      [Coins, "Demo credits in wallets", data.metrics.credits],
-                      [Layers, "Generations", data.metrics.generations],
+                    {(
                       [
-                        ShieldCheck,
-                        "Training in progress",
-                        data.metrics.training,
-                      ],
-                    ].map(([Icon, label, value]: any) => (
+                        [Users, "Users", data.metrics.users],
+                        [
+                          Coins,
+                          "Demo credits in wallets",
+                          data.metrics.credits,
+                        ],
+                        [Layers, "Generations", data.metrics.generations],
+                        [
+                          ShieldCheck,
+                          "Training in progress",
+                          data.metrics.training,
+                        ],
+                      ] satisfies [LucideIcon, string, number][]
+                    ).map(([Icon, label, value]) => (
                       <div key={label}>
                         <Icon size={20} />
                         <span>{label}</span>
@@ -329,7 +411,7 @@ export default function SuperAdmin({
                         "Joined",
                         "Actions",
                       ],
-                      rows.map((u: any) => (
+                      rows.map((u) => (
                         <tr key={u.id}>
                           <td>
                             <strong>{u.name}</strong>
@@ -352,8 +434,8 @@ export default function SuperAdmin({
                                 size="sm"
                                 variant="outline"
                                 onClick={() => {
-                                  const permission = data.permissions.find(
-                                    (p: any) =>
+                                  const permission = data?.permissions?.find(
+                                    (p) =>
                                       p.user_id === u.id &&
                                       p.character_id === "*",
                                   );
@@ -424,20 +506,22 @@ export default function SuperAdmin({
                           "Reason",
                           "Date",
                         ],
-                        rows.map((r: any) => (
+                        rows.map((r) => (
                           <tr key={r.id}>
                             <td>
                               {r.email}
                               <small>{r.type}</small>
                             </td>
                             <td
-                              className={r.amount > 0 ? "admin-positive" : ""}
+                              className={
+                                (r.amount ?? 0) > 0 ? "admin-positive" : ""
+                              }
                             >
-                              {r.amount > 0 ? "+" : ""}
+                              {(r.amount ?? 0) > 0 ? "+" : ""}
                               {fmt(r.amount)}
                             </td>
                             <td>{fmt(r.balance_after)}</td>
-                            <td>{generationMessage(r.description)}</td>
+                            <td>{generationMessage(r.description ?? "")}</td>
                             <td>{date(r.created_at)}</td>
                           </tr>
                         )),
@@ -454,23 +538,27 @@ export default function SuperAdmin({
                           "Account",
                           "Character",
                           "Mode",
-                          "Amount collected",
+                          "Cost",
                           "Status",
                           "Date",
                         ],
-                        data.orders.map((o: any) => (
+                        data.orders.map((o) => (
                           <tr key={o.id}>
                             <td>{o.email}</td>
                             <td>{o.character_id}</td>
                             <td>
-                              {o.mode === "test"
-                                ? "Test · no payment"
-                                : "Payment"}
+                              {o.currency === "demo_credits"
+                                ? "Demo credits"
+                                : o.mode === "test"
+                                  ? "Test · no payment"
+                                  : "Payment"}
                             </td>
                             <td>
-                              {o.mode === "test"
-                                ? "$0.00"
-                                : `$${(o.amount_cents / 100).toFixed(2)}`}
+                              {o.currency === "demo_credits"
+                                ? `${fmt(o.credits_spent)} credits`
+                                : o.mode === "test"
+                                  ? "$0.00"
+                                  : `$${((o.amount_cents ?? 0) / 100).toFixed(2)}`}
                             </td>
                             <td>{o.status}</td>
                             <td>{date(o.created_at)}</td>
@@ -484,14 +572,8 @@ export default function SuperAdmin({
                     not enable payment collection.
                   </p>
                   {table(
-                    [
-                      "Package",
-                      "Display price (USD)",
-                      "Credits",
-                      "Availability",
-                      "",
-                    ],
-                    data.packages.map((p: any) => (
+                    ["Package", "Price (USD)", "Credits", "Availability", ""],
+                    data.packages.map((p) => (
                       <tr key={p.id}>
                         <td>{p.name}</td>
                         <td>${p.price}</td>
@@ -525,11 +607,11 @@ export default function SuperAdmin({
                           "Status",
                           "Date",
                         ],
-                        rows.map((p: any) => (
+                        rows.map((p) => (
                           <tr key={p.id}>
                             <td>{p.email}</td>
                             <td>{p.character_id}</td>
-                            <td>${(p.price_cents / 100).toFixed(2)}</td>
+                            <td>${((p.price_cents ?? 0) / 100).toFixed(2)}</td>
                             <td>{p.status}</td>
                             <td>{date(p.created_at)}</td>
                           </tr>
@@ -548,13 +630,13 @@ export default function SuperAdmin({
                   </p>
                   {table(
                     ["Model", "Provider", "Type", "Base credits", "Status", ""],
-                    rows.map((m: any) => (
+                    rows.map((m) => (
                       <tr key={m.id}>
                         <td>
-                          <strong>{generationModelLabel(m.name)}</strong>
+                          <strong>{generationModelLabel(m.name ?? "")}</strong>
                           <small>{generationModelLabel(m.id)}</small>
                         </td>
-                        <td>{generationMessage(m.provider)}</td>
+                        <td>{generationMessage(m.provider ?? "")}</td>
                         <td>{m.type}</td>
                         <td>{m.credits}</td>
                         <td>{m.enabled ? "Available" : "Disabled"}</td>
@@ -577,19 +659,13 @@ export default function SuperAdmin({
               {section === "characters" && (
                 <>
                   <p className="admin-muted">
-                    Control catalog visibility, featured placement, and
-                    displayed sample prices. Disabled characters cannot be
-                    claimed or used for new generations.
+                    Control catalog visibility, featured placement, approval
+                    status, and demo credit prices. Disabled characters cannot
+                    be claimed or used for new generations.
                   </p>
                   {table(
-                    [
-                      "Character",
-                      "Category",
-                      "Display price (USD)",
-                      "Status",
-                      "",
-                    ],
-                    rows.map((c: any) => (
+                    ["Character", "Category", "Demo credits", "Status", ""],
+                    rows.map((c) => (
                       <tr key={c.id}>
                         <td>
                           <div className="admin-character">
@@ -601,13 +677,13 @@ export default function SuperAdmin({
                           </div>
                         </td>
                         <td>{c.category}</td>
-                        <td>${c.price}</td>
+                        <td>{c.demoCreditPrice ?? 300}</td>
                         <td>
                           {c.enabled ? "Visible" : "Disabled"}
                           <small>
-                            {c.referenceImage
-                              ? "Reference approved"
-                              : "Portrait needed · generation blocked"}
+                            {c.approvalStatus === "approved"
+                              ? "Approved · ready for Studio"
+                              : `${c.approvalStatus ?? "pending"} · generation blocked`}
                           </small>
                           {c.featured && <small>Featured</small>}
                         </td>
@@ -631,7 +707,7 @@ export default function SuperAdmin({
                 <>
                   <h2>Creator submissions</h2>
                   {rows.length
-                    ? rows.map((r: any) => (
+                    ? rows.map((r) => (
                         <article className="admin-review" key={r.id}>
                           <div>
                             <strong>{r.name}</strong>
@@ -651,7 +727,7 @@ export default function SuperAdmin({
                     : empty("No pending creator submissions.")}
                   <h2>Open reports</h2>
                   {data.reports.length
-                    ? data.reports.map((r: any) => (
+                    ? data.reports.map((r) => (
                         <article className="admin-review" key={r.id}>
                           <div>
                             <strong>{r.character_id}</strong>
@@ -673,14 +749,14 @@ export default function SuperAdmin({
                 (rows.length
                   ? table(
                       ["Administrator", "Action", "Record", "Details", "Date"],
-                      rows.map((r: any) => (
+                      rows.map((r) => (
                         <tr key={r.id}>
                           <td>{r.email}</td>
                           <td>{r.action}</td>
                           <td>
                             <code>
                               {r.action === "admin.model"
-                                ? generationModelLabel(r.entity_id)
+                                ? generationModelLabel(r.entity_id ?? "")
                                 : r.entity_id}
                             </code>
                           </td>
@@ -691,12 +767,12 @@ export default function SuperAdmin({
                                 {JSON.stringify(
                                   r.action === "admin.model"
                                     ? {
-                                        ...JSON.parse(r.metadata),
+                                        ...JSON.parse(r.metadata || "{}"),
                                         id: generationModelLabel(
-                                          JSON.parse(r.metadata).id,
+                                          JSON.parse(r.metadata || "{}").id,
                                         ),
                                       }
-                                    : JSON.parse(r.metadata),
+                                    : JSON.parse(r.metadata || "{}"),
                                   null,
                                   2,
                                 )}
@@ -719,7 +795,7 @@ export default function SuperAdmin({
                           "Status",
                           "Details",
                         ],
-                        data.generationJobs.map((job: any) => (
+                        data.generationJobs.map((job) => (
                           <tr key={job.id}>
                             <td>
                               {job.id}
@@ -738,7 +814,7 @@ export default function SuperAdmin({
               )}
               {section === "integrations" && (
                 <div className="admin-integrations">
-                  {data.integrations.map((i: any) => (
+                  {data.integrations.map((i) => (
                     <article key={i.name}>
                       <span className="admin-badge">{i.status}</span>
                       <h2>{i.name}</h2>
@@ -836,8 +912,8 @@ export default function SuperAdmin({
                       value={edit.record.characterId}
                       onChange={(e) => {
                         const characterId = e.target.value;
-                        const permission = data.permissions.find(
-                          (p: any) =>
+                        const permission = data?.permissions?.find(
+                          (p) =>
                             p.user_id === edit.record.id &&
                             p.character_id === characterId,
                         );
@@ -855,7 +931,7 @@ export default function SuperAdmin({
                       }}
                     >
                       <option value="*">All characters</option>
-                      {data.characters.map((c: any) => (
+                      {data?.characters?.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.name}
                         </option>
@@ -885,7 +961,36 @@ export default function SuperAdmin({
               {edit.action === "character" && (
                 <>
                   <label>
-                    Approved reference portrait
+                    Approval status
+                    <select
+                      name="approvalStatus"
+                      key={edit.record.referenceAssetId || "empty"}
+                      defaultValue={edit.record.approvalStatus ?? "pending"}
+                      required
+                    >
+                      <option value="pending">Pending review</option>
+                      <option
+                        value="approved"
+                        disabled={!edit.record.referenceAssetId}
+                      >
+                        Approved — available to buy and generate
+                      </option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </label>
+                  <label>
+                    Demo character price (credits)
+                    <Input
+                      name="demoCreditPrice"
+                      type="number"
+                      min={1}
+                      max={100000}
+                      defaultValue={edit.record.demoCreditPrice ?? 300}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Reference portrait
                     <input
                       type="file"
                       accept="image/png,image/jpeg,image/webp"
@@ -909,6 +1014,7 @@ export default function SuperAdmin({
                                   record: {
                                     ...current.record,
                                     referenceAssetId: result.id,
+                                    approvalStatus: "pending",
                                     referencePreview:
                                       "/api/upload?id=" + result.id,
                                   },
@@ -916,7 +1022,7 @@ export default function SuperAdmin({
                               : current,
                           );
                           toast.success(
-                            "Portrait uploaded. Save the profile to approve it.",
+                            "Portrait uploaded. Review it, select Approved, and save to open access.",
                           );
                         } catch (error) {
                           toast.error((error as Error).message);
@@ -933,7 +1039,8 @@ export default function SuperAdmin({
                     <img
                       src={
                         edit.record.referencePreview ||
-                        edit.record.referenceImage
+                        edit.record.referenceImage ||
+                        `/api/characters/reference?id=${encodeURIComponent(edit.record.id)}`
                       }
                       alt="Character reference awaiting profile save"
                       style={{ maxHeight: 180, objectFit: "contain" }}
@@ -952,6 +1059,7 @@ export default function SuperAdmin({
                                 record: {
                                   ...current.record,
                                   referenceAssetId: null,
+                                  approvalStatus: "pending",
                                   referenceImage: undefined,
                                   referencePreview: undefined,
                                 },

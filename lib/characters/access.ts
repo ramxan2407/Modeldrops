@@ -1,4 +1,5 @@
-export type CheckoutEnvironment = {
+import { demoEnabled, type DemoEnvironment } from "../credits";
+export type CheckoutEnvironment = DemoEnvironment & {
   CHARACTER_TEST_CHECKOUT?: string;
   VERCEL_ENV?: string;
 };
@@ -15,15 +16,23 @@ export async function characterAccess(
 ) {
   const row = await db
     .prepare(
-      "SELECT o.mode,o.status,e.status AS entitlement_status FROM character_entitlements e JOIN character_orders o ON o.id=e.order_id WHERE e.user_id=? AND e.character_id=?",
+      "SELECT o.mode,o.status,o.currency,e.status AS entitlement_status FROM character_entitlements e JOIN character_orders o ON o.id=e.order_id WHERE e.user_id=? AND e.character_id=?",
     )
     .bind(userId, characterId)
-    .first<{ mode: string; status: string; entitlement_status: string }>();
+    .first<{
+      mode: string;
+      status: string;
+      currency: string;
+      entitlement_status: string;
+    }>();
   if (row?.entitlement_status === "revoked") return false;
   if (row)
     return row.mode === "payment"
       ? row.status === "paid"
-      : row.status === "test_completed" && testCheckoutEnabled(env);
+      : row.status === "test_completed" &&
+          (row.currency === "demo_credits"
+            ? demoEnabled(env)
+            : testCheckoutEnabled(env));
   const legacy = await db
     .prepare(
       "SELECT price_cents,license_version FROM character_purchases WHERE user_id=? AND character_id=? AND status='active'",

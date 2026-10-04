@@ -2,6 +2,7 @@ import { auth, bindings, initialize, ApiError, fail } from "@/lib/server";
 import { LoraService } from "./service";
 import { stagedUpload } from "../upload-transfer";
 import { LoraError } from "./types";
+import { sameOrigin as isSameOrigin } from "../server-origin";
 export async function loraService() {
   const user = await auth();
   await initialize(user);
@@ -11,8 +12,7 @@ export function loraFailure(e: unknown) {
   return fail(e instanceof LoraError ? new ApiError(e.status, e.message) : e);
 }
 export function sameOrigin(request: Request) {
-  const origin = request.headers.get("origin");
-  if (origin !== new URL(request.url).origin)
+  if (!isSameOrigin(request))
     throw new LoraError(403, "Cross-origin request rejected.");
 }
 export async function boundedBytes(request: Request, max: number) {

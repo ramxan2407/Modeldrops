@@ -35,7 +35,17 @@ export async function processOneJob(deps: WorkerDependencies) {
   });
   if (!job) return false;
   const g = (
-    await db.query(
+    await db.query<{
+      id: string;
+      user_id: string;
+      adapter: string;
+      provider_request_id: string | null;
+      provider_model_id: string;
+      prompt: string;
+      parameters: Record<string, unknown>;
+      private_provider_parameters: Record<string, unknown> | null;
+      generation_type: string;
+    }>(
       `SELECT g.*,m.provider_model_id,m.generation_type,p.adapter,b.private_provider_parameters FROM generations g JOIN ai_models m ON m.id=g.model_id JOIN ai_providers p ON p.id=m.provider_id LEFT JOIN character_model_bindings b ON b.character_version_id=g.character_version_id AND b.model_id=g.model_id WHERE g.id=$1`,
       [job.generation_id],
     )

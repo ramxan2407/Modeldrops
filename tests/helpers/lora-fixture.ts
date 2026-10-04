@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
-import { DatabaseSync } from "node:sqlite";
+import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 import { readFileSync, readdirSync } from "node:fs";
 import { LoraService, type LoraBindings } from "../../lib/lora/service";
 class Statement {
-  values: any[] = [];
+  values: SQLInputValue[] = [];
   constructor(
     public db: DatabaseSync,
     public sql: string,
   ) {}
-  bind(...values: any[]) {
+  bind(...values: SQLInputValue[]) {
     const s = new Statement(this.db, this.sql);
     s.values = values;
     return s;
@@ -106,7 +106,12 @@ export function fixture() {
     BUCKET: bucket,
     ADMIN_USER_IDS: "admin",
     LORA_ADMIN_EMAILS: "ops@example.test",
-  } as unknown as LoraBindings;
+  } as unknown as LoraBindings & {
+    BUCKET: R2Bucket & {
+      signedRead?: (key: string, expires?: number) => Promise<string>;
+      signedUpload?: (key: string, mime?: string) => Promise<string>;
+    };
+  };
   const service = (userId: string) =>
     new LoraService(env, {
       userId,

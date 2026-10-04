@@ -37,7 +37,7 @@ export class WaveSpeedProvider implements AIProvider {
   generateVideo(input: ProviderRequest) {
     return this.submit(input);
   }
-  async generateText(_: ProviderRequest): Promise<ProviderResult> {
+  async generateText(): Promise<ProviderResult> {
     throw new UnsupportedCapability(
       "Configure a text adapter for this provider",
     );
@@ -51,7 +51,7 @@ export class WaveSpeedProvider implements AIProvider {
       ),
     );
   }
-  async cancelGeneration(_: string) {
+  async cancelGeneration() {
     return { supported: false, cancelled: false };
   } // Deleting a task is not assumed to cancel or refund computation.
   calculateProviderCost = calculateProviderCost;

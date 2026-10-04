@@ -95,7 +95,7 @@ for (const backend of ["sqlite", "postgres"]) {
       user: { userId: "alice", email: "alice@example.test", fullName: "Alice" },
       jobs: [] as Promise<unknown>[],
     };
-    (globalThis as any).__modelDropsTest = runtime;
+    globalThis.__modelDropsTest = runtime;
     const shim = fileURLToPath(
       new URL("./helpers/platform-runtime.ts", import.meta.url),
     );
@@ -125,20 +125,26 @@ for (const backend of ["sqlite", "postgres"]) {
     const mediaTypes = new Map<string, string>();
     const originalPut = runtime.env.BUCKET.put.bind(runtime.env.BUCKET);
     const originalGet = runtime.env.BUCKET.get.bind(runtime.env.BUCKET);
-    (runtime.env.BUCKET as any).put = async (
+    runtime.env.BUCKET.put = (async (
       key: string,
-      bytes: Uint8Array,
-      options: any,
+      bytes: Parameters<R2Bucket["put"]>[1],
+      options?: R2PutOptions,
     ) => {
-      mediaTypes.set(key, options.httpMetadata.contentType);
+      const metadata = options?.httpMetadata;
+      if (metadata && !(metadata instanceof Headers) && metadata.contentType)
+        mediaTypes.set(key, metadata.contentType);
       return originalPut(key, bytes);
-    };
-    (runtime.env.BUCKET as any).get = async (key: string) => {
+    }) as R2Bucket["put"];
+    runtime.env.BUCKET.get = (async (key: string) => {
       const object = await originalGet(key);
       return object
-        ? { ...object, httpMetadata: { contentType: mediaTypes.get(key) } }
+        ? {
+            ...object,
+            writeHttpMetadata: object.writeHttpMetadata,
+            httpMetadata: { contentType: mediaTypes.get(key) },
+          }
         : null;
-    };
+    }) as R2Bucket["get"];
     globalThis.fetch = async (url, options) => {
       const address = String(url);
       if (address.startsWith("https://static.wavespeed.ai/video"))
@@ -151,7 +157,10 @@ for (const backend of ["sqlite", "postgres"]) {
         return new Response(png, { headers: { "Content-Type": "image/png" } });
       }
       assert.match(address, /^https:\/\/api.wavespeed.ai\//);
-      assert.equal((options?.headers as any).Authorization, "Bearer test-key");
+      assert.equal(
+        new Headers(options?.headers).get("Authorization"),
+        "Bearer test-key",
+      );
       if (address.endsWith("/model/price"))
         return quoteFailure
           ? new Response("{}", { status: 500 })
@@ -222,7 +231,7 @@ for (const backend of ["sqlite", "postgres"]) {
         .prepare(
           "SELECT SUM(amount) AS balance FROM credit_transactions WHERE user_id='alice'",
         )
-        .first<any>())!.balance;
+        .first<{ balance: number }>())!.balance;
     await db
       .prepare(
         "INSERT INTO character_purchases(id,user_id,character_id,price_cents,license_version,license_snapshot) VALUES('native-fixture','alice','amara-rose',2900,'paid-1','Fixture license')",
@@ -247,7 +256,7 @@ for (const backend of ["sqlite", "postgres"]) {
         }),
       )
       .run();
-    (runtime.env.BUCKET as any).signedRead = async () =>
+    runtime.env.BUCKET.signedRead = async () =>
       "https://private-storage.example.com/reference.png?signature=test";
     const payload = () => ({
       idempotencyKey: crypto.randomUUID(),
@@ -281,23 +290,32 @@ for (const backend of ["sqlite", "postgres"]) {
         "New live accounts do not get automatic spendable demo credits",
       );
       assert.equal(body.models.length, generationModels.length);
-      assert(body.models.every((m: any) => m.provider === "WaveSpeed"));
+      assert(
+        body.models.every(
+          (m: {
+            id: string;
+            provider: string;
+            enabled: boolean;
+            resolutions: string[];
+          }) => m.provider === "WaveSpeed",
+        ),
+      );
       await db
         .prepare(
           "INSERT INTO credit_transactions(id,user_id,amount,type,description,balance_before,balance_after,idempotency_key) VALUES('fund','alice',1000,'promotion','Test credits',0,1000,'fund')",
         )
         .run();
       assert.equal(
-        (await post("generate", { ...payload(), characterId: null })).status,
+        (await post("generate", { ...payload(), characterId: null }))!.status,
         403,
       );
       // Prices are server-derived, and a failed/stale quote must not spend credits.
       quotePrice = 0.04;
-      assert.equal((await post("generate", payload())).status, 409);
+      assert.equal((await post("generate", payload()))!.status, 409);
       assert.equal(await balance(), 1000);
       quotePrice = 0.02;
       quoteFailure = true;
-      assert.equal((await post("generate", payload())).status, 422);
+      assert.equal((await post("generate", payload()))!.status, 422);
       quoteFailure = false;
       assert.equal(
         (await post("generate", { ...payload(), expectedCredits: undefined }))
@@ -312,7 +330,7 @@ for (const backend of ["sqlite", "postgres"]) {
         )
         .bind(referenceId)
         .run();
-      (runtime.env.BUCKET as any).signedRead = async (key: string) => {
+      runtime.env.BUCKET.signedRead = async (key: string) => {
         assert.equal(key, "private/alice/reference.png");
         return "https://private-storage.example.com/reference.png?signature=test";
       };
@@ -335,7 +353,7 @@ for (const backend of ["sqlite", "postgres"]) {
       assert.equal((await quoted.json()).credits, 12);
       runtime.user.userId = "bob";
       assert.equal(
-        (await imageApi.POST(quoteRequest())).status,
+        (await imageApi.POST(quoteRequest()))!.status,
         403,
         "Another account cannot quote a private reference",
       );
@@ -355,7 +373,12 @@ for (const backend of ["sqlite", "postgres"]) {
           "SELECT input_json,endpoint,character_reference FROM provider_requests WHERE generation_id=?",
         )
         .bind(job.id)
-        .first<any>();
+        .first<{
+          endpoint: string;
+          input_json: string;
+          character_reference: string;
+        }>();
+      assert(persistedInput);
       assert.equal(persistedInput.endpoint, "wavespeed-ai/qwen-image/edit");
       assert.equal(
         persistedInput.character_reference,
@@ -368,10 +391,10 @@ for (const backend of ["sqlite", "postgres"]) {
       await drain();
       assert.equal(submissions, 1);
       assert.equal(await balance(), 988);
-      assert.equal((await post("generate", input)).status, 200);
+      assert.equal((await post("generate", input))!.status, 200);
       await drain();
       assert.equal(submissions, 1);
-      assert.equal((await post("cancel", { id: job.id })).status, 409);
+      assert.equal((await post("cancel", { id: job.id }))!.status, 409);
       outcome = "completed";
       storageFailure = true;
       await tick(job.id);
@@ -384,31 +407,27 @@ for (const backend of ["sqlite", "postgres"]) {
         (await db
           .prepare("SELECT status FROM generations WHERE id=?")
           .bind(job.id)
-          .first<any>())!.status,
+          .first<{ status: string }>())!.status,
         "completed",
       );
       assert.equal(
         (await db
           .prepare("SELECT COUNT(*) AS n FROM notifications WHERE id=?")
           .bind(`generation:${job.id}`)
-          .first<any>())!.n,
+          .first<{ n: number }>())!.n,
         1,
       );
       assert.equal(
-        (
-          await media.GET(
-            new Request(`http://test.local/api/media?id=${job.id}`),
-          )
-        ).status,
+        (await media.GET(
+          new Request(`http://test.local/api/media?id=${job.id}`),
+        ))!.status,
         200,
       );
       runtime.user.userId = "bob";
       assert.equal(
-        (
-          await media.GET(
-            new Request(`http://test.local/api/media?id=${job.id}`),
-          )
-        ).status,
+        (await media.GET(
+          new Request(`http://test.local/api/media?id=${job.id}`),
+        ))!.status,
         404,
       );
       runtime.user.userId = "alice";
@@ -428,7 +447,7 @@ for (const backend of ["sqlite", "postgres"]) {
             "SELECT COUNT(*) AS n FROM credit_transactions WHERE generation_id=? AND type='generation_refund'",
           )
           .bind(second.id)
-          .first<any>())!.n,
+          .first<{ n: number }>())!.n,
         1,
       );
       submitFailure = "rejected";
@@ -455,7 +474,7 @@ for (const backend of ["sqlite", "postgres"]) {
         (await db
           .prepare("SELECT status FROM generation_jobs WHERE generation_id=?")
           .bind(fourth.id)
-          .first<any>())!.status,
+          .first<{ status: string }>())!.status,
         "needs_review",
       );
       runtime.env.WAVESPEED_DAILY_LIMIT_USD = "0.001";
@@ -481,7 +500,12 @@ for (const backend of ["sqlite", "postgres"]) {
           "SELECT endpoint,input_json FROM provider_requests WHERE generation_id=?",
         )
         .bind(video.id)
-        .first<any>();
+        .first<{
+          endpoint: string;
+          input_json: string;
+          reserved_microusd: number;
+        }>();
+      assert(videoRequest);
       assert.equal(
         videoRequest.endpoint,
         "kwaivgi/kling-v3.0-std/image-to-video",
@@ -502,12 +526,10 @@ for (const backend of ["sqlite", "postgres"]) {
       assert.equal(await balance(), 856);
       // Legacy batch fixture: existing multi-output delivery survives even though Qwen is single-output.
       assert.equal(
-        (
-          await post("generate", {
-            ...payload(),
-            settings: { ...settings, outputs: 4 },
-          })
-        ).status,
+        (await post("generate", {
+          ...payload(),
+          settings: { ...settings, outputs: 4 },
+        }))!.status,
         400,
       );
       const batch = { id: crypto.randomUUID() };
@@ -560,13 +582,11 @@ for (const backend of ["sqlite", "postgres"]) {
       const submittedBeforeDelivery = submissions;
       await tick(batch.id);
       assert.equal(
-        (
-          await media.GET(
-            new Request(
-              `http://test.local/api/media?id=${batch.id}&asset=${batch.id}`,
-            ),
-          )
-        ).status,
+        (await media.GET(
+          new Request(
+            `http://test.local/api/media?id=${batch.id}&asset=${batch.id}`,
+          ),
+        ))!.status,
         404,
         "Partial batch is not published",
       );
@@ -590,44 +610,44 @@ for (const backend of ["sqlite", "postgres"]) {
         )
       ).json();
       const delivered = batchState.account.generations.find(
-        (g: any) => g.id === batch.id,
+        (g: { id: string; state: string }) => g.id === batch.id,
       );
       assert.equal(delivered.status, "completed");
       assert.equal(delivered.outputs.length, 4);
       for (const output of delivered.outputs) {
         assert.equal(
-          (
-            await media.GET(
-              new Request(`http://test.local${output.url}&download=1`),
-            )
-          ).status,
+          (await media.GET(
+            new Request(`http://test.local${output.url}&download=1`),
+          ))!.status,
           200,
         );
         assert.equal(
-          (
-            await media.GET(
-              new Request(
-                `http://test.local/api/media?id=${job.id}&asset=${encodeURIComponent(output.id)}`,
-              ),
-            )
-          ).status,
+          (await media.GET(
+            new Request(
+              `http://test.local/api/media?id=${job.id}&asset=${encodeURIComponent(output.id)}`,
+            ),
+          ))!.status,
           404,
           "Asset must belong to the requested generation",
         );
       }
       runtime.user.userId = "bob";
       assert.equal(
-        (
-          await media.GET(
-            new Request(`http://test.local${delivered.outputs[3].url}`),
-          )
-        ).status,
+        (await media.GET(
+          new Request(`http://test.local${delivered.outputs[3].url}`),
+        ))!.status,
         404,
       );
       runtime.user.userId = "alice";
       assert.deepEqual(
-        batchState.models.find((m: any) => m.id === "wavespeed-kling-3")
-          .resolutions,
+        batchState.models.find(
+          (m: {
+            id: string;
+            provider: string;
+            enabled: boolean;
+            resolutions: string[];
+          }) => m.id === "wavespeed-kling-3",
+        ).resolutions,
         ["standard"],
       );
       // Historical models are neither advertised nor rerouted into WaveSpeed.
@@ -685,7 +705,7 @@ for (const backend of ["sqlite", "postgres"]) {
         const retired = await db
           .prepare("SELECT status FROM generation_jobs WHERE generation_id=?")
           .bind(id)
-          .first<any>();
+          .first<{ status: string }>();
         assert.equal(
           retired!.status,
           state === "ready" ? "cancelled" : "needs_review",
@@ -705,24 +725,32 @@ for (const backend of ["sqlite", "postgres"]) {
       ).json();
       assert(
         disconnected.models.every(
-          (m: any) => m.provider === "WaveSpeed" && !m.enabled,
+          (m: {
+            id: string;
+            provider: string;
+            enabled: boolean;
+            resolutions: string[];
+          }) => m.provider === "WaveSpeed" && !m.enabled,
         ),
       );
-      assert.equal((await post("generate", payload())).status, 503);
+      assert.equal((await post("generate", payload()))!.status, 503);
       runtime.env.WAVESPEED_API_KEY = "test-key";
       // Model drop access must be checked before any provider spend.
       const catalog = await vite.ssrLoadModule("/lib/catalog.ts");
       assert.equal(catalog.characters.length, 5);
       assert(
-        catalog.characters.every((c: any) => c.age >= 25 && !c.referenceImage),
+        catalog.characters.every(
+          (c: { id: string; age: number; referenceImage?: string }) =>
+            c.age >= 25 && !c.referenceImage,
+        ),
       );
       let character = catalog.characters[0];
       const characterPayload = { ...payload(), characterId: character.id };
-      assert.equal((await post("generate", characterPayload)).status, 403);
+      assert.equal((await post("generate", characterPayload))!.status, 403);
       await post("claim", { characterId: character.id, acceptedLicense: true });
       const beforeCharacter = submissions;
       assert.equal(
-        (await post("generate", characterPayload)).status,
+        (await post("generate", characterPayload))!.status,
         403,
         "Free preview claims do not unlock paid model generation",
       );
@@ -734,7 +762,7 @@ for (const backend of ["sqlite", "postgres"]) {
         )
         .bind(crypto.randomUUID(), character.id)
         .run();
-      assert.equal((await post("generate", characterPayload)).status, 409);
+      assert.equal((await post("generate", characterPayload))!.status, 409);
       assert.equal(
         submissions,
         beforeCharacter,
@@ -863,12 +891,10 @@ for (const backend of ["sqlite", "postgres"]) {
         "Revoked queued request refunds reserved credits",
       );
       assert.equal(
-        (
-          await db
-            .prepare("SELECT status FROM generations WHERE id=?")
-            .bind(pending.id)
-            .first<any>()
-        ).status,
+        (await db
+          .prepare("SELECT status FROM generations WHERE id=?")
+          .bind(pending.id)
+          .first<{ status: string }>())!.status,
         "failed",
       );
       await db
@@ -898,25 +924,24 @@ for (const backend of ["sqlite", "postgres"]) {
         const failed = await db
           .prepare("SELECT status,error FROM generations WHERE id=?")
           .bind(queued.id)
-          .first<any>();
+          .first<{ status: string; error: string }>();
+        assert(failed);
         assert.equal(failed.status, "failed");
         assert.match(failed.error, /reference changed/);
         assert.equal(
-          (
-            await db
-              .prepare(
-                "SELECT COUNT(*) n FROM credit_transactions WHERE generation_id=? AND type='generation_refund'",
-              )
-              .bind(queued.id)
-              .first<any>()
-          ).n,
+          (await db
+            .prepare(
+              "SELECT COUNT(*) n FROM credit_transactions WHERE generation_id=? AND type='generation_refund'",
+            )
+            .bind(queued.id)
+            .first<{ n: number }>())!.n,
           1,
         );
       }
       // Re-sign the same approved asset at submission time while preserving all priced settings.
       const refreshBalance = await balance();
       const refresh = await queueReferenceJob(approvedReference);
-      (runtime.env.BUCKET as any).signedRead = async () =>
+      runtime.env.BUCKET.signedRead = async () =>
         "https://private-storage.example.com/reference.png?signature=fresh";
       await tick(refresh.id);
       assert.equal(submissions, beforeSubmissions + 1);
@@ -936,36 +961,31 @@ for (const backend of ["sqlite", "postgres"]) {
       );
       assert.equal(await balance(), refreshBalance - 12);
       assert.equal(
-        (
-          await db
-            .prepare("SELECT status FROM generations WHERE id=?")
-            .bind(refresh.id)
-            .first<any>()
-        ).status,
+        (await db
+          .prepare("SELECT status FROM generations WHERE id=?")
+          .bind(refresh.id)
+          .first<{ status: string }>())!.status,
         "completed",
       );
       const scheduler = await vite.ssrLoadModule("/app/api/jobs/route.ts");
       assert.equal(
-        (await scheduler.GET(new Request("http://test.local/api/jobs"))).status,
+        (await scheduler.GET(new Request("http://test.local/api/jobs")))!
+          .status,
         401,
       );
       assert.equal(
-        (
-          await scheduler.GET(
-            new Request("http://test.local/api/jobs", {
-              headers: { Authorization: "Bearer test-cron-secret" },
-            }),
-          )
-        ).status,
+        (await scheduler.GET(
+          new Request("http://test.local/api/jobs", {
+            headers: { Authorization: "Bearer test-cron-secret" },
+          }),
+        ))!.status,
         200,
       );
       const admin = await vite.ssrLoadModule("/app/api/admin/route.ts");
       assert.equal(
-        (
-          await admin.GET(
-            new Request("http://test.local/api/admin?section=integrations"),
-          )
-        ).status,
+        (await admin.GET(
+          new Request("http://test.local/api/admin?section=integrations"),
+        ))!.status,
         403,
       );
       runtime.user.userId = "admin";
@@ -975,7 +995,8 @@ for (const backend of ["sqlite", "postgres"]) {
       assert.equal(adminResponse.status, 200);
       assert(
         (await adminResponse.json()).generationJobs.some(
-          (g: any) => g.id === fourth.id && g.state === "uncertain",
+          (g: { id: string; state: string }) =>
+            g.id === fourth.id && g.state === "uncertain",
         ),
       );
     } finally {
@@ -983,7 +1004,7 @@ for (const backend of ["sqlite", "postgres"]) {
       globalThis.fetch = originalFetch;
       await vite.close();
       await f.close();
-      delete (globalThis as any).__modelDropsTest;
+      delete globalThis.__modelDropsTest;
     }
   });
 }
@@ -1130,7 +1151,7 @@ await test("WaveSpeed protocol distinguishes rejections, uncertain submissions a
       }),
     );
     assert.equal(
-      (await client.status("pred_abc")).status,
+      (await client.status("pred_abc"))!.status,
       status === "completed"
         ? "completed"
         : status === "cancelled"

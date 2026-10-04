@@ -35,7 +35,12 @@ export async function enqueueGeneration(
     ); // Serialize per-wallet price reservations and retries.
     const key = `generation:${userId}:${req.idempotencyKey}`;
     const existing = (
-      await tx.query(
+      await tx.query<{
+        id: string;
+        request_hash: string;
+        credit_cost: number;
+        state: string;
+      }>(
         "SELECT id,request_hash,credit_cost,state FROM generations WHERE idempotency_key=$1",
         [key],
       )
@@ -69,7 +74,10 @@ export async function enqueueGeneration(
       characterVersionId = access.version_id;
       purchaseId = access.purchase_id;
     }
-    const multiplier = calculateMultiplier(req.parameters, m.multipliers);
+    const multiplier = calculateMultiplier(
+      req.parameters,
+      z.record(z.record(z.number())).parse(m.multipliers),
+    );
     const cost = m.fixed_credits
       ? Math.max(
           Number(m.minimum_credits),
@@ -117,8 +125,23 @@ export async function enqueueGeneration(
 }
 export function validateParameters(
   parameters: Record<string, unknown>,
-  schema: any,
+  rawSchema: unknown,
 ) {
+  const schema = z
+    .object({
+      type: z.literal("object"),
+      required: z.array(z.string()).optional(),
+      properties: z.record(
+        z.object({
+          type: z.string(),
+          enum: z.array(z.unknown()).optional(),
+          minimum: z.number().optional(),
+          maximum: z.number().optional(),
+          maxLength: z.number().optional(),
+        }),
+      ),
+    })
+    .parse(rawSchema);
   if (!schema || schema.type !== "object" || !schema.properties)
     throw new Error("Model input schema is not configured");
   for (const field of schema.required || [])
@@ -168,7 +191,7 @@ export async function refundGeneration(tx: Sql, id: string, reason: string) {
   const g = (
     await tx.query("SELECT * FROM generations WHERE id=$1 FOR UPDATE", [id])
   ).rows[0];
-  if (!g || ["completed", "refunded"].includes(g.state)) return;
+  if (!g || ["completed", "refunded"].includes(String(g.state))) return;
   await tx.query(
     "SELECT post_credit_entry($1,$2,'generation_refund',$3,$4,$5)",
     [g.user_id, g.credit_cost, reason, `refund:${id}`, id],

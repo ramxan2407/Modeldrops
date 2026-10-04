@@ -1,3 +1,4 @@
+import type { TestUser } from "./helpers/platform-runtime";
 import { postgresFixture } from "./helpers/postgres-fixture";
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -14,11 +15,20 @@ for (const backend of ["sqlite", "postgres"]) {
       ? await postgresFixture()
       : { ...fixture(), close: async () => {} };
   const runtime = {
-    env: { ...f.env, SUPER_ADMIN_USER_IDS: "admin" },
-    user: null as any,
+    env: {
+      ...f.env,
+      CHARACTER_TEST_CHECKOUT: undefined as string | undefined,
+      VERCEL_ENV: undefined as string | undefined,
+      SUPER_ADMIN_USER_IDS: "admin",
+      APP_ORIGIN: "http://test.local",
+      WELCOME_CREDITS: "1840" as string | undefined,
+      WAVESPEED_API_KEY: undefined as string | undefined,
+      WAVESPEED_ENABLED: undefined as string | undefined,
+    },
+    user: null as TestUser | null,
     jobs: [] as Promise<unknown>[],
   };
-  (globalThis as any).__modelDropsTest = runtime;
+  globalThis.__modelDropsTest = runtime;
   const vite = await createServer({
     configFile: false,
     root,
@@ -35,16 +45,19 @@ for (const backend of ["sqlite", "postgres"]) {
   const api = await vite.ssrLoadModule("/app/api/platform/route.ts");
   const admin = await vite.ssrLoadModule("/app/api/admin/route.ts");
   const media = await vite.ssrLoadModule("/app/api/media/route.ts");
+  const server = await vite.ssrLoadModule("/lib/server.ts");
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () =>
-    new Response(png as any, { headers: { "Content-Type": "image/png" } });
+    new Response(new Uint8Array(png), {
+      headers: { "Content-Type": "image/png" },
+    });
   const who = (id: string | null) =>
     (runtime.user = id
       ? { userId: id, email: id + "@example.test", fullName: id }
       : null);
-  const post = async (action: string, data: any) =>
+  const post = async (action: string, data: unknown) =>
     api.POST(
-      new Request("http://test.local/api/platform", {
+      new Request("http://localhost:3000/api/platform", {
         method: "POST",
         headers: {
           origin: "http://test.local",
@@ -61,6 +74,40 @@ for (const backend of ["sqlite", "postgres"]) {
     return r.json();
   };
   try {
+    await test(`${backend}: welcome credits require explicit configuration and are never regranted`, async () => {
+      const initialize = async (userId: string) => {
+        await server.initialize({
+          userId,
+          email: `${userId}@example.test`,
+          fullName: userId,
+        });
+        const row = await f.env.DB.prepare(
+          "SELECT COALESCE(SUM(amount),0) balance,COUNT(*) n FROM credit_transactions WHERE user_id=?",
+        )
+          .bind(userId)
+          .first<{ balance: number; n: number }>();
+        return row!;
+      };
+      try {
+        runtime.env.WELCOME_CREDITS = undefined;
+        assert.equal((await initialize("no-promotion")).balance, 0);
+        runtime.env.WAVESPEED_API_KEY = "test-key-never-sent";
+        runtime.env.WAVESPEED_ENABLED = "true";
+        assert.equal((await initialize("no-promotion")).balance, 0);
+        assert.equal((await initialize("provider-account")).balance, 0);
+        runtime.env.WELCOME_CREDITS = "42";
+        assert.equal((await initialize("explicit-promotion")).balance, 42);
+        runtime.env.WELCOME_CREDITS = "100";
+        const repeated = await initialize("explicit-promotion");
+        assert.equal(repeated.balance, 42);
+        assert.equal(repeated.n, 1);
+        assert.equal((await initialize("no-promotion")).balance, 0);
+      } finally {
+        runtime.env.WELCOME_CREDITS = "1840";
+        runtime.env.WAVESPEED_API_KEY = undefined;
+        runtime.env.WAVESPEED_ENABLED = undefined;
+      }
+    });
     await test(
       backend +
         ": " +
@@ -98,12 +145,12 @@ for (const backend of ["sqlite", "postgres"]) {
         );
         await post("favorite", { characterId: "valentina" });
         await post("project", { name: "Private QA project" });
-        const a: any = await state();
+        const a = await state();
         assert.deepEqual(a.account.owned, ["valentina"]);
         assert.equal(a.account.projects.length, 1);
         assert.equal(a.account.purchases.length, 1);
         who("bob");
-        const b: any = await state();
+        const b = await state();
         assert.deepEqual(b.account.owned, []);
         assert.deepEqual(b.account.favorites, []);
         assert.deepEqual(b.account.projects, []);
@@ -143,7 +190,7 @@ for (const backend of ["sqlite", "postgres"]) {
         who("alice");
         const r = await post("generate", payload);
         assert.equal(r.status, 202);
-        const job: any = await r.json();
+        const job = await r.json();
         assert.equal((await post("generate", payload)).status, 200);
         assert.equal((await state()).account.balance, 1828);
         assert.equal(
@@ -192,7 +239,7 @@ for (const backend of ["sqlite", "postgres"]) {
           new Request("http://test.local/api/admin?section=users"),
         );
         assert.equal(r.status, 200);
-        const mutate = (action: string, data: any) =>
+        const mutate = (action: string, data: unknown) =>
           admin.POST(
             new Request("http://test.local/api/admin", {
               method: "POST",
@@ -272,7 +319,9 @@ for (const backend of ["sqlite", "postgres"]) {
       async () => {
         who("alice");
         for (const origin of [undefined, "https://foreign.test"]) {
-          const headers: any = { "Content-Type": "application/json" };
+          const headers: Record<string, string> = {
+            "Content-Type": "application/json",
+          };
           if (origin) headers.origin = origin;
           assert.equal(
             (
@@ -305,7 +354,7 @@ for (const backend of ["sqlite", "postgres"]) {
         );
         const upload = await vite.ssrLoadModule("/app/api/upload/route.ts");
         let storageKey = "";
-        (runtime.env.BUCKET as any).signedUpload = async (key: string) => {
+        runtime.env.BUCKET.signedUpload = async (key: string) => {
           storageKey = key;
           return "https://storage.example.test/signed";
         };
@@ -357,7 +406,10 @@ for (const backend of ["sqlite", "postgres"]) {
           .bind("alice", "valentina")
           .run();
         assert.equal(
-          (await state()).characters.some((c: any) => c.id === "valentina"),
+          (await state()).characters.some(
+            (c: { id: string; age: number; referenceImage?: string }) =>
+              c.id === "valentina",
+          ),
           false,
         );
         assert.equal(
@@ -401,7 +453,10 @@ for (const backend of ["sqlite", "postgres"]) {
         assert.equal((await state()).account.balance, balance);
         who("bob");
         assert.equal(
-          (await state()).characters.some((c: any) => c.id === "valentina"),
+          (await state()).characters.some(
+            (c: { id: string; age: number; referenceImage?: string }) =>
+              c.id === "valentina",
+          ),
           true,
         );
       },
@@ -533,9 +588,9 @@ for (const backend of ["sqlite", "postgres"]) {
         ]);
         assert.equal(first.id, second.id);
         const refs = await vite.ssrLoadModule("/lib/generation/characters.ts");
-        (runtime.env as any).CHARACTER_TEST_CHECKOUT = "true";
-        (runtime.env as any).VERCEL_ENV = "preview";
-        (runtime.env.BUCKET as any).signedRead = async () =>
+        runtime.env.CHARACTER_TEST_CHECKOUT = "true";
+        runtime.env.VERCEL_ENV = "preview";
+        runtime.env.BUCKET.signedRead = async () =>
           "https://example.com/approved-sora.png";
         assert.deepEqual(
           await refs.characterReferenceInputs(
@@ -549,8 +604,8 @@ for (const backend of ["sqlite", "postgres"]) {
           { image: "https://example.com/approved-sora.png" },
         );
         assert((await state()).account.usableCharacters.includes(characterId));
-        delete (runtime.env as any).CHARACTER_TEST_CHECKOUT;
-        delete (runtime.env as any).VERCEL_ENV;
+        delete runtime.env.CHARACTER_TEST_CHECKOUT;
+        delete runtime.env.VERCEL_ENV;
 
         assert.equal(
           await characterAccess(f.env.DB, "alice", characterId, testEnv),
@@ -576,11 +631,9 @@ for (const backend of ["sqlite", "postgres"]) {
           /already in your library/,
         );
         assert.equal(
-          (
-            await f.env.DB.prepare(
-              "SELECT COUNT(*) n FROM character_orders",
-            ).first<any>()
-          ).n,
+          (await f.env.DB.prepare(
+            "SELECT COUNT(*) n FROM character_orders",
+          ).first<{ n: number }>())!.n,
           1,
         );
         // A revoked entitlement is authoritative even when a legacy paid receipt exists.
@@ -610,11 +663,9 @@ for (const backend of ["sqlite", "postgres"]) {
           );
         }
         assert.equal(
-          (
-            await f.env.DB.prepare(
-              "SELECT COUNT(*) n FROM character_orders",
-            ).first<any>()
-          ).n,
+          (await f.env.DB.prepare(
+            "SELECT COUNT(*) n FROM character_orders",
+          ).first<{ n: number }>())!.n,
           1,
         );
         assert.equal((await state()).account.balance, balanceBefore);
@@ -624,7 +675,7 @@ for (const backend of ["sqlite", "postgres"]) {
     await Promise.allSettled(runtime.jobs);
     globalThis.fetch = originalFetch;
     await vite.close();
-    delete (globalThis as any).__modelDropsTest;
+    delete globalThis.__modelDropsTest;
   }
 
   await f.close();

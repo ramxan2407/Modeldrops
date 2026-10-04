@@ -6,10 +6,10 @@ import { supabaseConfig } from "@/lib/supabase/config";
 import {
   authCookieName,
   authDestination,
-  isSameOriginAuthRequest,
   loginMethodCookie,
   verifiedSupabaseIdentity,
 } from "@/lib/auth-policy";
+import { sameOrigin } from "@/lib/server-origin";
 export const dynamic = "force-dynamic";
 const options = (secure: boolean) => ({
   httpOnly: true,
@@ -29,8 +29,9 @@ export async function POST(
   { params }: { params: Promise<{ action: string }> },
 ) {
   const { action } = await params;
-  if (!isSameOriginAuthRequest(request))
+  if (!sameOrigin(request))
     return reply("Please sign in from Model Drops.", 403);
+  const origin = request.headers.get("origin")!;
   if (
     !["signin", "signup", "reset", "password", "google", "signout"].includes(
       action,
@@ -49,10 +50,10 @@ export async function POST(
     for (const c of jar.getAll())
       if (c.name.startsWith(authCookieName) || c.name === loginMethodCookie)
         jar.set(c.name, "", {
-          ...options(new URL(request.url).protocol === "https:"),
+          ...options(new URL(origin).protocol === "https:"),
           maxAge: 0,
         });
-    return NextResponse.redirect(new URL("/login", request.url), 303);
+    return NextResponse.redirect(new URL("/login", origin), 303);
   }
   if (!config)
     return reply(

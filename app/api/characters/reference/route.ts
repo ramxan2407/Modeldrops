@@ -10,7 +10,9 @@ export async function GET(request: Request) {
     if (
       !c ||
       (!isSuperAdmin(user.userId) &&
-        (!c.enabled || !(await characterAllowed(DB, user.userId, c.id))))
+        (c.approvalStatus !== "approved" ||
+          !c.enabled ||
+          !(await characterAllowed(DB, user.userId, c.id))))
     )
       throw new ApiError(404, "Character unavailable.");
     if (!c.referenceAssetId)

@@ -12,35 +12,47 @@ type Quote = {
   characterId: string;
   name: string;
   amountCents: number;
+  creditCost: number;
+  balance: number;
   currency: string;
   ready: boolean;
   owned: boolean;
   mode: string;
   license: string;
 };
-export function CharacterCheckout({
-  character,
-  onClose,
-  onComplete,
-}: {
+type CheckoutProps = {
   character: Character | null;
   onClose: () => void;
   onComplete: (id: string) => Promise<void>;
+};
+export function CharacterCheckout(props: CheckoutProps) {
+  const [revision, setRevision] = useState(0);
+  return props.character ? (
+    <CheckoutSession
+      {...props}
+      character={props.character}
+      key={`${props.character.id}:${revision}`}
+      onRetry={() => setRevision((r) => r + 1)}
+    />
+  ) : null;
+}
+function CheckoutSession({
+  character,
+  onClose,
+  onComplete,
+  onRetry,
+}: Omit<CheckoutProps, "character"> & {
+  character: Character;
+  onRetry: () => void;
 }) {
   const [quote, setQuote] = useState<Quote | null>(null),
     [error, setError] = useState(""),
     [accepted, setAccepted] = useState(false),
     [busy, setBusy] = useState(false);
-  const [revision, setRevision] = useState(0);
-  const key = useRef("");
+  const [key] = useState(() => crypto.randomUUID());
   const saving = useRef(false);
   useEffect(() => {
-    if (!character) return;
     const controller = new AbortController();
-    setQuote(null);
-    setError("");
-    setAccepted(false);
-    key.current = crypto.randomUUID();
     fetch("/api/characters/checkout?id=" + encodeURIComponent(character.id), {
       signal: controller.signal,
     })
@@ -56,7 +68,7 @@ export function CharacterCheckout({
         if (!controller.signal.aborted) setError(e.message);
       });
     return () => controller.abort();
-  }, [character?.id, revision]);
+  }, [character.id]);
   async function complete() {
     if (!quote || saving.current) return;
     saving.current = true;
@@ -75,7 +87,9 @@ export function CharacterCheckout({
           characterId: quote.characterId,
           acceptedLicense: accepted,
           expectedAmountCents: quote.amountCents,
-          idempotencyKey: key.current,
+          idempotencyKey: key,
+          expectedCredits:
+            quote.mode === "demo_credits" ? quote.creditCost : undefined,
         }),
       });
       const d = (await r.json()) as { characterId: string; error?: string };
@@ -105,8 +119,12 @@ export function CharacterCheckout({
         {quote ? (
           <div className="character-checkout-review">
             <p>
-              <strong>${(quote.amountCents / 100).toFixed(2)} USD</strong> ·
-              Character access
+              <strong>
+                {quote.mode === "demo_credits"
+                  ? `${quote.creditCost.toLocaleString()} demo credits`
+                  : `$${(quote.amountCents / 100).toFixed(2)} USD`}
+              </strong>{" "}
+              · Character access
             </p>
             <p>{quote.license}</p>
             {!quote.ready && (
@@ -119,6 +137,15 @@ export function CharacterCheckout({
               <p role="status">
                 Payments are not connected yet. No payment or credits will be
                 taken.
+              </p>
+            )}
+            {quote.mode === "demo_credits" && (
+              <p role="status">
+                Demo purchase · No money is charged. Balance:{" "}
+                {quote.balance.toLocaleString()} credits.{" "}
+                {quote.balance < quote.creditCost && !quote.owned
+                  ? "Ask an administrator for more demo credits."
+                  : "Your character will open in Studio after purchase."}
               </p>
             )}
             {quote.mode === "test" && (
@@ -141,7 +168,11 @@ export function CharacterCheckout({
               disabled={
                 busy ||
                 (!quote.owned &&
-                  (!accepted || !quote.ready || quote.mode !== "test"))
+                  (!accepted ||
+                    !quote.ready ||
+                    !["test", "demo_credits"].includes(quote.mode) ||
+                    (quote.mode === "demo_credits" &&
+                      quote.balance < quote.creditCost)))
               }
               onClick={complete}
             >
@@ -149,9 +180,11 @@ export function CharacterCheckout({
                 ? "Unlocking…"
                 : quote.owned
                   ? "Open Creator Studio"
-                  : quote.mode === "test"
-                    ? "Confirm test access"
-                    : "Payments coming soon"}
+                  : quote.mode === "demo_credits"
+                    ? `Buy for ${quote.creditCost.toLocaleString()} credits`
+                    : quote.mode === "test"
+                      ? "Confirm test access"
+                      : "Payments coming soon"}
             </Button>
           </div>
         ) : (
@@ -160,11 +193,7 @@ export function CharacterCheckout({
         {error && (
           <>
             <p role="alert">{error}</p>
-            <Button
-              variant="outline"
-              disabled={busy}
-              onClick={() => setRevision((r) => r + 1)}
-            >
+            <Button variant="outline" disabled={busy} onClick={onRetry}>
               Refresh access and price
             </Button>
           </>

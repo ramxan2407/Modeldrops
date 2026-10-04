@@ -31,7 +31,7 @@ export class OpenRouterProvider implements AIProvider {
       );
     }
   }
-  async generateVideo(_: ProviderRequest): Promise<ProviderResult> {
+  async generateVideo(): Promise<ProviderResult> {
     throw new UnsupportedCapability(
       "Video requires a separately verified provider model adapter",
     );
@@ -46,7 +46,11 @@ export class OpenRouterProvider implements AIProvider {
         messages: [{ role: "user", content: input.prompt }],
         stream: false,
       },
-    )) as any;
+    )) as {
+      id?: string;
+      choices?: { message?: { content?: unknown } }[];
+      usage?: { cost?: number };
+    };
     const content = raw.choices?.[0]?.message?.content;
     if (typeof content !== "string")
       throw new SubmissionUncertain(
@@ -60,12 +64,12 @@ export class OpenRouterProvider implements AIProvider {
       costUsd: raw.usage?.cost,
     };
   }
-  async getStatus(_: string): Promise<ProviderResult> {
+  async getStatus(): Promise<ProviderResult> {
     throw new UnsupportedCapability(
       "This adapter uses blocking provider responses inside an asynchronous worker",
     );
   }
-  async cancelGeneration(_: string) {
+  async cancelGeneration() {
     return { supported: false, cancelled: false };
   }
   calculateProviderCost = calculateProviderCost;

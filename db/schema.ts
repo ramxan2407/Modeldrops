@@ -31,6 +31,9 @@ export const ledger = sqliteTable(
     amount: integer("amount").notNull(),
     type: text("type").notNull(),
     generationId: text("generation_id"),
+    wallet: text("wallet", { enum: ["standard", "demo"] })
+      .notNull()
+      .default("standard"),
     description: text("description").notNull(),
     balanceBefore: integer("balance_before").notNull(),
     balanceAfter: integer("balance_after").notNull(),
@@ -125,6 +128,9 @@ export const generations = sqliteTable(
     type: text("type").notNull(),
     status: text("status").notNull().default("queued"),
     cost: integer("cost").notNull(),
+    creditWallet: text("credit_wallet", { enum: ["standard", "demo"] })
+      .notNull()
+      .default("standard"),
     assetKey: text("asset_key"),
     projectId: text("project_id").references(() => projects.id),
     referenceId: text("reference_id"),
@@ -392,6 +398,7 @@ export const characterOrders = sqliteTable(
       .references(() => users.id),
     characterId: text("character_id").notNull(),
     amountCents: integer("amount_cents").notNull(),
+    creditsSpent: integer("credits_spent").notNull().default(0),
     currency: text("currency").notNull().default("usd"),
     mode: text("mode").notNull(),
     status: text("status").notNull(),

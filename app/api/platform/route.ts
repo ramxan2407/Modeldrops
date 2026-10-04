@@ -1,3 +1,4 @@
+import { activeWallet, demoEnabled } from "@/lib/credits";
 import { characterAccess, testCheckoutEnabled } from "@/lib/characters/access";
 import {
   characterAllowed,
@@ -10,7 +11,7 @@ import { resolveImageReferences } from "@/lib/generation/references";
 import { catalogFor } from "@/lib/admin/service";
 import { waitUntil } from "cloudflare:workers";
 import { z } from "zod";
-import { characters, license, models as catalogModels } from "@/lib/catalog";
+import { license, models as catalogModels } from "@/lib/catalog";
 import {
   ApiError,
   auth,
@@ -18,7 +19,6 @@ import {
   initialize,
   uid,
   isAdmin,
-  requireAdmin,
   requireSuperAdmin,
   isSuperAdmin,
   assertOrigin,
@@ -37,6 +37,34 @@ import {
 } from "@/lib/generation/models";
 import { refundJob } from "@/lib/demo-worker";
 export const dynamic = "force-dynamic";
+type CountRow = { n: number };
+type BalanceRow = { balance: number };
+type ModelRow = {
+  id: string;
+  name: string;
+  provider: string;
+  type: string;
+  config: string;
+  credits: number;
+  enabled: number;
+};
+type PurchaseRow = {
+  character_id: string;
+  created_at: string;
+  license_version: string;
+  license_snapshot: string;
+  price_cents: number;
+  credits_spent?: number;
+};
+type GenerationReplay = {
+  id: string;
+  prompt: string;
+  model_id: string;
+  character_id: string | null;
+  settings: string;
+  reference_id: string | null;
+  credit_wallet: string;
+};
 const str = (max = 100) => z.string().trim().min(1).max(max);
 const key = z.string().uuid();
 export async function GET(request: Request) {
@@ -48,15 +76,21 @@ export async function GET(request: Request) {
     if (action === "admin") {
       requireSuperAdmin(user.userId);
       const [users, gens, listed, rows] = await Promise.all([
-        DB.prepare("SELECT COUNT(*) AS n FROM users").first<any>(),
-        DB.prepare("SELECT COUNT(*) AS n FROM generations").first<any>(),
-        DB.prepare("SELECT COUNT(*) AS n FROM creator_listings").first<any>(),
+        DB.prepare("SELECT COUNT(*) AS n FROM users").first<CountRow>(),
+        DB.prepare("SELECT COUNT(*) AS n FROM generations").first<CountRow>(),
+        DB.prepare(
+          "SELECT COUNT(*) AS n FROM creator_listings",
+        ).first<CountRow>(),
         DB.prepare(
           "SELECT id,name,description,status FROM creator_listings ORDER BY created_at DESC LIMIT 100",
         ).all(),
       ]);
       return Response.json({
-        metrics: { Users: users.n, Generations: gens.n, Concepts: listed.n },
+        metrics: {
+          Users: users?.n ?? 0,
+          Generations: gens?.n ?? 0,
+          Concepts: listed?.n ?? 0,
+        },
         listings: rows.results,
       });
     }
@@ -76,20 +110,20 @@ export async function GET(request: Request) {
     ] = await Promise.all([
       DB.prepare("SELECT name,default_private FROM users WHERE id=?")
         .bind(user.userId)
-        .first<any>(),
+        .first<{ name: string; default_private: number }>(),
       DB.prepare(
-        "SELECT COALESCE(SUM(amount),0) AS balance FROM credit_transactions WHERE user_id=?",
+        "SELECT COALESCE(SUM(amount),0) AS balance FROM credit_transactions WHERE user_id=? AND wallet=?",
       )
-        .bind(user.userId)
-        .first<any>(),
+        .bind(user.userId, activeWallet(bindings()))
+        .first<BalanceRow>(),
       DB.prepare(
         "SELECT character_id,created_at,license_version,license_snapshot,price_cents FROM character_purchases WHERE user_id=? AND status='active' ORDER BY created_at DESC",
       )
         .bind(user.userId)
-        .all<any>(),
+        .all<PurchaseRow>(),
       DB.prepare("SELECT character_id FROM favorites WHERE user_id=?")
         .bind(user.userId)
-        .all<any>(),
+        .all<{ character_id: string }>(),
       DB.prepare(
         'SELECT id,name,description,created_at AS "createdAt" FROM projects WHERE user_id=? ORDER BY created_at DESC',
       )
@@ -99,18 +133,24 @@ export async function GET(request: Request) {
         'SELECT g.id,g.prompt,g.character_id AS "characterId",g.model_id AS "modelId",g.status,g.cost,g.type,g.settings,g.error,g.created_at AS "createdAt",g.project_id AS "projectId",g.asset_key IS NOT NULL AS "hasAsset",m.provider,m.name AS "modelName" FROM generations g JOIN ai_models m ON m.id=g.model_id WHERE g.user_id=? ORDER BY g.created_at DESC LIMIT 100',
       )
         .bind(user.userId)
-        .all<any>(),
+        .all<{
+          id: string;
+          status: string;
+          provider: string;
+          hasAsset: boolean;
+          settings: string;
+        }>(),
       DB.prepare(
-        'SELECT id,amount,description,created_at AS "createdAt",balance_after AS "balanceAfter" FROM credit_transactions WHERE user_id=? ORDER BY created_at DESC LIMIT 100',
+        'SELECT id,amount,description,created_at AS "createdAt",balance_after AS "balanceAfter" FROM credit_transactions WHERE user_id=? AND wallet=? ORDER BY created_at DESC LIMIT 100',
       )
-        .bind(user.userId)
+        .bind(user.userId, activeWallet(bindings()))
         .all(),
       DB.prepare(
         "SELECT id,message,read FROM notifications WHERE user_id=? ORDER BY created_at DESC LIMIT 50",
       )
         .bind(user.userId)
         .all(),
-      DB.prepare("SELECT * FROM ai_models").all<any>(),
+      DB.prepare("SELECT * FROM ai_models").all<ModelRow>(),
       DB.prepare(
         "SELECT id,name,price,credits FROM credit_packages WHERE enabled=1 ORDER BY price",
       ).all(),
@@ -121,12 +161,24 @@ export async function GET(request: Request) {
         .all(),
     ]);
     const accessRows = await DB.prepare(
-      "SELECT e.character_id,o.created_at,o.mode,o.license_snapshot,o.amount_cents FROM character_entitlements e JOIN character_orders o ON o.id=e.order_id WHERE e.user_id=? AND e.status='active' AND o.status IN ('paid','test_completed')",
+      "SELECT e.character_id,o.created_at,o.mode,o.license_snapshot,o.amount_cents,o.currency,o.credits_spent FROM character_entitlements e JOIN character_orders o ON o.id=e.order_id WHERE e.user_id=? AND e.status='active' AND o.status IN ('paid','test_completed')",
     )
       .bind(user.userId)
-      .all<any>();
+      .all<{
+        character_id: string;
+        created_at: string;
+        mode: string;
+        license_snapshot: string;
+        amount_cents: number;
+        currency: string;
+        credits_spent: number;
+      }>();
     const access = accessRows.results.filter(
-      (r) => r.mode === "payment" || testCheckoutEnabled(bindings()),
+      (r) =>
+        r.mode === "payment" ||
+        (r.currency === "demo_credits"
+          ? demoEnabled(bindings())
+          : testCheckoutEnabled(bindings())),
     );
     const usable = await Promise.all(
       [
@@ -158,7 +210,8 @@ export async function GET(request: Request) {
       {
         liveGeneration: liveEnabled,
         account: {
-          name: profile.name,
+          demoMode: demoEnabled(bindings()),
+          name: profile?.name ?? user.fullName ?? "Creator",
           email: user.email,
           purchases: [
             ...owned.results.filter(
@@ -166,7 +219,13 @@ export async function GET(request: Request) {
             ),
             ...access.map((r) => ({
               ...r,
-              license_version: r.mode === "test" ? "test-1" : "paid-1",
+              license_version:
+                r.currency === "demo_credits"
+                  ? "demo-credits-1"
+                  : r.mode === "test"
+                    ? "test-1"
+                    : "paid-1",
+              credits_spent: r.credits_spent,
               price_cents: r.mode === "test" ? 0 : r.amount_cents,
             })),
           ].map((p) => ({
@@ -175,9 +234,10 @@ export async function GET(request: Request) {
             licenseVersion: p.license_version,
             licenseSnapshot: p.license_snapshot,
             priceCents: p.price_cents,
+            creditsSpent: "credits_spent" in p ? p.credits_spent : 0,
           })),
-          defaultPrivate: !!profile.default_private,
-          balance: balance.balance,
+          defaultPrivate: !!profile?.default_private,
+          balance: balance?.balance ?? 0,
           owned: [
             ...new Set([
               ...owned.results.map((x) => x.character_id),
@@ -301,8 +361,8 @@ export async function POST(request: Request) {
           "SELECT COUNT(*) AS n FROM projects WHERE user_id=?",
         )
           .bind(id)
-          .first<any>();
-        if (n.n >= 100)
+          .first<CountRow>();
+        if ((n?.n ?? 0) >= 100)
           throw new ApiError(429, "Preview project limit reached");
         await DB.prepare(
           "INSERT INTO projects(id,user_id,name,description) VALUES(?,?,?,?)",
@@ -330,12 +390,13 @@ export async function POST(request: Request) {
           );
         const idem = `generation:${id}:${d.idempotencyKey}`;
         const existing = await DB.prepare(
-          "SELECT id,prompt,model_id,character_id,settings,reference_id FROM generations WHERE idempotency_key=?",
+          "SELECT id,prompt,model_id,character_id,settings,reference_id,credit_wallet FROM generations WHERE idempotency_key=?",
         )
           .bind(idem)
-          .first<any>();
+          .first<GenerationReplay>();
         if (existing) {
           if (
+            existing.credit_wallet !== activeWallet(bindings()) ||
             existing.prompt !== d.prompt ||
             existing.model_id !== d.modelId ||
             existing.character_id !== d.characterId ||
@@ -352,7 +413,7 @@ export async function POST(request: Request) {
           "SELECT * FROM ai_models WHERE id=? AND enabled=1",
         )
           .bind(d.modelId)
-          .first<any>();
+          .first<ModelRow>();
         if (!m) throw new ApiError(400, "Choose an available model");
         const live = m.provider === "WaveSpeed";
         if (
@@ -448,8 +509,8 @@ export async function POST(request: Request) {
           "SELECT COUNT(*) AS n FROM generations WHERE user_id=? AND status IN ('queued','processing')",
         )
           .bind(id)
-          .first<any>();
-        if (active.n >= 3)
+          .first<CountRow>();
+        if ((active?.n ?? 0) >= 3)
           throw new ApiError(429, "Three generations are already in progress.");
         if ((!live || m.type !== "image") && !d.prompt)
           throw new ApiError(400, "Write a prompt first.");
@@ -492,17 +553,17 @@ export async function POST(request: Request) {
           }
         }
         const balance = await DB.prepare(
-          "SELECT COALESCE(SUM(amount),0) AS balance FROM credit_transactions WHERE user_id=?",
+          "SELECT COALESCE(SUM(amount),0) AS balance FROM credit_transactions WHERE user_id=? AND wallet=?",
         )
-          .bind(id)
-          .first<any>();
-        if (balance.balance < cost)
+          .bind(id, activeWallet(bindings()))
+          .first<BalanceRow>();
+        if ((balance?.balance ?? 0) < cost)
           throw new ApiError(402, "Not enough credits.");
         const gen = uid();
         try {
           await DB.batch([
             DB.prepare(
-              "INSERT INTO generations(id,user_id,character_id,model_id,prompt,settings,type,cost,idempotency_key,reference_id,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+              "INSERT INTO generations(id,user_id,character_id,model_id,prompt,settings,type,cost,idempotency_key,reference_id,updated_at,credit_wallet) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
             ).bind(
               gen,
               id,
@@ -515,6 +576,7 @@ export async function POST(request: Request) {
               idem,
               d.reference || null,
               new Date().toISOString(),
+              activeWallet(bindings()),
             ),
             ledgerStatement(
               id,
@@ -551,12 +613,13 @@ export async function POST(request: Request) {
           ]);
         } catch (e) {
           const concurrent = await DB.prepare(
-            "SELECT id,prompt,model_id,character_id,settings,reference_id FROM generations WHERE idempotency_key=?",
+            "SELECT id,prompt,model_id,character_id,settings,reference_id,credit_wallet FROM generations WHERE idempotency_key=?",
           )
             .bind(idem)
-            .first<any>();
+            .first<GenerationReplay>();
           if (concurrent) {
             if (
+              concurrent.credit_wallet !== activeWallet(bindings()) ||
               concurrent.prompt !== d.prompt ||
               concurrent.model_id !== d.modelId ||
               concurrent.character_id !== d.characterId ||
@@ -574,7 +637,10 @@ export async function POST(request: Request) {
               429,
               "The generation budget or concurrent job limit has been reached. Try later or contact support.",
             );
-          if (e instanceof Error && e.message.includes("balance_nonnegative"))
+          if (
+            e instanceof Error &&
+            /balance_nonnegative|Stale credit balance/.test(e.message)
+          )
             throw new ApiError(402, "Not enough credits.");
           throw e;
         }
@@ -590,7 +656,7 @@ export async function POST(request: Request) {
           "SELECT status,model_id FROM generations WHERE id=? AND user_id=?",
         )
           .bind(d.id, id)
-          .first<any>();
+          .first<{ status: string; model_id: string }>();
         if (!g) throw new ApiError(404, "Generation not found");
         if (
           !catalogModels.some(
@@ -651,8 +717,8 @@ export async function POST(request: Request) {
           "SELECT COUNT(*) AS n FROM creator_listings WHERE user_id=?",
         )
           .bind(id)
-          .first<any>();
-        if (n.n >= 25)
+          .first<CountRow>();
+        if ((n?.n ?? 0) >= 25)
           throw new ApiError(429, "Preview submission limit reached");
         await DB.prepare(
           "INSERT INTO creator_listings(id,user_id,name,description,rights_confirmed) VALUES(?,?,?,?,1)",
