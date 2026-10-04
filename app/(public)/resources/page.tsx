@@ -36,9 +36,9 @@ export default function Resources() {
     <div className="md-section md-resources">
       <span className="md-kicker">THE FIELD GUIDE</span>
       <h1 className="md-display">
-        GOOD IDEAS.
+        Create with
         <br />
-        <em>CLEAR NEXT STEPS.</em>
+        <em>confidence.</em>
       </h1>
       <section id="how-it-works">
         <span className="md-kicker">01 / THE WORKFLOW</span>

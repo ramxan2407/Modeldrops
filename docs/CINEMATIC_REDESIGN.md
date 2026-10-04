@@ -1,5 +1,7 @@
 # Cinematic public experience
 
+The homepage and public visual system described below were superseded by the product-led redesign in October 2026. See `PRODUCT_WEBSITE_DESIGN.md` for the current layout. Earlier cinematic components remain available in the repository but are no longer rendered on `/welcome`.
+
 Implemented on `codex/drop-001-models`. Production deployment, database migrations, payment activation, and paid generation are outside this development update.
 
 ## Information architecture

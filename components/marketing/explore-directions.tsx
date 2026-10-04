@@ -16,9 +16,9 @@ export function ExploreDirections({
     <section className="md-section md-explore">
       <span className="md-kicker">THE CREATIVE NOTEBOOK</span>
       <h1 className="md-display">
-        A FAMILIAR FACE.
+        One character.
         <br />
-        <em>AN UNFAMILIAR WORLD.</em>
+        <em>A world of possibilities.</em>
       </h1>
       <p className="md-lede">Start with a direction. Make the story yours.</p>
       <div className="md-filter-row" role="group" aria-label="Explore scenes">

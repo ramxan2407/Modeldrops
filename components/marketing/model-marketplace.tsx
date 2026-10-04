@@ -19,9 +19,9 @@ export function ModelMarketplace({ compact = false }: { compact?: boolean }) {
         <span>Five original identities</span>
       </div>
       <Heading id="marketplace-title" className="md-display">
-        FIND YOUR
+        Find your
         <br />
-        <em>FACE.</em>
+        <em>signature model.</em>
       </Heading>
       <div className="md-marketplace-intro">
         <p>

@@ -11,9 +11,9 @@ export default function Pricing() {
     <section className="md-section md-pricing">
       <span className="md-kicker">A CLEAR WAY TO CREATE</span>
       <h1 className="md-display">
-        YOUR TALENT.
+        Your character.
         <br />
-        <em>YOUR PACE.</em>
+        <em>Your pace.</em>
       </h1>
       <p className="md-lede">
         Character access unlocks an identity.

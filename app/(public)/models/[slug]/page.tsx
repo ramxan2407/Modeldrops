@@ -52,7 +52,7 @@ export default async function ModelPage({
             ← The collection
           </Link>
           <span className="md-kicker">AI DIGITAL MODEL / {m.drop}</span>
-          <h1>{m.name.toUpperCase()}</h1>
+          <h1>{m.name}</h1>
           <p>{m.description}</p>
           <dl>
             <div>
@@ -82,9 +82,9 @@ export default async function ModelPage({
           <span>Reviewed examples only</span>
         </div>
         <h2 className="md-display">
-          A FACE.
+          One identity.
           <br />
-          <em>A WORLD OF STORIES.</em>
+          <em>A world of stories.</em>
         </h2>
         {m.gallery.length > 0 ? (
           <div className="md-portfolio-grid">
@@ -119,11 +119,11 @@ export default async function ModelPage({
         <div>
           <span className="md-kicker">02 / YOUR CREATIVE DIRECTION</span>
           <h2>
-            IMAGINE
+            Imagine
             <br />
-            {m.name.toUpperCase()}
+            {m.name}
             <br />
-            <em>ANYWHERE.</em>
+            <em>anywhere.</em>
           </h2>
           <p>
             Start with a scene. Your character and draft follow you into the

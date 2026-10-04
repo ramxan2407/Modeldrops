@@ -11,10 +11,10 @@ import {
   toggleStoryMotion,
 } from "@/components/motion/motion-preference";
 const links = [
+  ["Product", "/welcome#workspace"],
+  ["Workflows", "/welcome#workflows"],
   ["Models", "/models"],
-  ["Explore", "/explore"],
   ["Pricing", "/pricing"],
-  ["Resources", "/resources"],
 ];
 export function MarketingShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -24,24 +24,13 @@ export function MarketingShell({ children }: { children: ReactNode }) {
   const systemReduced = useSystemReducedStoryMotion();
   const header = useRef<HTMLElement>(null);
   useEffect(() => {
-    let previous = window.scrollY,
-      direction = 0,
-      travel = 0,
-      frame = 0;
+    let frame = 0;
     const update = () => {
       frame = 0;
       const y = window.scrollY;
-      const delta = y - previous;
-      if (Math.sign(delta) !== direction) travel = 0;
-      direction = Math.sign(delta);
-      travel += delta;
       if (header.current) {
-        header.current.dataset.compact = String(y > 80);
-        if (open || y < 500 || travel < -12)
-          header.current.dataset.hidden = "false";
-        else if (travel > 36) header.current.dataset.hidden = "true";
+        header.current.dataset.compact = String(y > 24);
       }
-      previous = y;
     };
     const scroll = () => {
       if (!frame) frame = requestAnimationFrame(update);
@@ -54,6 +43,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
     };
     window.addEventListener("scroll", scroll, { passive: true });
     window.addEventListener("keydown", key);
+    update();
     return () => {
       window.removeEventListener("scroll", scroll);
       window.removeEventListener("keydown", key);
@@ -61,15 +51,11 @@ export function MarketingShell({ children }: { children: ReactNode }) {
     };
   }, [open]);
   return (
-    <div className="md-public" data-reduced-motion={reduced}>
+    <div className="md-public md-workspace-site" data-reduced-motion={reduced}>
       <a className="md-skip" href="#main-content">
         Skip to content
       </a>
-      <header
-        className="md-nav md-nav-refined"
-        ref={header}
-        data-menu-open={open}
-      >
+      <header className="md-nav ws-nav" ref={header} data-menu-open={open}>
         <Link href="/welcome" aria-label="ModelDrops home">
           <ModelDropsBrand />
         </Link>
@@ -91,7 +77,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
         <div className="md-nav-actions">
           <ThemeToggle />
           <Link className="md-login" href="/login">
-            Log in
+            Sign in
           </Link>
           <Link className="md-button md-button-small" href="/create">
             Start creating <ArrowUpRight size={15} />
@@ -130,7 +116,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
             ))}
             <div className="md-mobile-account">
               <Link onClick={() => setOpen(false)} href="/login">
-                Log in
+                Sign in
               </Link>
               <Link
                 onClick={() => setOpen(false)}
@@ -150,8 +136,9 @@ export function MarketingShell({ children }: { children: ReactNode }) {
             <ModelDropsBrand />
           </Link>
           <p>
-            Digital talent.
-            <br />A world of possibility.
+            Your model. Your ideas.
+            <br />
+            All in one place.
           </p>
         </div>
         <div>
