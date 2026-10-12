@@ -4,6 +4,19 @@ import path from "node:path";
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   async headers() {
+    const formTargets = ["'self'"];
+    if (process.env.SUPABASE_GOOGLE_ENABLED === "true") {
+      const authOrigin = new URL(process.env.SUPABASE_URL || "");
+      if (
+        authOrigin.protocol !== "https:" ||
+        authOrigin.username ||
+        authOrigin.password
+      )
+        throw new Error(
+          "Google sign-in requires a valid HTTPS Supabase origin.",
+        );
+      formTargets.push(authOrigin.origin, "https://accounts.google.com");
+    }
     return [
       {
         source: "/:path*",
@@ -17,8 +30,9 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value:
-              "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'",
+            // Google sign-in posts locally then redirects through Supabase and Google.
+            // Keep form targets restricted, including the exact enabled OAuth hosts.
+            value: `base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action ${formTargets.join(" ")}`,
           },
         ],
       },
