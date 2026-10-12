@@ -47,8 +47,8 @@ Manual LoRA request collection, datasets, approval, delivery and download are su
 
 ## Hosted verification
 
-- Published application commit `4a3f3d4` at [Model Drops](https://model-drops-ten.vercel.app). Production deployment: `dpl_EVDsL4f7NsURR1x5PFxAQ6BmuKhi`, `https://model-drops-pdpw7k79e-model-drops-ramxan87.vercel.app`.
-- [GitHub release checks](https://github.com/ramxan2407/Modeldrops/actions/runs/38237591143) passed from a clean Linux install: lint, TypeScript, all 104 tests, production dependency audit and production build. The final narrow OAuth allowlist was deployed afterwards and the canonical login still returns 200 with self-only form destinations while Google login is disabled.
+- Published application commit `6d50cb0` at [Model Drops](https://model-drops-ten.vercel.app). Production deployment: `dpl_7zhRUWE5XdzmCuJiTa97NJwq5atG`, `https://model-drops-3wi49ouwz-model-drops-ramxan87.vercel.app`.
+- [GitHub release checks](https://github.com/ramxan2407/Modeldrops/actions/runs/38246131382) passed from a clean Linux install: lint, TypeScript, all 106 tests, production dependency audit and production build. The canonical login returns 200 with self-only form destinations while Google login is disabled.
 - Production migration 008 completed. The hardened pool successfully queried the real Supabase transaction pooler. Both new tables deny SELECT to anonymous/authenticated browser roles.
 - Canonical welcome returned 200, the branded missing page returned 404, and the configured security headers were present with no framework disclosure header.
 - Demo email/password login returned 200. The account still has 5,000 credits and no super-admin role. Anonymous admin/scheduler/workspace API calls returned 401; signed-in demo admin access returned 403.
@@ -78,3 +78,5 @@ The owner authorized one image from each enabled image model and one silent five
 - The image outputs visibly retained the reference's black bob and facial appearance while following the ivory-blazer prompt. The video begins with the uploaded portrait and shows gentle head motion. This visual check is not a guarantee of identity consistency for every future prompt.
 - These examples are available for owner review in Super admin → Characters. Testing did not publish portraits, assert ownership/rights, or change sale approval.
 - The owner chose invited-beta access while domain/support email setup is pending. Supabase currently permits auth-level registration; the owner elected to change that global setting later. App signup and workspace APIs enforce active tester invitations. Turning off Supabase signups globally also prevents invited testers from self-registering, so accounts would then need to be provisioned through Supabase administration. Email delivery remains unverified.
+
+Post-deploy acceptance of `6d50cb0`: the canonical login shows Invited beta / Accept invitation; uninvited app signup returns 403 before password validation or Supabase account creation; the ordinary demo account still signs in with 5,000 credits and no admin access. Each new output returns 401 anonymously and 404 to the unrelated demo user. Ledger aggregates report zero negative wallets, zero missing refunds, zero completed-job charge mismatches and zero pending jobs. GitHub release checks passed.
