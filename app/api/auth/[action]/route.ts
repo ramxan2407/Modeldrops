@@ -12,6 +12,8 @@ import {
 import { sameOrigin } from "@/lib/server-origin";
 import { requestText, RequestError } from "@/lib/http-body";
 import { authThrottle } from "@/lib/auth-throttle";
+import { demoSignupAllowed } from "@/lib/demo-access";
+import type { DemoEnvironment } from "@/lib/credits";
 import { env } from "cloudflare:workers";
 export const dynamic = "force-dynamic";
 const options = (secure: boolean) => ({
@@ -139,6 +141,14 @@ export async function POST(
       return success({ returnTo: "/dashboard" });
     }
     const email = z.string().trim().email().max(254).parse(data.email);
+    if (action === "signup") {
+      const access = env as unknown as DemoEnvironment & { DB?: D1Database };
+      if (!(await demoSignupAllowed(access.DB, access, email)))
+        return reply(
+          "Model Drops is in invited beta. Ask your administrator to approve your email before creating an account.",
+          403,
+        );
+    }
     if (action === "reset") {
       const { error } = await client.auth.resetPasswordForEmail(email, {
         redirectTo: startFlow("recovery", "/dashboard"),

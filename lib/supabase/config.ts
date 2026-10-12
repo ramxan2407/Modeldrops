@@ -40,6 +40,7 @@ export function supabaseConfig() {
       origin: app.origin,
       secure: app.protocol === "https:",
       google: values.SUPABASE_GOOGLE_ENABLED === "true",
+      invitedBeta: values.DEMO_MODE === "true",
     };
   } catch {
     return null;

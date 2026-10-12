@@ -13,7 +13,8 @@ Updated 12 October 2026. This release hardens the hosted **invited demo with rea
 - Admin Overview and Integrations show scheduler heartbeats, review/stalled job counts, email backlog/failures and pending file cleanup. Overlapping runs cannot overwrite a newer result. Heartbeat health only means the task ran; it does not prove email was delivered or external generation succeeded.
 - The character editor lists all enabled model checks with human-readable names, existing approval evidence and missing examples. Save pending & test opens Studio with that exact character selected. Approval still requires real completed reference-conditioned results; historical approval is not fabricated into QA evidence.
 - Node 24 is pinned. GitHub Actions runs lint, TypeScript, tests, a production dependency audit and the Next.js production build without production secrets. Repository branch protection is not configured by this workflow.
-- Automated suite: 104 passing tests, including SQLite and PostgreSQL/PGlite; credit isolation, retries/refunds, private uploads, manual LoRA workflows, auth limits, streamed payload limits, stale/overlapping scheduler runs, portrait migration and the restricted OAuth form policy. The npm production audit reports zero known vulnerabilities. Lint has zero errors and 23 native-image optimization warnings.
+- Automated suite: 106 passing tests, including SQLite and PostgreSQL/PGlite; credit isolation, retries/refunds, private uploads, manual LoRA workflows, auth limits, streamed payload limits, stale/overlapping scheduler runs, portrait migration and the restricted OAuth form policy. The npm production audit reports zero known vulnerabilities. Lint has zero errors and 23 native-image optimization warnings.
+- Invited-beta signup checks the same active email invitation list as workspace access, before contacting Supabase. Missing database access fails closed; revoking an invitation blocks registration and workspace APIs. Existing administrator sign-in and public-mode registration remain supported. The login form explains the invited-beta flow.
 - The isolated browser test verified the admin health panel, model checklist and save-pending-to-Studio selection. Simulated local output is not counted as a real provider acceptance test.
 
 ## Release and rollback
@@ -32,7 +33,7 @@ Updated 12 October 2026. This release hardens the hosted **invited demo with rea
 | Gate | Required action |
 | --- | --- |
 | Sale-ready characters | Generate and inspect Qwen, GPT Flare, GPT Sunburst and Kling results using the exact final hosted portrait. Select those examples in Super admin → Characters, then approve. Valentina/Isla currently retain historical existing-buyer access; new purchases remain gated until their review is complete. |
-| Real model acceptance tests | The prior local Qwen/Kling tests succeeded. This release has not run a new paid test against all four models/current hosted portrait. Owner approval for a capped test is pending. Do not treat mocked tests or price quotes as completed media generation. |
+| Real model acceptance tests | Completed on 12 October using the current live Valentina portrait; see the four-model acceptance results below. Owner content/rights review and character approval remain separate from pipeline verification. |
 | Email and public onboarding | Provide an owned sending domain and sender/support address. Configure custom Supabase SMTP for signup/reset mail and Resend plus `LORA_EMAIL_FROM` / `LORA_ADMIN_EMAILS` for training notifications. Complete real-inbox tests. Supabase's [default SMTP service](https://supabase.com/docs/guides/auth/auth-smtp) is not a general production mail service. |
 | Google login | Configure Google OAuth in Supabase and exact redirects, enable `SUPABASE_GOOGLE_ENABLED`, and verify a real login round trip. Currently disabled. |
 | Paid commerce | Intentionally deferred. Keep purchases on explicit demo credits; do not accept real money until payment, webhook, refund and reconciliation tests pass. |
@@ -55,6 +56,25 @@ Manual LoRA request collection, datasets, approval, delivery and download are su
 - At 10:33 UTC, generation recovery, email scheduling and storage cleanup all recorded successful heartbeats. Queues were empty. Email configuration is still required; a scheduler heartbeat is not a delivered-email receipt.
 - Read-only ledger aggregates: zero negative wallets, zero failed/cancelled jobs with unreturned credits, zero completed charge mismatches, zero pending/review jobs.
 - The owner browser showed the new loading state, operational health, unchanged 1,400-credit balance, and Valentina's four explicit missing model-review checks. No live character, permission or credit setting was changed by these checks. Dashboard document width matched viewport width at 390px and 1,440px; no browser warning/error was recorded during these checks.
-- No new paid generation was submitted. The final hosted portrait still needs those model acceptance tests and content review before new sales open. Payments remain disabled.
+- The four newly authorized paid tests below completed successfully. The final hosted portrait still needs owner content/rights confirmation and selection of review examples before new sales open. Payments remain disabled.
 
 The previous release evidence remains in `RELEASE-AUDIT-2026-10-12.md`.
+
+## Four-model live acceptance — 12 October 2026
+
+The owner authorized one image from each enabled image model and one silent five-second Kling video, capped at $1. All were submitted through the signed-in production Studio using Valentina's saved candidate portrait. No direct provider-generation bypass or automatic paid retry was used.
+
+| Model | Generation ID | Result | Verified output | Demo credits | Provider USD |
+| --- | --- | --- | --- | --- | --- |
+| Qwen Image Edit | `5527a837-e675-40d0-955d-4fa724f575e8` | Completed | JPEG, 768 × 1024 | 12 | $0.020 |
+| GPT Image 2.5 Flare | `3428ce40-8cb7-4859-8f5d-62debd5dde4e` | Completed | PNG, 880 × 1184; 1k/medium, requested 3:4 | 24 | $0.039 |
+| GPT Image 2.5 Sunburst | `b7155f46-8839-4955-a0dc-e0715e9bbd7a` | Completed | PNG, 880 × 1184; 1k/medium, requested 3:4 | 24 | $0.039 |
+| Kling 3.0 Standard | `0d7351dd-b28e-49ec-8e05-13ebf05422c6` | Completed | MP4, 720 × 1280; 5.041667-second encoded duration for the five-second request | 120 | $0.420 |
+
+- Exact reference verified independently: each provider input resolves to the saved private portrait storage key; each generation records the matching portrait version and `character_qa` purpose. Image models used edit endpoints, and Kling used image-to-video.
+- Each request has exactly one credit debit and the matching ledger net. Owner demo balance changed from 1,400 to 1,220 (180 credits total). No paid wallet funds were used.
+- All four private stored objects exist with matching recorded byte sizes. Images loaded at the dimensions above. The saved Kling video played to its end with no media error.
+- Provider balance decreased by **$0.518**, matching the four live price quotes and reservations, below the authorized $1 maximum. No additional generation was submitted.
+- The image outputs visibly retained the reference's black bob and facial appearance while following the ivory-blazer prompt. The video begins with the uploaded portrait and shows gentle head motion. This visual check is not a guarantee of identity consistency for every future prompt.
+- These examples are available for owner review in Super admin → Characters. Testing did not publish portraits, assert ownership/rights, or change sale approval.
+- The owner chose invited-beta access while domain/support email setup is pending. Supabase currently permits auth-level registration; the owner elected to change that global setting later. App signup and workspace APIs enforce active tester invitations. Turning off Supabase signups globally also prevents invited testers from self-registering, so accounts would then need to be provisioned through Supabase administration. Email delivery remains unverified.

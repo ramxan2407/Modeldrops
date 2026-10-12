@@ -74,6 +74,7 @@ async function LoginContent({
           <LoginForm
             ready={!!config}
             google={config?.google || false}
+            invitedBeta={config?.invitedBeta || false}
             returnTo={returnTo}
             initialError={
               error === "oauth"

@@ -9,12 +9,14 @@ export function LoginForm({
   returnTo,
   initialError = "",
   recovery = false,
+  invitedBeta = false,
 }: {
   ready: boolean;
   google: boolean;
   returnTo: string;
   initialError?: string;
   recovery?: boolean;
+  invitedBeta?: boolean;
 }) {
   const [mode, setMode] = useState<Mode>(recovery ? "password" : "signin");
   const [busy, setBusy] = useState(false),
@@ -81,12 +83,20 @@ export function LoginForm({
           </h2>
           <p>
             {mode === "signup"
-              ? "One workspace for your characters, creations, and custom LoRAs."
+              ? invitedBeta
+                ? "Use the email address your administrator approved for beta access."
+                : "One workspace for your characters, creations, and custom LoRAs."
               : mode === "reset"
                 ? "Enter your email to get a password reset link."
                 : "Sign in to continue where you left off."}
           </p>
         </div>
+      )}
+      {invitedBeta && !recovery && mode !== "reset" && (
+        <p className="auth-notice" role="status">
+          Invited beta · An administrator must approve your email and grant demo
+          credits. Payments are not enabled.
+        </p>
       )}
       {!recovery && mode !== "reset" && (
         <Tabs value={mode} onValueChange={(value) => change(value as Mode)}>
@@ -103,7 +113,7 @@ export function LoginForm({
               className={mode === "signup" ? "active" : ""}
               disabled={busy}
             >
-              Create account
+              {invitedBeta ? "Accept invitation" : "Create account"}
             </TabsTrigger>
           </TabsList>
         </Tabs>
