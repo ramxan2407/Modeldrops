@@ -6,6 +6,7 @@ import { creativeScenes, useCases } from "@/lib/marketing/catalog";
 import {
   campaignAssets,
   campaignPoster,
+  creatorVideoAssets,
 } from "@/lib/marketing/campaign-assets";
 import { CinematicMedia } from "./cinematic-media";
 import { useStoryMotion } from "@/components/motion/use-story-motion";
@@ -27,28 +28,12 @@ function animateCases(gsap: typeof Gsap) {
 export function CampaignComparison() {
   const [split, setSplit] = useState(48),
     [scene, setScene] = useState(0);
-  const briefs = [
-    {
-      ...creativeScenes[2],
-      setting:
-        "A volcanic coastline at dusk. Silver sea mist. A restrained warm horizon.",
-    },
-    {
-      ...creativeScenes[0],
-      setting:
-        "Sculptural plaster walls. A charcoal plinth. Long afternoon shadows.",
-    },
-    {
-      ...creativeScenes[4],
-      setting:
-        "A rain-wet city plaza. Glass architecture. Muted green reflections.",
-    },
-  ];
-  const assets = [
-    campaignAssets.coast,
-    campaignAssets.editorial,
-    campaignAssets.street,
-  ];
+  const briefs = creatorVideoAssets.map((asset) => ({
+    id: asset.slug,
+    label: asset.category,
+    setting: asset.prompt,
+  }));
+  const assets = creatorVideoAssets;
   return (
     <section className="md-section md-comparison">
       <span className="md-kicker">ACT 05 / MAKE THE IDEA VISIBLE</span>
@@ -78,7 +63,7 @@ export function CampaignComparison() {
             sizes="90vw"
           />
           <div className="md-concept-caption">
-            <span>AI-GENERATED CAMPAIGN ENVIRONMENT</span>
+            <span>AI CREATOR CONCEPT / ILLUSTRATIVE SAMPLE</span>
             <h3>{briefs[scene].label}</h3>
           </div>
         </div>
@@ -109,8 +94,10 @@ export function CampaignComparison() {
         />
       </div>
       <p className="md-disclosure">
-        Move the slider to explore the brief and visual treatment. This is a
-        generated campaign environment, not a character likeness demonstration.
+        Explore the creative brief and its AI-generated concept. These fictional
+        creators are illustrative samples, not customer results or marketplace
+        characters.{" "}
+        <Link href={assets[scene].creditUrl}>{assets[scene].credit}</Link>
       </p>
     </section>
   );

@@ -1,0 +1,207 @@
+{
+  "purpose": "Original fictional adult AI creator concepts for Model Drops marketing; not customer results, purchasable characters, or marketplace likeness examples.",
+  "approvedCapUsd": 2,
+  "totalQuotedUsd": 1.71,
+  "tasks": [
+    {
+      "slug": "ugc-product",
+      "kind": "image",
+      "model": "openai/gpt-image-2.5-sunburst/text-to-image",
+      "input": {
+        "prompt": "Photorealistic vertical 9:16 UGC beauty creator video still. A fictional adult woman aged 28 with warm olive skin, brown eyes and shoulder-length dark wavy hair, wearing a casual ivory crew-neck cotton top, looks warmly into the camera. Waist-up composition in a tasteful sunlit apartment bathroom with pale stone and plants softly blurred behind her. She holds one small unbranded amber skincare bottle with a simple cream cap at chest height in her right hand, left hand relaxed. Natural window light, authentic skin texture, minimal makeup, realistic fingers, friendly confident expression. Shot on a modern phone at eye level, approachable social media product demo aesthetic, clean premium composition. Fully clothed. No text, brand, label, logos, watermark or visible phone.",
+        "aspect_ratio": "9:16",
+        "resolution": "2k",
+        "quality": "high",
+        "output_format": "jpeg"
+      },
+      "quotedUsd": 0.15,
+      "status": "completed",
+      "id": "6c36a033c1e44b2b879aa097fb3a6c51",
+      "submittedAt": "2026-10-12T13:51:43.063Z"
+    },
+    {
+      "slug": "lifestyle-vlog",
+      "kind": "image",
+      "model": "openai/gpt-image-2.5-sunburst/text-to-image",
+      "input": {
+        "prompt": "Photorealistic vertical 9:16 lifestyle creator vlog still. A fictional adult woman aged 30 with deep brown skin, dark brown eyes, short natural curly hair, wearing a sage green linen shirt over a white crew-neck top, sits at a cozy sidewalk cafe on a quiet tree-lined city street. Medium close-up from waist up, she looks directly into the camera with a relaxed genuine smile, holding an unbranded cream takeaway coffee cup in one hand near the table. Soft warm morning daylight, gently blurred cafe facade and foliage, natural realistic skin texture. Modern phone video aesthetic, inviting everyday storytelling, realistic hands. Fully clothed. No text, logos, watermark, readable signs, phone or camera equipment.",
+        "aspect_ratio": "9:16",
+        "resolution": "2k",
+        "quality": "high",
+        "output_format": "jpeg"
+      },
+      "quotedUsd": 0.15,
+      "status": "completed",
+      "id": "53d0cf10117a4a6abb805cfdd53e8a37",
+      "submittedAt": "2026-10-12T13:51:43.787Z"
+    },
+    {
+      "slug": "fashion-reel",
+      "kind": "image",
+      "model": "openai/gpt-image-2.5-sunburst/text-to-image",
+      "input": {
+        "prompt": "Photorealistic vertical 9:16 fashion content creator video still. A fictional adult East Asian woman aged 27 with a sleek dark bob and brown eyes, fully clothed in a relaxed cream blazer, black crew-neck top, tailored black trousers and white sneakers. Three-quarter to full body view, centered with room above her head and below her feet. She faces the camera with a poised friendly smile in a bright minimalist apartment dressing area, pale oak floor, warm white wall, soft daylight from the side, a subtle clothing rack out of focus. One hand lightly holding her blazer lapel, the other relaxed naturally by her side. Editorial quality with an authentic phone-shot outfit-of-the-day feeling, realistic skin and hands. No text, brand, logos, watermark or visible phone.",
+        "aspect_ratio": "9:16",
+        "resolution": "2k",
+        "quality": "high",
+        "output_format": "jpeg"
+      },
+      "quotedUsd": 0.15,
+      "status": "completed",
+      "id": "fbce114a52f44dba93e30e4cc013d737",
+      "submittedAt": "2026-10-12T13:51:44.499Z"
+    },
+    {
+      "slug": "ugc-product",
+      "kind": "video",
+      "model": "kwaivgi/kling-v3.0-std/image-to-video",
+      "input": {
+        "image": "Generated still for ugc-product, task 6c36a033c1e44b2b879aa097fb3a6c51",
+        "prompt": "A natural direct-to-camera skincare creator moment. She smiles subtly, slowly brings the small amber bottle slightly closer to the camera, then holds it still at chest height. Gentle head nod and natural blinking. Preserve her face, five fingers and bottle shape. Fixed eye-level camera with barely perceptible handheld motion, one continuous take, no speaking, no cuts.",
+        "negative_prompt": "text, logos, watermark, nudity, revealing clothing, extra fingers, malformed hands, changing face, morphing objects, flicker, sudden movement, cuts, camera zoom",
+        "duration": 5,
+        "sound": false,
+        "cfg_scale": 0.5
+      },
+      "quotedUsd": 0.42,
+      "status": "completed",
+      "id": "4d7fcc6ef519471d9fb12d3fd347f989",
+      "submittedAt": "2026-10-12T13:53:53.383Z"
+    },
+    {
+      "slug": "lifestyle-vlog",
+      "kind": "video",
+      "model": "kwaivgi/kling-v3.0-std/image-to-video",
+      "input": {
+        "image": "Generated still for lifestyle-vlog, task 53d0cf10117a4a6abb805cfdd53e8a37",
+        "prompt": "A candid coffee-stop lifestyle vlog moment. She looks at the lens, gives a warm relaxed smile and gently raises her takeaway coffee cup in a small greeting, then settles it lower. Natural blink and subtle head movement, light breeze in her shirt and background leaves. Keep her facial identity and cup shape consistent, restrained handheld camera, no cuts, no dialogue.",
+        "negative_prompt": "text, logos, watermark, nudity, revealing clothing, extra fingers, malformed hands, changing face, morphing objects, flicker, sudden movement, cuts, camera zoom",
+        "duration": 5,
+        "sound": false,
+        "cfg_scale": 0.5
+      },
+      "quotedUsd": 0.42,
+      "status": "completed",
+      "id": "1e39587d7a4649fe83e0f94e6973a19b",
+      "submittedAt": "2026-10-12T13:53:54.070Z"
+    },
+    {
+      "slug": "fashion-reel",
+      "kind": "video",
+      "model": "kwaivgi/kling-v3.0-std/image-to-video",
+      "input": {
+        "image": "Generated still for fashion-reel, task fbce114a52f44dba93e30e4cc013d737",
+        "prompt": "A tasteful outfit-of-the-day creator reel. She gently smooths one blazer lapel, shifts her weight and makes a small quarter-turn to show the outfit, then looks back toward the lens with a soft smile. Keep her feet in frame and outfit consistent, realistic fingers and fabric, fixed camera, smooth unhurried motion, no walking out of frame, no cuts, no dialogue.",
+        "negative_prompt": "text, logos, watermark, nudity, revealing clothing, extra fingers, malformed hands, changing face, morphing objects, flicker, sudden movement, cuts, camera zoom",
+        "duration": 5,
+        "sound": false,
+        "cfg_scale": 0.5
+      },
+      "quotedUsd": 0.42,
+      "status": "completed",
+      "id": "0ea42c0f3cc141a280dca0f76b682c95",
+      "submittedAt": "2026-10-12T13:53:54.755Z"
+    }
+  ],
+  "billing": {
+    "verified": true,
+    "totalChargedUsd": 1.71,
+    "charges": [
+      {
+        "taskId": "0ea42c0f3cc141a280dca0f76b682c95",
+        "type": "deduct",
+        "usd": 0.42
+      },
+      {
+        "taskId": "1e39587d7a4649fe83e0f94e6973a19b",
+        "type": "deduct",
+        "usd": 0.42
+      },
+      {
+        "taskId": "4d7fcc6ef519471d9fb12d3fd347f989",
+        "type": "deduct",
+        "usd": 0.42
+      },
+      {
+        "taskId": "fbce114a52f44dba93e30e4cc013d737",
+        "type": "deduct",
+        "usd": 0.15
+      },
+      {
+        "taskId": "53d0cf10117a4a6abb805cfdd53e8a37",
+        "type": "deduct",
+        "usd": 0.15
+      },
+      {
+        "taskId": "6c36a033c1e44b2b879aa097fb3a6c51",
+        "type": "deduct",
+        "usd": 0.15
+      }
+    ]
+  },
+  "files": [
+    {
+      "file": "ugc-product-v1.mp4",
+      "bytes": 628035,
+      "sha256": "b22d015167cf47b7461caf0078bda0a5ad7a9191d3c1073e64849540b95c7581",
+      "width": 720,
+      "height": 1280,
+      "duration": "5.041667"
+    },
+    {
+      "file": "ugc-product-v1-mobile.mp4",
+      "bytes": 186439,
+      "sha256": "a3682478a4e1f1add153bded3b35f499d39f70670133090c859fdcef2b84a488",
+      "width": 432,
+      "height": 768,
+      "duration": "5.041667"
+    },
+    {
+      "file": "lifestyle-vlog-v1.mp4",
+      "bytes": 731251,
+      "sha256": "fcfa42a93fb234ec3abc0030692bdedec62258d2f7738f3af04130904ae19235",
+      "width": 720,
+      "height": 1280,
+      "duration": "5.041667"
+    },
+    {
+      "file": "lifestyle-vlog-v1-mobile.mp4",
+      "bytes": 250675,
+      "sha256": "f768d06b7926db52dc0531008ec40680bfef81e28b27e43e1886fb277bfa839f",
+      "width": 432,
+      "height": 768,
+      "duration": "5.041667"
+    },
+    {
+      "file": "fashion-reel-v1.mp4",
+      "bytes": 647040,
+      "sha256": "edb130c5968def7a12a781ad9ccc28e3c6ae617cf0229805284a9261611ba738",
+      "width": 720,
+      "height": 1280,
+      "duration": "5.041667"
+    },
+    {
+      "file": "fashion-reel-v1-mobile.mp4",
+      "bytes": 202528,
+      "sha256": "409bc1c5e6d30cbeb04d2b1b253483e6f9aab1c115387536a09ea68427209a13",
+      "width": 432,
+      "height": 768,
+      "duration": "5.041667"
+    },
+    {
+      "file": "ugc-product-v1.webp",
+      "bytes": 59338,
+      "sha256": "0af5c9a5ef540b204cd2485ee2f02d4527d6f126e50dd8d3410a101d3e23a100"
+    },
+    {
+      "file": "lifestyle-vlog-v1.webp",
+      "bytes": 88564,
+      "sha256": "7947f2506f5bbebde53a0036287247291d6e1b3fdef7ce669da11af3a21a3a8b"
+    },
+    {
+      "file": "fashion-reel-v1.webp",
+      "bytes": 56926,
+      "sha256": "28947bfb238ce016ba7f0dc81f1f25c89de6881690e841fe7696877e82fbc303"
+    }
+  ]
+}

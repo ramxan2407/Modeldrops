@@ -1289,3 +1289,187 @@
 .md-minimal-site[data-reduced-motion="true"] .min-step-link svg {
   transform: none;
 }
+
+/* Creator samples: one clip plays at a time; the other directions stay poster-first. */
+.min-creator-showcase {
+  flex: 1;
+  min-width: 0;
+}
+.min-creator-categories {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 13px;
+}
+.min-creator-categories button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--ws-panel);
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.35;
+  transition:
+    background 160ms,
+    color 160ms,
+    border-color 160ms;
+}
+.min-creator-categories button > span {
+  font-size: 8px;
+  opacity: 0.65;
+  font-variant-numeric: tabular-nums;
+}
+.min-creator-categories button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.min-creator-samples {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.min-creator-sample {
+  min-width: 0;
+}
+.min-creator-video {
+  position: relative;
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+  border-radius: 9px;
+  background: var(--ws-panel-raised);
+  border: 1px solid var(--line);
+}
+.min-creator-sample[data-active="true"] .min-creator-video {
+  outline: 1px solid var(--ink);
+  outline-offset: 2px;
+}
+.min-creator-video > img,
+.min-creator-video .md-cinematic-media,
+.min-creator-video .md-cinematic-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.min-creator-video > img {
+  object-fit: cover;
+}
+.min-creator-video .md-cinematic-frame::after {
+  display: none;
+}
+.md-minimal-site .min-creator-video .md-media-toggle {
+  top: auto;
+  right: 10px;
+  bottom: 10px;
+  left: auto;
+  min-height: 36px;
+  padding: 8px 10px;
+  font-size: 8px;
+  z-index: 3;
+}
+.min-creator-number {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: #0008;
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.min-creator-caption {
+  padding: 12px 1px 4px;
+}
+.md-minimal-site .min-creator-caption h3 {
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  font-weight: 500;
+  margin: 0 0 4px;
+}
+.min-creator-caption a {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.6;
+  text-underline-offset: 3px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .min-creator-categories button:not([aria-pressed="true"]):hover {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+  .min-creator-caption a:hover {
+    text-decoration: underline;
+  }
+}
+@media (max-width: 1050px) and (min-width: 761px) {
+  .min-creator-categories button {
+    font-size: 9px;
+    gap: 4px;
+  }
+  .min-creator-categories button > span {
+    display: none;
+  }
+  .min-creator-caption h3 {
+    overflow-wrap: anywhere;
+  }
+  .md-minimal-site .min-creator-video .md-media-toggle {
+    min-width: 36px;
+    width: 36px;
+    padding: 9px;
+  }
+  .md-minimal-site .min-creator-video .md-media-toggle span {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .min-creator-categories {
+    gap: 5px;
+    margin-bottom: 15px;
+  }
+  .min-creator-categories button {
+    min-height: 44px;
+    padding: 8px 5px;
+    font-size: 10px;
+  }
+  .min-creator-categories button > span {
+    display: none;
+  }
+  .min-creator-samples {
+    display: block;
+    max-width: 290px;
+    margin: 0 auto;
+  }
+  .min-creator-sample:not([data-active="true"]) {
+    display: none;
+  }
+  .min-creator-caption {
+    padding: 13px 1px 3px;
+  }
+  .md-minimal-site .min-creator-caption h3 {
+    font-size: 12px;
+  }
+  .min-creator-caption a {
+    font-size: 9px;
+    min-height: 28px;
+  }
+  .md-minimal-site .min-creator-video .md-media-toggle {
+    min-height: 44px;
+    padding: 10px 13px;
+    font-size: 9px;
+  }
+}

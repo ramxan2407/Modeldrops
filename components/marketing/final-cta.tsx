@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useStoryMotion } from "@/components/motion/use-story-motion";
 import type { gsap as Gsap } from "gsap";
 import { CinematicMedia } from "./cinematic-media";
-import { campaignAssets } from "@/lib/marketing/campaign-assets";
+import { creatorVideoAssets } from "@/lib/marketing/campaign-assets";
 function animateFinal(
   gsap: typeof Gsap,
   _trigger: unknown,
@@ -36,7 +36,7 @@ export function FinalCTA() {
   return (
     <section className="md-final" ref={root}>
       <div className="md-final-image">
-        <CinematicMedia asset={campaignAssets.coast} />
+        <CinematicMedia asset={creatorVideoAssets[1]} />
       </div>
       <div className="md-final-type" data-motion-reveal>
         <span className="md-kicker">TALENT IS JUST THE BEGINNING.</span>
@@ -48,6 +48,7 @@ export function FinalCTA() {
           <em>NEED A CAMERA.</em>
         </h2>
         <p>Find a model. Imagine the next frame.</p>
+        <small>AI creator concept · illustrative sample</small>
         <div className="md-actions">
           <Link className="md-button" href="/create">
             Start creating ↗

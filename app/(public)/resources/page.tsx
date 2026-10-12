@@ -198,14 +198,16 @@ export default function Resources() {
             Sign in to your workspace <ArrowUpRight size={17} />
           </Link>
         </div>
-        <aside>
+        <aside id="artwork">
           <span className="md-status-dot" aria-hidden="true" />
           <h3>About the artwork</h3>
           <p>
-            Public concept artwork illustrates creative possibilities. It is not
-            a result generated for the launch characters, a customer testimonial
-            or proof of likeness quality. Approved character examples appear
-            after review.
+            Public artwork and creator videos are original AI-generated
+            marketing concepts. The fictional adult creators illustrate product
+            demos, lifestyle vlogs and fashion reels. They are not purchasable
+            marketplace characters or customer results, and do not demonstrate
+            likeness quality for the launch characters. Approved character
+            examples appear after review.
           </p>
         </aside>
       </section>

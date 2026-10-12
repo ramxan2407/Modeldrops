@@ -5,7 +5,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, Film, ImageIcon, Layers3 } from "lucide-react";
 import { CinematicMedia } from "./cinematic-media";
-import { campaignAssets } from "@/lib/marketing/campaign-assets";
+import {
+  campaignAssets,
+  campaignPoster,
+  creatorVideoAssets,
+} from "@/lib/marketing/campaign-assets";
 
 const workflows = [
   {
@@ -30,7 +34,7 @@ const workflows = [
     tags: ["Character reference", "Duration", "Resolution"],
     link: "/create",
     cta: "Open Creator Studio",
-    asset: campaignAssets.coast,
+    asset: creatorVideoAssets[0],
   },
   {
     id: "projects",
@@ -110,7 +114,7 @@ export function WorkflowShowcase() {
               inert={selected !== i}
             >
               <Image
-                src={`/assets/campaigns/${item.asset.slug}.webp`}
+                src={campaignPoster(item.asset)}
                 alt={item.asset.alt}
                 aria-hidden={selected === 1 && i === 1}
                 fill
@@ -124,7 +128,7 @@ export function WorkflowShowcase() {
               )}
               <span className="ws-art-label">
                 {i === 1
-                  ? "GENERATED MOTION STUDY"
+                  ? "AI CREATOR CONCEPT / ILLUSTRATIVE SAMPLE"
                   : "GENERATED CAMPAIGN ENVIRONMENT"}
               </span>
               {i === 2 && (
@@ -174,8 +178,9 @@ export function WorkflowShowcase() {
         {workflows[selected].label} preview selected.
       </p>
       <p className="ws-disclosure">
-        Campaign studies show creative settings, not likeness results for the
-        launch characters.
+        AI-generated images and fictional creator videos illustrate creative
+        formats. They are not customer outputs or likeness results for the
+        marketplace characters.
       </p>
     </section>
   );

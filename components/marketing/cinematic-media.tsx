@@ -15,9 +15,11 @@ type Connection = EventTarget & { saveData?: boolean };
 export function CinematicMedia({
   asset,
   sizes = "100vw",
+  eager = false,
 }: {
   asset: CampaignAsset;
   sizes?: string;
+  eager?: boolean;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
@@ -79,7 +81,13 @@ export function CinematicMedia({
       }
     >
       <div className="md-cinematic-frame">
-        <Image src={campaignPoster(asset)} alt={asset.alt} fill sizes={sizes} />
+        <Image
+          src={campaignPoster(asset)}
+          alt={asset.alt}
+          fill
+          sizes={sizes}
+          loading={eager ? "eager" : "lazy"}
+        />
         {canMount && (
           <video
             ref={video}
@@ -105,12 +113,15 @@ export function CinematicMedia({
             }}
           >
             <source
-              src={`/assets/campaigns/${asset.slug}-mobile.mp4`}
+              src={
+                asset.mobileVideo ??
+                `/assets/campaigns/${asset.slug}-mobile.mp4`
+              }
               type="video/mp4"
               media="(max-width: 767px)"
             />
             <source
-              src={`/assets/campaigns/${asset.slug}.mp4`}
+              src={asset.video ?? `/assets/campaigns/${asset.slug}.mp4`}
               type="video/mp4"
               onError={() => {
                 setMediaError(4);

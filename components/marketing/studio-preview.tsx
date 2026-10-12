@@ -16,7 +16,10 @@ import {
   Video,
 } from "lucide-react";
 import { CinematicMedia } from "./cinematic-media";
-import { campaignAssets } from "@/lib/marketing/campaign-assets";
+import {
+  campaignAssets,
+  creatorVideoAssets,
+} from "@/lib/marketing/campaign-assets";
 
 const modes = [
   { id: "image", label: "Create images", icon: ImageIcon },
@@ -27,7 +30,9 @@ type Mode = (typeof modes)[number]["id"];
 
 /** An explicitly illustrative tour. Changing its view never submits a generation. */
 export function StudioPreview() {
-  const [mode, setMode] = useState<Mode>("image");
+  const [mode, setMode] = useState<Mode>("video");
+  const [creatorIndex, setCreatorIndex] = useState(0);
+  const creator = creatorVideoAssets[creatorIndex];
   return (
     <div className="min-studio-preview" id="workflows">
       <div className="min-preview-topbar">
@@ -56,12 +61,16 @@ export function StudioPreview() {
       </div>
       <div id="studio-tour-panel" className="min-preview-body" data-mode={mode}>
         <aside className="min-preview-controls">
-          <span className="min-kicker">YOUR CREATIVE DIRECTION</span>
+          <span className="min-kicker">
+            {mode === "video"
+              ? "AI CREATOR CONCEPTS"
+              : "YOUR CREATIVE DIRECTION"}
+          </span>
           <h2>
             {mode === "image"
               ? "An idea, brought to life."
               : mode === "video"
-                ? "Put your ideas in motion."
+                ? "Content made for the feed."
                 : "A home for every idea."}
           </h2>
           {mode !== "library" ? (
@@ -71,8 +80,16 @@ export function StudioPreview() {
                   <CircleUserRound size={23} strokeWidth={1.3} />
                 </span>
                 <div>
-                  <strong>Your character</strong>
-                  <p>Selected from your collection</p>
+                  <strong>
+                    {mode === "video"
+                      ? "Fictional AI creator"
+                      : "Your character"}
+                  </strong>
+                  <p>
+                    {mode === "video"
+                      ? "Concept sample · not for purchase"
+                      : "Selected from your collection"}
+                  </p>
                 </div>
                 <Check size={15} />
               </div>
@@ -81,7 +98,7 @@ export function StudioPreview() {
                 <p>
                   {mode === "image"
                     ? "Soft afternoon light. Sculptural architecture. A quiet, editorial mood."
-                    : "A slow cinematic movement along the coast. Soft waves, silver light."}
+                    : creator.prompt}
                 </p>
               </div>
               <div className="min-setting-preview">
@@ -94,8 +111,9 @@ export function StudioPreview() {
                 <span>You’re in control</span>
               </div>
               <p className="min-preview-note">
-                Your character’s portrait is used as a reference in the real
-                Studio.
+                {mode === "video"
+                  ? "Explore a creative direction here. Use your purchased character’s portrait as a reference in the real Studio."
+                  : "Your character’s portrait is used as a reference in the real Studio."}
               </p>
             </>
           ) : (
@@ -140,14 +158,66 @@ export function StudioPreview() {
               </span>
             </div>
           ) : mode === "video" ? (
-            <div className="min-scene-preview">
-              <CinematicMedia
-                asset={campaignAssets.coast}
-                sizes="(max-width: 760px) 92vw, 72vw"
-              />
-              <span className="min-scene-caption">
-                COASTAL STUDY <span>02 / IN MOTION</span>
-              </span>
+            <div className="min-creator-showcase">
+              <div
+                className="min-creator-categories"
+                role="group"
+                aria-label="Choose a creator video sample"
+              >
+                {creatorVideoAssets.map((asset, index) => (
+                  <button
+                    type="button"
+                    key={asset.slug}
+                    aria-pressed={creatorIndex === index}
+                    aria-controls={`creator-sample-${asset.slug}`}
+                    onClick={() => setCreatorIndex(index)}
+                  >
+                    <span>0{index + 1}</span>
+                    {asset.category}
+                  </button>
+                ))}
+              </div>
+              <div className="min-creator-samples">
+                {creatorVideoAssets.map((asset, index) => (
+                  <article
+                    key={asset.slug}
+                    id={`creator-sample-${asset.slug}`}
+                    className="min-creator-sample"
+                    data-active={creatorIndex === index}
+                    aria-label={asset.label}
+                  >
+                    <div className="min-creator-video">
+                      {creatorIndex === index ? (
+                        <CinematicMedia
+                          key={asset.slug}
+                          asset={asset}
+                          sizes="(max-width: 760px) 80vw, 25vw"
+                          eager={index === 0}
+                        />
+                      ) : (
+                        <Image
+                          src={asset.poster}
+                          alt={asset.alt}
+                          fill
+                          sizes="(max-width: 760px) 80vw, 25vw"
+                        />
+                      )}
+                      <span className="min-creator-number" aria-hidden="true">
+                        0{index + 1}
+                      </span>
+                    </div>
+                    <div className="min-creator-caption">
+                      <h3>{asset.label}</h3>
+                      <Link
+                        href={asset.creditUrl}
+                        aria-label={`About this AI creator concept: ${asset.label}`}
+                      >
+                        {asset.credit} <ArrowUpRight size={10} />
+                      </Link>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="min-library-preview">
@@ -174,7 +244,11 @@ export function StudioPreview() {
             <span>
               <LockKeyhole size={12} /> Private by default
             </span>
-            <span>Illustrative scene previews · not character outputs</span>
+            <span>
+              {mode === "video"
+                ? "AI creator concepts · illustrative samples"
+                : "Illustrative scene previews · not character outputs"}
+            </span>
           </div>
         </div>
       </div>
