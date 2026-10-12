@@ -59,6 +59,14 @@ export async function postgresFixture() {
       "utf8",
     ),
   );
+  await pg.exec(
+    (
+      await readFile(
+        new URL("../../migrations/vercel/008_operations.sql", import.meta.url),
+        "utf8",
+      )
+    ).replace("FROM PUBLIC, anon, authenticated", "FROM PUBLIC"),
+  );
   const db = new PostgresDatabase({
     transaction: (fn) =>
       pg.transaction(async (tx) => {

@@ -9,6 +9,72 @@ import {
   DialogDescription,
 } from "./ui/dialog";
 
+export type OperationsSnapshot = {
+  checks: { name: string; lastRun: string | null; status: string }[];
+  counts: Record<string, number>;
+};
+export function OperationsHealth({
+  snapshot,
+}: {
+  snapshot: OperationsSnapshot;
+}) {
+  const names: Record<string, string> = {
+    generation: "Generation recovery",
+    email: "Email scheduler",
+    storage: "Storage cleanup",
+  };
+  const statuses: Record<string, string> = {
+    ok: "Healthy",
+    running: "Running",
+    failed: "Needs attention",
+    stale: "No recent heartbeat",
+    not_seen: "Not yet observed",
+  };
+  return (
+    <section
+      className="admin-card operations-health"
+      aria-labelledby="operations-heading"
+    >
+      <h2 id="operations-heading">Background service health</h2>
+      <p>
+        The scheduler runs every minute. Refresh to check its latest heartbeat.
+        Email delivery also requires a configured sender in Integrations.
+      </p>
+      <div className="operations-grid">
+        {snapshot.checks.map((check) => (
+          <article key={check.name}>
+            <strong>{names[check.name] || check.name}</strong>
+            <span className="admin-badge" data-health={check.status}>
+              {statuses[check.status] || check.status}
+            </span>
+            <small>
+              {check.lastRun
+                ? `Last observed ${new Date(check.lastRun).toLocaleString()}`
+                : "Waiting for the first scheduled run"}
+            </small>
+          </article>
+        ))}
+      </div>
+      <dl className="operations-counts">
+        {(
+          [
+            ["review_jobs", "Jobs needing manual review"],
+            ["stalled_jobs", "Generations older than 30 minutes"],
+            ["pending_emails", "Emails waiting for delivery"],
+            ["failed_emails", "Failed email deliveries"],
+            ["cleanup_pending", "Files queued for cleanup"],
+          ] as const
+        ).map(([key, label]) => (
+          <div key={key}>
+            <dt>{label}</dt>
+            <dd>{(snapshot.counts[key] || 0).toLocaleString()}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
 async function mutate(action: string, data: unknown) {
   const r = await fetch("/api/admin", {
     method: "POST",

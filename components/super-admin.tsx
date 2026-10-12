@@ -1,5 +1,10 @@
 "use client";
-import { TesterAccess, JobRecovery } from "./admin-operations";
+import {
+  TesterAccess,
+  JobRecovery,
+  OperationsHealth,
+  type OperationsSnapshot,
+} from "./admin-operations";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   type LucideIcon,
@@ -62,6 +67,7 @@ type AdminRecord = {
   demoCreditPrice?: number;
   approvalStatus?: string;
   purchaseReady?: boolean;
+  reviewedModelIds?: string[];
   referenceAssetId?: string | null;
   referenceImage?: string;
   referencePreview?: string;
@@ -71,6 +77,9 @@ type AdminRecord = {
 };
 type AdminState = {
   _section?: string;
+  operations?: OperationsSnapshot;
+  qualityModels?: { id: string; name: string; type: string }[];
+  enabledQualityModels?: string[];
   testers?: { email: string; enabled: number }[];
   qualityExamples?: {
     id: string;
@@ -137,9 +146,11 @@ async function call<T = unknown>(url: string, data?: unknown) {
 export default function SuperAdmin({
   onTraining,
   onUpdated,
+  onTestCharacter,
 }: {
   onTraining: () => void;
   onUpdated: () => Promise<unknown>;
+  onTestCharacter: (id: string) => void;
 }) {
   const [section, setSection] = useState("overview"),
     [page, setPage] = useState(0),
@@ -249,10 +260,7 @@ export default function SuperAdmin({
       setEdit(null);
       toast.success("Change saved and recorded in the activity log.");
       await Promise.all([load(), onUpdated()]);
-      if (testPortrait)
-        window.location.assign(
-          `/studio?character=${encodeURIComponent(edit.record.id)}`,
-        );
+      if (testPortrait) onTestCharacter(edit.record.id);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -296,9 +304,14 @@ export default function SuperAdmin({
       <div className="admin-notice">
         <AlertTriangle size={18} />
         <span>
-          <strong>Preview environment.</strong> Credits and character access are
-          workspace data. Character access, credits and approvals are controlled
-          here. Real payments are not connected.
+          <strong>
+            {data?.demoMode
+              ? "Demo credits active."
+              : "Payments are not connected."}
+          </strong>{" "}
+          Manage character access, credits and approvals here. No money is
+          charged for purchases. Live generation still uses your provider
+          balance.
         </span>
         <button
           onClick={() => {
@@ -363,6 +376,9 @@ export default function SuperAdmin({
         ) : (
           data && (
             <>
+              {data.operations && (
+                <OperationsHealth snapshot={data.operations} />
+              )}
               {section === "overview" && (
                 <>
                   <div className="admin-metrics">
@@ -1111,33 +1127,64 @@ export default function SuperAdmin({
                   <fieldset>
                     <legend>Reviewed generation examples</legend>
                     <p>
-                      Select an output you have inspected from every enabled
-                      image model and video model.
+                      Save the portrait as pending and test it in Studio.
+                      Inspect an output from each enabled model before approving
+                      sales. Existing buyers retain the portrait version they
+                      purchased.
                     </p>
-                    {(data?.qualityExamples || [])
-                      .filter(
-                        (g) =>
-                          g.character_id === edit.record.id &&
-                          g.character_reference ===
-                            `asset:${edit.record.referenceAssetId}`,
-                      )
-                      .map((g) => (
-                        <label key={g.id}>
-                          <input
-                            name="reviewedGenerationId"
-                            value={g.id}
-                            type="checkbox"
-                          />{" "}
-                          {generationModelLabel(g.model_id)} ·{" "}
-                          <a
-                            href={`/api/media?id=${g.id}`}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            View {g.type} example
-                          </a>
-                        </label>
-                      ))}
+                    {(data?.qualityModels || [])
+                      .filter((m) => data?.enabledQualityModels?.includes(m.id))
+                      .map((m) => {
+                        const examples = (data?.qualityExamples || []).filter(
+                          (g) =>
+                            g.model_id === m.id &&
+                            g.character_id === edit.record.id &&
+                            g.character_reference ===
+                              `asset:${edit.record.referenceAssetId}`,
+                        );
+                        const reviewed = data?.rows
+                          .find(
+                            (c) =>
+                              c.id === edit.record.id &&
+                              c.referenceAssetId ===
+                                edit.record.referenceAssetId,
+                          )
+                          ?.reviewedModelIds?.includes(m.id);
+                        return (
+                          <div className="quality-model-check" key={m.id}>
+                            <strong>{m.name}</strong>
+                            <span className="admin-muted">
+                              {reviewed
+                                ? "Previously reviewed for this portrait"
+                                : examples.length
+                                  ? "Ready for your review"
+                                  : "A completed test is needed"}
+                            </span>
+                            {examples.map((g) => (
+                              <label key={g.id}>
+                                <input
+                                  name="reviewedGenerationId"
+                                  value={g.id}
+                                  type="checkbox"
+                                  aria-label={`Confirm reviewed ${m.name} ${g.type} example ${g.id.slice(0, 8)}`}
+                                />{" "}
+                                <a
+                                  href={`/api/media?id=${g.id}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  View {g.type} example
+                                </a>
+                              </label>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    <small>
+                      Checked examples replace the previous review set. When
+                      selecting new examples, select one for every enabled
+                      model.
+                    </small>
                   </fieldset>
 
                   <label>

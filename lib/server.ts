@@ -1,4 +1,6 @@
 import { demoAccessAllowed } from "./demo-access";
+import { RequestError } from "./http-body";
+import { ZodError } from "zod";
 import {
   activeWallet,
   demoEnabled,
@@ -143,15 +145,21 @@ export function assertOrigin(request: Request) {
     throw new ApiError(415, "JSON is required.");
 }
 export function fail(e: unknown) {
-  if (e instanceof ApiError)
-    return Response.json({ error: e.message }, { status: e.status });
+  const headers = { "Cache-Control": "private, no-store" };
+  if (e instanceof ApiError || e instanceof RequestError)
+    return Response.json({ error: e.message }, { status: e.status, headers });
+  if (e instanceof ZodError || e instanceof SyntaxError)
+    return Response.json(
+      { error: "Invalid request. Check the submitted fields." },
+      { status: 400, headers },
+    );
   console.error(
     "Platform request failed",
     e instanceof Error ? e.message : "unknown",
   );
   return Response.json(
     { error: "The operation could not be completed. Please try again." },
-    { status: 500 },
+    { status: 500, headers },
   );
 }
 export function ledgerStatement(

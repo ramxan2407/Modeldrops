@@ -1,5 +1,6 @@
 import { auth, initialize, bindings, assertOrigin, fail } from "@/lib/server";
 import { CharacterCheckout } from "@/lib/characters/checkout";
+import { requestJson } from "@/lib/http-body";
 export async function GET(request: Request) {
   try {
     const user = await auth();
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
         bindings().DB,
         user.userId,
         bindings(),
-      ).complete(await request.json()),
+      ).complete(await requestJson(request, 4096)),
     );
   } catch (e) {
     return fail(e);

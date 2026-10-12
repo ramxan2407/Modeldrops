@@ -10,6 +10,7 @@ import { LoraError } from "@/lib/lora/types";
 import { boundedBytes } from "@/lib/lora/http";
 import { supabaseConfig } from "@/lib/supabase/config";
 import { generationEnabled } from "@/lib/generation/models";
+import { operationsState } from "@/lib/operations";
 export const dynamic = "force-dynamic";
 function failure(e: unknown) {
   if (e instanceof AdminError || e instanceof LoraError)
@@ -35,6 +36,9 @@ export async function GET(request: Request) {
     return Response.json(
       {
         ...data,
+        ...(section === "overview" || section === "integrations"
+          ? { operations: await operationsState(env.DB) }
+          : {}),
         ...(section === "users"
           ? {
               testers: (

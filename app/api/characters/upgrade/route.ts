@@ -2,6 +2,7 @@ import { z } from "zod";
 import { auth, bindings, assertOrigin, fail, ApiError } from "@/lib/server";
 import { CharacterCheckout } from "@/lib/characters/checkout";
 import { characterAccess } from "@/lib/characters/access";
+import { requestJson } from "@/lib/http-body";
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +16,7 @@ export async function POST(request: Request) {
         toVersion: z.string(),
         acceptedLicense: z.literal(true),
       })
-      .safeParse(await request.json());
+      .safeParse(await requestJson(request, 4096));
     if (!parsed.success)
       throw new ApiError(
         400,

@@ -355,6 +355,28 @@ for (const backend of ["sqlite", "postgres"]) {
           );
         }
         const before = (await state()).account.balance;
+        for (const [body, status] of [
+          ["{", 400],
+          ["null", 400],
+          ['{"action":42}', 400],
+          ["x".repeat(32001), 413],
+        ] as const) {
+          const invalid = await api.POST(
+            new Request("http://test.local/api/platform", {
+              method: "POST",
+              headers: {
+                origin: "http://test.local",
+                "Content-Type": "application/json",
+              },
+              body,
+            }),
+          );
+          assert.equal(invalid.status, status);
+          assert.equal(
+            invalid.headers.get("Cache-Control"),
+            "private, no-store",
+          );
+        }
         assert.equal(
           (await post("checkout", { packageId: "starter" })).status,
           503,
@@ -374,6 +396,21 @@ for (const backend of ["sqlite", "postgres"]) {
           return "https://storage.example.test/signed";
         };
         who("alice");
+        assert.equal(
+          (
+            await transfers.POST(
+              new Request("http://test.local/api/transfers", {
+                method: "POST",
+                headers: {
+                  origin: "http://test.local",
+                  "Content-Type": "application/json",
+                },
+                body: "null",
+              }),
+            )
+          ).status,
+          400,
+        );
         const start = await transfers.POST(
           new Request("http://test.local/api/transfers", {
             method: "POST",

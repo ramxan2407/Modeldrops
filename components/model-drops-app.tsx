@@ -2402,10 +2402,13 @@ export default function ModelDropsApp({
             </>
           )}
           {page === "admin" &&
-            (account.isSuperAdmin ? (
+            (loading ? (
+              <div className="admin-card" role="status" aria-live="polite">Loading your administrator workspace…</div>
+            ) : loadError ? null : account.isSuperAdmin ? (
               <SuperAdmin
                 onTraining={() => navigate("admin-training")}
                 onUpdated={refresh}
+                onTestCharacter={(id) => { setSelected(id); navigate("studio"); }}
               />
             ) : (
               <Empty

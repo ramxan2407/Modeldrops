@@ -10,6 +10,9 @@ import {
   verifiedSupabaseIdentity,
 } from "@/lib/auth-policy";
 import { sameOrigin } from "@/lib/server-origin";
+import { requestText, RequestError } from "@/lib/http-body";
+import { authThrottle } from "@/lib/auth-throttle";
+import { env } from "cloudflare:workers";
 export const dynamic = "force-dynamic";
 const options = (secure: boolean) => ({
   httpOnly: true,
@@ -63,10 +66,22 @@ export async function POST(
   const client = await supabaseServer();
   if (!client) return reply("Sign-in is temporarily unavailable.", 503);
   try {
-    if (Number(request.headers.get("content-length") || 0) > 4096)
-      return reply("Request too large.", 413);
-    const raw = await request.text();
-    if (raw.length > 4096) return reply("Request too large.", 413);
+    const raw = await requestText(request, 4096);
+    const limited = await authThrottle(
+      env as unknown as Parameters<typeof authThrottle>[0],
+      request,
+      action,
+    );
+    if (limited) {
+      const response = reply(
+        limited.status === 429
+          ? "Too many attempts. Please wait before trying again."
+          : "Sign-in is temporarily unavailable.",
+        limited.status,
+      );
+      response.headers.set("Retry-After", String(limited.retryAfter));
+      return response;
+    }
     const startFlow = (purpose: string, returnTo: unknown) => {
       const flow = crypto.randomUUID();
       jar.set("md-auth-flow", flow, {
@@ -109,7 +124,7 @@ export async function POST(
     }
     if (!request.headers.get("content-type")?.startsWith("application/json"))
       return reply("Invalid request.", 415);
-    const data = JSON.parse(raw);
+    const data = z.record(z.unknown()).parse(JSON.parse(raw));
     if (action === "password") {
       const { data: current, error: authError } = await client.auth.getUser();
       if (authError || !verifiedSupabaseIdentity(current.user))
@@ -182,6 +197,7 @@ export async function POST(
     });
     return success({ returnTo: authDestination(data.returnTo) });
   } catch (e) {
+    if (e instanceof RequestError) return reply(e.message, e.status);
     return reply(
       e instanceof z.ZodError || e instanceof SyntaxError
         ? "Please check all fields. New passwords need 12–128 characters."

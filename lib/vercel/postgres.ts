@@ -86,6 +86,8 @@ export function createPostgresDatabase(connectionString: string) {
     max: 3,
     idleTimeoutMillis: 10000,
     connectionTimeoutMillis: 10000,
+    statement_timeout: 20000,
+    query_timeout: 25000,
     ssl: { rejectUnauthorized: true, ca: supabaseCa },
     types: {
       getTypeParser(oid: number, format?: "text" | "binary") {
@@ -106,6 +108,7 @@ export function createPostgresDatabase(connectionString: string) {
       try {
         await client.query("BEGIN");
         await client.query("SET LOCAL search_path TO model_drops");
+        await client.query("SET LOCAL lock_timeout = '5s'");
         const result = await fn(client);
         await client.query("COMMIT");
         return result;

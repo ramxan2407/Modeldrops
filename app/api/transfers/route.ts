@@ -8,6 +8,8 @@ import {
   uid,
 } from "@/lib/server";
 import { type SignedBucket, transferTarget } from "@/lib/upload-transfer";
+import { requestJson } from "@/lib/http-body";
+import { z } from "zod";
 export async function POST(request: Request) {
   try {
     assertOrigin(request);
@@ -16,10 +18,9 @@ export async function POST(request: Request) {
     const { DB, BUCKET } = bindings();
     const bucket = BUCKET as SignedBucket;
     if (!bucket.signedUpload) return Response.json({ direct: false });
-    const { target, size } = (await request.json()) as {
-      target: string;
-      size: number;
-    };
+    const { target, size } = z
+      .object({ target: z.string(), size: z.number() })
+      .parse(await requestJson(request, 4096));
     if (
       typeof target !== "string" ||
       !target.startsWith("/") ||

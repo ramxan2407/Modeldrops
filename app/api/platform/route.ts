@@ -1,4 +1,5 @@
 import { reserveProviderStatement } from "@/lib/generation/budget";
+import { requestJson } from "@/lib/http-body";
 import { purchasedVersion, versionCharacter } from "@/lib/characters/versions";
 import { activeWallet, demoEnabled } from "@/lib/credits";
 import { characterAccess, testCheckoutEnabled } from "@/lib/characters/access";
@@ -325,13 +326,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     assertOrigin(request);
-    if (Number(request.headers.get("content-length")) > 32000)
-      throw new ApiError(413, "Request too large");
-    const body = await request.text();
-    if (body.length > 32000) throw new ApiError(413, "Request too large");
     const { action, data } = z
       .object({ action: str(50), data: z.unknown() })
-      .parse(JSON.parse(body));
+      .parse(await requestJson(request, 32000));
     const user = await auth();
     await initialize(user);
     const { DB } = bindings();
@@ -794,13 +791,6 @@ export async function POST(request: Request) {
     }
     return Response.json({ ok: true });
   } catch (e) {
-    if (e instanceof z.ZodError)
-      return Response.json(
-        { error: "Please check the required fields and supported settings." },
-        { status: 400 },
-      );
-    if (e instanceof SyntaxError)
-      return Response.json({ error: "Invalid JSON request" }, { status: 400 });
     return fail(e);
   }
 }

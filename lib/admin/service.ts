@@ -1,4 +1,5 @@
 import { qualityApprovalStatements } from "../characters/quality";
+import { generationModels } from "../generation/models";
 import {
   draftVersionStatement,
   portraitVersionId,
@@ -227,6 +228,9 @@ export class AdminService {
                 : null;
               return {
                 ...character,
+                reviewedModelIds: version
+                  ? (JSON.parse(version.reviewed_models) as string[])
+                  : [],
                 purchaseReady: Boolean(
                   character.enabled &&
                   character.approvalStatus === "approved" &&
@@ -243,6 +247,16 @@ export class AdminService {
             "SELECT g.id,g.character_id,g.model_id,g.type,p.character_reference FROM generations g JOIN provider_requests p ON p.generation_id=g.id WHERE g.user_id=? AND g.status='completed' AND p.state='completed' ORDER BY g.created_at DESC LIMIT 100",
             [this.actor],
           ),
+          qualityModels: generationModels.map(({ id, name, type }) => ({
+            id,
+            name,
+            type,
+          })),
+          enabledQualityModels: (
+            await list(
+              "SELECT id FROM ai_models WHERE provider='WaveSpeed' AND enabled=1",
+            )
+          ).map((m) => m.id),
         };
       case "moderation":
         return {

@@ -26,9 +26,12 @@ for (const backend of ["sqlite", "postgres"]) {
       const migrations = (await readdir(dir))
         .filter((f) => f.endsWith(".sql"))
         .sort();
-      const last = migrations.pop()!;
-      assert(last.includes("demo_readiness"));
-      for (const file of migrations)
+      const targetIndex = migrations.findIndex((file) =>
+        file.includes("demo_readiness"),
+      );
+      assert(targetIndex >= 0);
+      const last = migrations[targetIndex];
+      for (const file of migrations.slice(0, targetIndex))
         await exec(await readFile(new URL(file, dir), "utf8"));
       await run(
         "INSERT INTO users(id,name,email) VALUES('buyer','Buyer','buyer@example.test')",

@@ -1,4 +1,5 @@
 import { characterReferenceInputs } from "@/lib/generation/characters";
+import { requestJson } from "@/lib/http-body";
 import { z } from "zod";
 import {
   auth,
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
         prompt: z.string().max(16000),
         inputs: z.record(z.unknown()),
       })
-      .parse(await request.json());
+      .parse(await requestJson(request));
     if (!d.characterId)
       throw new ApiError(
         403,

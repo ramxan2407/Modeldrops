@@ -5787,3 +5787,21 @@ h1 {
 .schema-upload{position:relative;display:flex;align-items:center;gap:8px;border:1px dashed light-dark(#b6c8a8, #2a2a2a);border-radius:10px;padding:12px;background:light-dark(#f7faf2, #090909);overflow:hidden;cursor:pointer}
 .schema-upload input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}.schema-reference-preview,.schema-array-row img{width:72px;height:72px;object-fit:cover;border-radius:8px}
 .schema-size{display:grid;gap:5px}.schema-reset{justify-self:start}.image-quote-note{font-size:11px;color:light-dark(#66786d, #b3b3b3);line-height:1.6}
+
+.recovery-page {max-width: 760px; min-height: 75vh; margin: auto; padding: 12vh 24px; display: flex; flex-direction: column; justify-content: center; gap: 24px;}
+.recovery-page h1 {font-size: clamp(28px, 5vw, 48px); line-height: 1.12; letter-spacing: -.035em;}
+.recovery-page p {line-height: 1.65;}
+.recovery-page > div {display: flex; flex-wrap: wrap; align-items: center; gap: 24px;}
+.recovery-page a, .recovery-page button {min-height: 44px; display: inline-flex; align-items: center;}
+.operations-health {margin-block: 24px;}
+.operations-health > p {margin-block: 12px 20px; max-width: 78ch;}
+.operations-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 16px;}
+.operations-grid article {display: grid; justify-items: start; gap: 10px; border: 1px solid light-dark(#dde2da, #333); padding: 16px; border-radius: 12px; min-width: 0;}
+.operations-grid small {font-size: 12px; opacity: .75;}
+.operations-grid [data-health=failed], .operations-grid [data-health=stale], .operations-grid [data-health=not_seen] {background: light-dark(#fff1d5, #332716); color: light-dark(#805107, #ffd489);}
+.operations-counts {display: grid; gap: 10px; margin-top: 20px;}
+.operations-counts > div {display: flex; justify-content: space-between; gap: 20px; font-size: 13px;}
+.operations-counts dd {font-variant-numeric: tabular-nums; font-weight: 700;}
+.quality-model-check {display: grid; gap: 8px; padding: 16px 0; border-bottom: 1px solid light-dark(#dde2da, #333);}
+.quality-model-check > label {display: flex; align-items: center; gap: 10px; min-height: 44px;}
+.quality-model-check a {text-decoration: underline; text-underline-offset: 3px;}
