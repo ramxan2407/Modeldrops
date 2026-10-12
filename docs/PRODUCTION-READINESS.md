@@ -44,4 +44,17 @@ New demo users receive zero automatic credits. Invite specific testers and grant
 
 Manual LoRA request collection, datasets, approval, delivery and download are supported. Automatic training, using delivered LoRA weights in these Studio models, payouts and full media editing are not part of this release. Native authenticated images remain a performance follow-up; replacing them with a public optimizer without preserving access checks would be incorrect.
 
-Hosted verification results and deployment identity will be appended after rollout. The previous release evidence remains in `RELEASE-AUDIT-2026-10-12.md`.
+## Hosted verification
+
+- Published application commit `f15f5ac` at [Model Drops](https://model-drops-ten.vercel.app). Production deployment: `dpl_92uUnaqSdcp8rNQrnD3Y4t7AePPN`, `https://model-drops-edeeey2wt-model-drops-ramxan87.vercel.app`.
+- [GitHub release checks](https://github.com/ramxan2407/Modeldrops/actions/runs/38236597876) passed from a clean Linux install: lint, TypeScript, all 103 tests, production dependency audit and production build.
+- Production migration 008 completed. The hardened pool successfully queried the real Supabase transaction pooler. Both new tables deny SELECT to anonymous/authenticated browser roles.
+- Canonical welcome returned 200, the branded missing page returned 404, and the configured security headers were present with no framework disclosure header.
+- Demo email/password login returned 200. The account still has 5,000 credits and no super-admin role. Anonymous admin/scheduler/workspace API calls returned 401; signed-in demo admin access returned 403.
+- Malformed platform/transfer payloads returned 400 and an oversized platform request returned 413. These requests left the demo balance unchanged. A hashed auth-limit entry was recorded; no raw address was stored in its key.
+- At 10:33 UTC, generation recovery, email scheduling and storage cleanup all recorded successful heartbeats. Queues were empty. Email configuration is still required; a scheduler heartbeat is not a delivered-email receipt.
+- Read-only ledger aggregates: zero negative wallets, zero failed/cancelled jobs with unreturned credits, zero completed charge mismatches, zero pending/review jobs.
+- The owner browser showed the new loading state, operational health, unchanged 1,400-credit balance, and Valentina's four explicit missing model-review checks. No live character, permission or credit setting was changed by these checks. Dashboard document width matched viewport width at 390px and 1,440px; no browser warning/error was recorded during these checks.
+- No new paid generation was submitted. The final hosted portrait still needs those model acceptance tests and content review before new sales open. Payments remain disabled.
+
+The previous release evidence remains in `RELEASE-AUDIT-2026-10-12.md`.
