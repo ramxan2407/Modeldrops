@@ -15,6 +15,7 @@ export async function quoteImage(
   endpoint: string,
   input: unknown,
   fetcher: typeof fetch = fetch,
+  minimumCredits = 0,
 ) {
   const response = await fetcher(
     "https://api.wavespeed.ai/api/v3/model/price",
@@ -38,7 +39,7 @@ export async function quoteImage(
     throw Error("The model price could not be verified.");
   // Retail credits use the published price; account-specific provider discounts do not change customer prices.
   return {
-    credits: imageCredits(data.price),
+    credits: Math.max(minimumCredits, imageCredits(data.price)),
     providerMicrousd: Math.ceil(data.discounted_price * 1000000),
     providerUsd: data.price,
   };

@@ -1,3 +1,4 @@
+import { seedReviewedCharacter } from "./helpers/character-fixture";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "vite";
@@ -89,6 +90,8 @@ for (const backend of ["sqlite", "postgres"]) {
         WAVESPEED_API_KEY: "test-key",
         WAVESPEED_ENABLED: "true",
         WAVESPEED_DAILY_LIMIT_USD: "5",
+        GENERATION_USER_DAILY_LIMIT_USD: "1000",
+        GENERATION_REQUESTS_PER_MINUTE: "1000",
         CRON_SECRET: "test-cron-secret",
         SUPER_ADMIN_USER_IDS: "admin",
       },
@@ -256,6 +259,10 @@ for (const backend of ["sqlite", "postgres"]) {
         }),
       )
       .run();
+    await seedReviewedCharacter(db, {
+      id: "amara-rose",
+      referenceAssetId: "00000000-0000-4000-8000-000000000099",
+    });
     runtime.env.BUCKET.signedRead = async () =>
       "https://private-storage.example.com/reference.png?signature=test";
     const payload = () => ({
@@ -492,6 +499,7 @@ for (const backend of ["sqlite", "postgres"]) {
         await post("generate", {
           ...payload(),
           modelId: "wavespeed-kling-3",
+          expectedCredits: 120,
           settings: videoSettings,
         })
       ).json();
@@ -771,6 +779,7 @@ for (const backend of ["sqlite", "postgres"]) {
       const refs = await vite.ssrLoadModule("/lib/generation/characters.ts");
       character.referenceImage = "/assets/drops/test-approved.png";
       try {
+        await seedReviewedCharacter(db, character);
         const input = await refs.characterReferenceInputs(
           db,
           "alice",
@@ -828,7 +837,7 @@ for (const backend of ["sqlite", "postgres"]) {
         await db.batch([
           db
             .prepare(
-              "INSERT INTO generations(id,user_id,character_id,model_id,prompt,settings,type,cost,idempotency_key,updated_at) VALUES(?,'alice','amara-rose','wavespeed-qwen-image-edit','Queued character request',?,'image',12,?,?)",
+              "INSERT INTO generations(id,user_id,character_id,model_id,prompt,settings,type,cost,idempotency_key,updated_at,character_version_id) VALUES(?,'alice','amara-rose','wavespeed-qwen-image-edit','Queued character request',?,'image',12,?,?,'amara-rose@asset:00000000-0000-4000-8000-000000000099')",
             )
             .bind(
               pending.id,

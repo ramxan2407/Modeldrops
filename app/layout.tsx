@@ -6,6 +6,7 @@ import "./design-system.css";
 import "./welcome.css";
 import "./cinematic.css";
 import "./workspace-marketing.css";
+import "./motion.css";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {

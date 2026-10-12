@@ -901,10 +901,6 @@
 .md-card-name h3 {
   font-size: 38px;
   margin: 0;
-  transition: letter-spacing 0.4s;
-}
-.md-talent-card:hover h3 {
-  letter-spacing: -0.03em;
 }
 .md-card-meta,
 .md-card-extra {

@@ -1,3 +1,4 @@
+import { drainStorageCleanup, queueCleanup } from "../storage-cleanup";
 import { administratorIds } from "../admin/policy";
 import { z } from "zod";
 import {
@@ -78,7 +79,9 @@ export class LoraService {
   }
   get maxLoraBytes() {
     const configured = Number(this.env.MAX_LORA_UPLOAD_BYTES);
-    return Number.isSafeInteger(configured) && configured > 0 ? Math.min(configured, MAX_LORA_SIZE) : MAX_LORA_SIZE;
+    return Number.isSafeInteger(configured) && configured > 0
+      ? Math.min(configured, MAX_LORA_SIZE)
+      : MAX_LORA_SIZE;
   }
   async settings() {
     return {
@@ -313,6 +316,11 @@ export class LoraService {
     const result = await this.db.batch([
       this.db
         .prepare(
+          "INSERT OR IGNORE INTO storage_cleanup(storage_key,upload_id,created_at) SELECT storage_key,CASE WHEN ready=0 THEN upload_id ELSE NULL END,? FROM training_files WHERE id=? AND EXISTS(SELECT 1 FROM training_requests WHERE id=? AND status=?)",
+        )
+        .bind(now(), fileId, r.id, expected),
+      this.db
+        .prepare(
           "UPDATE training_requests SET revision=revision+1 WHERE id=? AND status='draft' AND EXISTS(SELECT 1 FROM training_files WHERE id=?)",
         )
         .bind(r.id, fileId),
@@ -322,25 +330,19 @@ export class LoraService {
         )
         .bind(fileId, r.id, expected),
     ]);
-    if (result[1].meta.changes) {
-      if (f.upload_id && !f.ready)
-        await this.env.BUCKET.resumeMultipartUpload(
-          f.storage_key,
-          f.upload_id,
-        ).abort();
-      await this.env.BUCKET.delete(f.storage_key);
-    }
+    if (result[2].meta.changes) await drainStorageCleanup(this.env);
     return { ok: true };
   }
   async deleteDraft(requestId: string) {
     const r = await this.request(requestId, true);
     if (r.status !== "draft")
       throw new LoraError(409, "Only drafts can be discarded.");
-    const files = await this.db
-      .prepare("SELECT storage_key FROM training_files WHERE request_id=?")
-      .bind(requestId)
-      .all<{ storage_key: string }>();
     const result = await this.db.batch([
+      this.db
+        .prepare(
+          "INSERT OR IGNORE INTO storage_cleanup(storage_key,upload_id,created_at) SELECT storage_key,CASE WHEN ready=0 THEN upload_id ELSE NULL END,? FROM training_files WHERE request_id=? AND EXISTS(SELECT 1 FROM training_requests WHERE id=? AND status='draft' AND revision=?)",
+        )
+        .bind(now(), requestId, requestId, r.revision),
       this.db
         .prepare(
           "DELETE FROM training_files WHERE request_id=? AND EXISTS(SELECT 1 FROM training_requests WHERE id=? AND status='draft' AND revision=?)",
@@ -352,13 +354,12 @@ export class LoraService {
         )
         .bind(requestId, r.revision),
     ]);
-    if (!result[1].meta.changes)
+    if (!result[2].meta.changes)
       throw new LoraError(
         409,
         "This draft changed. Refresh before discarding it.",
       );
-    if (files.results.length)
-      await this.env.BUCKET.delete(files.results.map((f) => f.storage_key));
+    await drainStorageCleanup(this.env);
     return { ok: true };
   }
   async notificationStatements(
@@ -607,7 +608,10 @@ export class LoraService {
       size < 10 ||
       size > this.maxLoraBytes
     )
-      throw new LoraError(400, `Use a .safetensors file up to ${this.maxLoraBytes / 1048576} MB.`);
+      throw new LoraError(
+        400,
+        `Use a .safetensors file up to ${this.maxLoraBytes / 1048576} MB.`,
+      );
     const count = await this.db
       .prepare(
         "SELECT COUNT(*) n FROM training_files WHERE request_id=? AND kind='weights'",
@@ -763,17 +767,19 @@ export class LoraService {
       .bind(loraId, this.user.userId)
       .first<TrainedLora>();
     if (!lora) throw new LoraError(404, "LoRA not found.");
-    await this.db
-      .prepare(
-        "UPDATE trained_loras SET deleted_at=COALESCE(deleted_at,?) WHERE id=? AND user_id=?",
-      )
-      .bind(now(), loraId, this.user.userId)
-      .run();
     const files = await this.db
       .prepare("SELECT storage_key FROM training_files WHERE id IN (?,?)")
       .bind(lora.file_id, lora.cover_id)
       .all<{ storage_key: string }>();
-    await this.env.BUCKET.delete(files.results.map((f) => f.storage_key));
+    await this.db.batch([
+      this.db
+        .prepare(
+          "UPDATE trained_loras SET deleted_at=COALESCE(deleted_at,?) WHERE id=? AND user_id=?",
+        )
+        .bind(now(), loraId, this.user.userId),
+      ...files.results.map((f) => queueCleanup(this.db, f.storage_key)),
+    ]);
+    await drainStorageCleanup(this.env);
     return { ok: true };
   }
   async setSettings(value: unknown) {

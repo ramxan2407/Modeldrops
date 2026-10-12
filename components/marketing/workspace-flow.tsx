@@ -30,8 +30,9 @@ const stages = [
 
 export function WorkspaceFlow() {
   const [stage, setStage] = useState(0);
+  const [immediate, setImmediate] = useState(false);
   return (
-    <div className="ws-flow" data-stage={stage}>
+    <div className="ws-flow" data-stage={stage} data-immediate={immediate}>
       <div
         className="ws-flow-board"
         aria-label="Illustration of the Model Drops creative workflow"
@@ -48,8 +49,14 @@ export function WorkspaceFlow() {
         >
           <path d="M152 150 H300 Q325 150 325 175 V254 H457 M325 254 V384 H450" />
           <path
-            d="M152 150 H300 Q325 150 325 175 V254 H457 M325 254 V384 H450"
-            className="ws-connector-pulse"
+            d="M152 150 H300 Q325 150 325 175 V254 H457"
+            className="ws-connector-stage"
+            data-active={stage > 0}
+          />
+          <path
+            d="M325 254 V384 H450"
+            className="ws-connector-stage"
+            data-active={stage === 2}
           />
         </svg>
         <div className="ws-node ws-persona" data-active={stage === 0}>
@@ -135,14 +142,28 @@ export function WorkspaceFlow() {
             key={item.label}
             type="button"
             aria-pressed={stage === i}
-            onClick={() => setStage(i)}
+            onClick={(event) => {
+              setImmediate(event.detail === 0);
+              setStage(i);
+            }}
           >
             <span>0{i + 1}</span>
             {item.label}
           </button>
         ))}
       </div>
-      <p className="ws-flow-caption" aria-live="polite">
+      <div className="ws-flow-captions" aria-hidden="true">
+        {stages.map((item, i) => (
+          <p
+            className="ws-flow-caption"
+            key={item.label}
+            data-active={stage === i}
+          >
+            {item.text}
+          </p>
+        ))}
+      </div>
+      <p className="sr-only" role="status">
         {stages[stage].text}
       </p>
     </div>

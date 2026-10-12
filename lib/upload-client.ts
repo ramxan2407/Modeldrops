@@ -42,7 +42,9 @@ export async function uploadFile(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ target: url, size: file.size }),
   });
-  const transfer = (await init.json()) as {
+  const transfer = (await init.json().catch(() => {
+    throw new Error("Could not prepare upload. Please refresh and try again.");
+  })) as {
     direct?: boolean;
     id: string;
     url: string;

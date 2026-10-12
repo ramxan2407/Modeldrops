@@ -8,7 +8,10 @@ import "../../app/admin.css";
 import "../../app/lora.css";
 import "../../app/theme.css";
 import "../../app/design-system.css";
+import "../../app/motion.css";
 const path = window.location.pathname.slice(1) || "marketplace";
+const live =
+  (import.meta.env as { VITE_LOCAL_LIVE?: boolean }).VITE_LOCAL_LIVE === true;
 createRoot(document.getElementById("root")!).render(
   <ThemeProvider>
     <div
@@ -22,18 +25,24 @@ createRoot(document.getElementById("root")!).render(
         fontSize: 12,
       }}
     >
-      LOCAL QA · SIMULATED GENERATION ·{" "}
-      <Link prefetch={false} href="/api/demo-account?id=alice">
-        Buyer
-      </Link>{" "}
-      ·{" "}
-      <Link prefetch={false} href="/api/demo-account?id=admin">
-        Super admin
-      </Link>{" "}
-      ·{" "}
-      <Link prefetch={false} href="/api/demo-account?id=bob">
-        Second buyer
-      </Link>
+      {live ? (
+        "LOCAL LIVE TEST · REAL GENERATION · DEMO CREDITS · $1 TOTAL PROVIDER CAP"
+      ) : (
+        <>
+          LOCAL QA · SIMULATED GENERATION ·{" "}
+          <Link prefetch={false} href="/api/demo-account?id=alice">
+            Buyer
+          </Link>{" "}
+          ·{" "}
+          <Link prefetch={false} href="/api/demo-account?id=admin">
+            Super admin
+          </Link>{" "}
+          ·{" "}
+          <Link prefetch={false} href="/api/demo-account?id=bob">
+            Second buyer
+          </Link>
+        </>
+      )}
     </div>
     <ModelDropsApp
       initialPage={path as "marketplace"}

@@ -1,3 +1,4 @@
+import { portraitVersionId, readVersion, purchasedVersion } from "./versions";
 import { z } from "zod";
 import { catalogFor } from "../admin/service";
 import { characterAllowed } from "../admin/character-permissions";
@@ -16,6 +17,7 @@ type Order = {
   amount_cents: number;
   currency: string;
   credits_spent: number;
+  version_id: string | null;
 };
 export class CharacterCheckout {
   constructor(
@@ -27,6 +29,15 @@ export class CharacterCheckout {
     const c = (await catalogFor(this.db)).find((c) => c.id === id && c.enabled);
     if (!c || !(await characterAllowed(this.db, this.userId, id)))
       throw new ApiError(404, "Character unavailable.");
+    const versionId = portraitVersionId(c);
+    const version = versionId ? await readVersion(this.db, versionId) : null;
+    const canGenerate = await characterAllowed(
+      this.db,
+      this.userId,
+      id,
+      "generate",
+    );
+    const purchased = await purchasedVersion(this.db, this.userId, id);
     const demo = demoEnabled(this.env);
     const balance = demo
       ? await this.db
@@ -43,7 +54,15 @@ export class CharacterCheckout {
       currency: demo ? "demo_credits" : "usd",
       creditCost: c.demoCreditPrice,
       balance: balance?.balance ?? 0,
-      ready: c.approvalStatus === "approved" && !!c.referenceImage,
+      versionId,
+      purchasedVersionId: purchased?.id ?? null,
+      canGenerate,
+      ready:
+        canGenerate &&
+        c.approvalStatus === "approved" &&
+        !!c.referenceImage &&
+        !!version?.approved &&
+        JSON.parse(version.reviewed_models).length > 0,
       approvalStatus: c.approvalStatus,
       owned: await characterAccess(this.db, this.userId, id, this.env),
       mode: demo
@@ -62,6 +81,7 @@ export class CharacterCheckout {
         expectedAmountCents: z.number().int().nonnegative().optional(),
         expectedCredits: z.number().int().nonnegative().optional(),
         idempotencyKey: z.string().uuid(),
+        expectedVersionId: z.string().min(1),
       })
       .safeParse(raw);
     if (!parsed.success)
@@ -86,13 +106,14 @@ export class CharacterCheckout {
     const previous = () =>
       this.db
         .prepare(
-          "SELECT id,character_id,amount_cents,currency,credits_spent FROM character_orders WHERE idempotency_key=?",
+          "SELECT id,character_id,amount_cents,currency,credits_spent,version_id FROM character_orders WHERE idempotency_key=?",
         )
         .bind(key)
         .first<Order>();
     const receipt = async (order: Order) => {
       if (
         order.character_id !== d.characterId ||
+        order.version_id !== d.expectedVersionId ||
         (demo
           ? order.currency !== "demo_credits" ||
             order.credits_spent !== d.expectedCredits
@@ -131,6 +152,16 @@ export class CharacterCheckout {
         "This access is no longer active. Contact support before checking out again.",
       );
     const quote = await this.quote(d.characterId);
+    if (!quote.canGenerate)
+      throw new ApiError(
+        403,
+        "Character generation access is restricted for your account. No credits were charged.",
+      );
+    if (quote.versionId !== d.expectedVersionId)
+      throw new ApiError(
+        409,
+        "The character version changed. Review checkout again.",
+      );
     if (!quote.ready)
       throw new ApiError(
         409,
@@ -154,7 +185,7 @@ export class CharacterCheckout {
       await this.db.batch([
         this.db
           .prepare(
-            "INSERT INTO character_orders(id,user_id,character_id,amount_cents,currency,mode,status,license_snapshot,idempotency_key,credits_spent) VALUES(?,?,?,?,?,'test','test_completed',?,?,?)",
+            "INSERT INTO character_orders(id,user_id,character_id,amount_cents,currency,mode,status,license_snapshot,idempotency_key,credits_spent,version_id) VALUES(?,?,?,?,?,'test','test_completed',?,?,?,?)",
           )
           .bind(
             id,
@@ -165,6 +196,7 @@ export class CharacterCheckout {
             characterLicense,
             key,
             demo ? quote.creditCost : 0,
+            quote.versionId,
           ),
         ...(demo
           ? [
@@ -185,9 +217,9 @@ export class CharacterCheckout {
           : []),
         this.db
           .prepare(
-            "INSERT INTO character_entitlements(user_id,character_id,order_id,status) VALUES(?,?,?,'active')",
+            "INSERT INTO character_entitlements(user_id,character_id,order_id,status,version_id) VALUES(?,?,?,'active',?)",
           )
-          .bind(this.userId, d.characterId, id),
+          .bind(this.userId, d.characterId, id, quote.versionId),
         this.db
           .prepare(
             "INSERT INTO notifications(id,user_id,message) VALUES(?,?,?)",

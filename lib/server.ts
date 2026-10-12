@@ -1,7 +1,7 @@
+import { demoAccessAllowed } from "./demo-access";
 import {
   activeWallet,
   demoEnabled,
-  initialDemoCredits,
   type Wallet,
   type DemoEnvironment,
 } from "./credits";
@@ -58,6 +58,11 @@ export async function auth() {
       403,
       "Your account is suspended. Contact Model Drops support.",
     );
+  if (!(await demoAccessAllowed(bindings().DB, bindings(), user)))
+    throw new ApiError(
+      403,
+      "Demo access requires an invitation. Ask an administrator to approve your email address.",
+    );
   return user;
 }
 export async function initialize(user: Awaited<ReturnType<typeof auth>>) {
@@ -73,9 +78,7 @@ export async function initialize(user: Awaited<ReturnType<typeof auth>>) {
       "Account credit configuration requires administrator review.",
     );
   const wallet = activeWallet(bindings());
-  const allocation = demoEnabled(bindings())
-    ? initialDemoCredits(bindings())
-    : welcomeCredits;
+  const allocation = demoEnabled(bindings()) ? 0 : welcomeCredits;
   const known = await DB.prepare("SELECT id FROM ai_models").all<{
     id: string;
   }>();

@@ -1,7 +1,8 @@
 "use client";
+import { usePublicTalent } from "./use-public-talent";
 import { useRef } from "react";
 import Link from "next/link";
-import { talent } from "@/lib/marketing/catalog";
+
 import {
   useStoryMotion,
   storyPinStart,
@@ -47,6 +48,7 @@ function animateDrop(
   });
 }
 export function DropShowcase() {
+  const talent = usePublicTalent();
   const root = useRef<HTMLElement>(null);
   useStoryMotion(root, animateDrop);
   return (

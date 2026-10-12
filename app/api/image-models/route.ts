@@ -1,6 +1,13 @@
 import { characterReferenceInputs } from "@/lib/generation/characters";
 import { z } from "zod";
-import { auth, assertOrigin, bindings, ApiError, fail } from "@/lib/server";
+import {
+  auth,
+  isSuperAdmin,
+  assertOrigin,
+  bindings,
+  ApiError,
+  fail,
+} from "@/lib/server";
 import {
   imageDefinition,
   imageEndpoint,
@@ -47,9 +54,9 @@ export async function POST(request: Request) {
     const model = imageDefinition(d.modelId);
     if (!model) throw new ApiError(404, "Image model not found.");
     const enabled = await bindings()
-      .DB.prepare("SELECT enabled FROM ai_models WHERE id=?")
+      .DB.prepare("SELECT enabled,credits FROM ai_models WHERE id=?")
       .bind(d.modelId)
-      .first<{ enabled: number }>();
+      .first<{ enabled: number; credits: number }>();
     if (!enabled?.enabled) throw new ApiError(400, "This model is disabled.");
     let input: Record<string, unknown>;
     try {
@@ -61,6 +68,7 @@ export async function POST(request: Request) {
             d.modelId,
             d.inputs,
             new URL(request.url).origin,
+            { qa: isSuperAdmin(user.userId) },
           )
         : d.inputs;
       input = imageInput(model, d.prompt, inputs);
@@ -71,7 +79,13 @@ export async function POST(request: Request) {
     input = await resolveImageReferences(input, user.userId);
     try {
       return Response.json(
-        await quoteImage(bindings(), imageEndpoint(d.modelId, input), input),
+        await quoteImage(
+          bindings(),
+          imageEndpoint(d.modelId, input),
+          input,
+          fetch,
+          enabled.credits,
+        ),
         { headers: { "Cache-Control": "private, no-store" } },
       );
     } catch (e) {

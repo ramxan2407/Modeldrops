@@ -192,7 +192,7 @@ function ModelControlsSession({
         <strong>Your model reference</strong>
         <span>
           {characterId
-            ? "When the model is available, her approved portrait is attached automatically. Identity consistency varies by image model."
+            ? "The selected character’s saved portrait is attached automatically. Identity consistency varies by image model."
             : "Choose an unlocked model above. Her approved portrait will be attached automatically."}{" "}
           One image per request.
         </span>

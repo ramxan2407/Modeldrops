@@ -1,3 +1,4 @@
+import { reconcileGeneration } from "@/lib/generation/reconciliation";
 import { demoEnabled } from "@/lib/credits";
 import { auth, initialize, bindings, assertOrigin, fail } from "@/lib/server";
 import {
@@ -34,12 +35,21 @@ export async function GET(request: Request) {
     return Response.json(
       {
         ...data,
+        ...(section === "users"
+          ? {
+              testers: (
+                await env.DB.prepare(
+                  "SELECT * FROM demo_testers ORDER BY updated_at DESC LIMIT 200",
+                ).all()
+              ).results,
+            }
+          : {}),
         demoMode: demoEnabled(env),
         ...(section === "integrations"
           ? {
               generationJobs: (
                 await env.DB.prepare(
-                  "SELECT g.id,g.user_id,g.model_id,g.status,g.error,p.request_id,p.state,p.updated_at FROM provider_requests p JOIN generations g ON g.id=p.generation_id ORDER BY p.updated_at DESC LIMIT 20",
+                  "SELECT g.id,g.user_id,g.model_id,g.status,g.error,p.request_id,p.state,p.updated_at,j.status AS job_status FROM provider_requests p JOIN generations g ON g.id=p.generation_id JOIN generation_jobs j ON j.generation_id=g.id ORDER BY CASE WHEN j.status='needs_review' THEN 0 ELSE 1 END,p.updated_at DESC LIMIT 100",
                 ).all()
               ).results,
               integrations: [
@@ -120,9 +130,14 @@ export async function POST(request: Request) {
       typeof body.data !== "object"
     )
       throw new AdminError(400, "An action and change details are required.");
-    return Response.json(await service.mutate(body.action, body.data), {
-      headers: { "Cache-Control": "private, no-store" },
-    });
+    return Response.json(
+      body.action === "reconcile"
+        ? await reconcileGeneration(env, user.userId, body.data)
+        : await service.mutate(body.action, body.data),
+      {
+        headers: { "Cache-Control": "private, no-store" },
+      },
+    );
   } catch (e) {
     return failure(e);
   }

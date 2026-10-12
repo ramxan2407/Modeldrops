@@ -284,7 +284,17 @@ export function UserDashboard(p: Props) {
                   >
                     <div>
                       {g.image ? (
-                        <img src={g.image} alt={g.prompt} />
+                        g.type === "video" ? (
+                          <video
+                            src={g.image}
+                            muted
+                            playsInline
+                            preload="metadata"
+                            aria-label={g.prompt}
+                          />
+                        ) : (
+                          <img src={g.image} alt={g.prompt} />
+                        )
                       ) : (
                         <span>
                           <Clock size={24} />
@@ -331,7 +341,17 @@ export function UserDashboard(p: Props) {
             {latest ? (
               <>
                 <div className="continue-image">
-                  <img src={latest.image} alt="Your latest creation" />
+                  {latest.type === "video" ? (
+                    <video
+                      src={latest.image}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      aria-label="Your latest video"
+                    />
+                  ) : (
+                    <img src={latest.image} alt="Your latest creation" />
+                  )}
                   <span>
                     <RefreshCw size={13} />
                     PICK UP WHERE YOU LEFT OFF

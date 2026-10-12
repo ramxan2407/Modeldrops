@@ -65,6 +65,84 @@ test("Vercel Postgres migration supports private training and atomic admin credi
         "utf8",
       ),
     );
+    const legacyProfile = JSON.stringify({
+      name: "Original portrait",
+      description:
+        "An original fictional adult portrait used before migration.",
+      age: 28,
+      category: "Editorial",
+      referenceAssetId: "7b31a7f0-dc5e-4434-9b88-ccae902064cd",
+      approvalStatus: "approved",
+    });
+    await pg.exec(
+      "INSERT INTO users(id,name,email) VALUES('legacy','Legacy tester','legacy@example.test')",
+    );
+    await pg.query(
+      "INSERT INTO character_controls(id,profile) VALUES('valentina',$1)",
+      [legacyProfile],
+    );
+    await pg.exec(
+      "INSERT INTO character_orders(id,user_id,character_id,amount_cents,currency,mode,status,license_snapshot,idempotency_key,credits_spent) VALUES('legacy-order','legacy','valentina',0,'demo_credits','test','test_completed','Original terms','legacy-checkout',300)",
+    );
+    await pg.exec(
+      "INSERT INTO character_entitlements(user_id,character_id,order_id) VALUES('legacy','valentina','legacy-order')",
+    );
+    await pg.exec(
+      "INSERT INTO credit_transactions(id,user_id,amount,type,description,balance_before,balance_after,idempotency_key,wallet) VALUES('legacy-credit','legacy',4700,'admin','Existing demo balance',0,4700,'legacy-credit','demo')",
+    );
+    await pg.exec(
+      await readFile(
+        new URL("../migrations/vercel/007_demo_readiness.sql", import.meta.url),
+        "utf8",
+      ),
+    );
+    const backfill = (
+      await pg.query<{
+        version_id: string;
+        profile: string;
+        reviewed_models: string;
+      }>(
+        "SELECT e.version_id,v.profile,v.reviewed_models FROM character_entitlements e JOIN character_versions v ON v.id=e.version_id WHERE e.user_id='legacy'",
+      )
+    ).rows[0];
+    assert.equal(
+      backfill.version_id,
+      "valentina@asset:7b31a7f0-dc5e-4434-9b88-ccae902064cd",
+    );
+    assert.equal(backfill.profile, legacyProfile);
+    assert.equal(
+      backfill.reviewed_models,
+      "[]",
+      "Migration must not invent QA evidence",
+    );
+    assert.equal(
+      (
+        await pg.query<{ version_id: string }>(
+          "SELECT version_id,license_snapshot,credits_spent FROM character_orders WHERE id='legacy-order'",
+        )
+      ).rows[0].version_id,
+      backfill.version_id,
+    );
+    assert.equal(
+      (
+        await pg.query<{ balance: number }>(
+          "SELECT SUM(amount)::integer balance FROM credit_transactions WHERE user_id='legacy'",
+        )
+      ).rows[0].balance,
+      4700,
+    );
+    await assert.rejects(
+      pg.exec(
+        "UPDATE character_versions SET profile='{}' WHERE id='valentina@asset:7b31a7f0-dc5e-4434-9b88-ccae902064cd'",
+      ),
+      /immutable/,
+    );
+    await assert.rejects(
+      pg.exec(
+        "UPDATE character_orders SET version_id=NULL WHERE id='legacy-order'",
+      ),
+      /immutable/,
+    );
     const db = new PostgresDatabase({
       transaction: (fn) =>
         pg.transaction(async (tx) => {

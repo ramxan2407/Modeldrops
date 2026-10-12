@@ -13,11 +13,11 @@ The live workspace uses WaveSpeed for **Qwen Image Edit**, **GPT Image 2.5 Flare
 
 Image controls come from the selected models' authenticated API schemas. `scripts/sync-wavespeed-catalog.mjs` refreshes only the five approved image endpoints (Qwen edit and both GPT generation/edit variants). Review and deploy schema changes explicitly. GPT switches to its `/edit` endpoint only when references are present; an empty reference list is omitted from text-to-image requests.
 
-Image price previews call WaveSpeed's free `/model/price` endpoint with the actual validated inputs. The server re-quotes before enqueueing, refuses increases above the user's displayed amount, and never substitutes a base price when quoting fails. Retail cost is `max(1, ceil(published USD price × 600))`, preserving the established Qwen rate. Daily provider reservations use the quoted discounted amount. WaveSpeed recalculates final provider charges at submission; reservations are estimates, not a billing guarantee. Kling reserves $0.084/second without sound or $0.126/second with sound.
+Image price previews call WaveSpeed's free `/model/price` endpoint with the actual validated inputs. The server re-quotes before enqueueing, refuses increases above the user's displayed amount, and never substitutes a base price when quoting fails. Retail cost is `max(admin minimum image credits, 1, ceil(published USD price × 600))`, preserving the established Qwen rate. Daily provider reservations use the quoted discounted amount. WaveSpeed recalculates final provider charges at submission; reservations are estimates, not a billing guarantee. Kling reserves $0.084/second without sound or $0.126/second with sound. All generation requests, including video and sample models, must include the displayed `expectedCredits`. Price increases return 409 before any credit reservation or provider submission; Studio refreshes its quote for explicit review, without automatically retrying. Replaying an accepted request retains its original charge.
 
-References upload into private storage using the existing owner-bound upload flow. Only owner-validated asset IDs receive temporary signed download URLs for provider access. The URL is never sent back in price quotes. External HTTPS image URLs are also supported. Images and prompts go to WaveSpeed for generation. Purchased-character and custom LoRA conditioning remain unconnected to these selected endpoints.
+References upload into private storage using the existing owner-bound upload flow. Only owner-validated asset IDs receive temporary signed download URLs for provider access. The URL is never sent back in price quotes. External HTTPS image URLs are also supported. Images and prompts go to WaveSpeed for generation. Purchased-character portrait conditioning is connected: the server selects the owned immutable reference version. Custom LoRA weight conditioning remains separate.
 
-Kling manages its native resolution. Shot durations must total the video duration. Custom shots replace the main prompt; automatic storyboard uses the main prompt. Sync and base64 output stay disabled. Each selected image endpoint returns one image; historical multi-output creations retain delivery and download support.
+Character videos use the image-to-video endpoint; the portrait determines framing. Kling manages its native resolution. Shot durations must total the video duration. Custom shots replace the main prompt; automatic storyboard uses the main prompt. Sync and base64 output stay disabled. Each selected image endpoint returns one image; historical multi-output creations retain delivery and download support.
 
 ## Activation and deployment
 
@@ -52,3 +52,5 @@ Official sources:
 - [Kling Standard schema and sound pricing](https://wavespeed.ai/docs/docs-api/kwaivgi/kwaivgi-kling-v3.0-std-text-to-video)
 - [Prediction status](https://wavespeed.ai/docs/get-result)
 - [Balance API](https://wavespeed.ai/docs/check-balance)
+
+For invited demo access, version review, atomic per-user/shared/cumulative budgets, and the admin recovery workflow, see [DEMO_TESTING.md](DEMO_TESTING.md).

@@ -12,10 +12,12 @@ import {
 } from "lucide-react";
 import { WorkspaceFlow } from "./workspace-flow";
 import { WorkflowShowcase } from "./workflow-showcase";
-import { talent } from "@/lib/marketing/catalog";
+import { publicCatalog } from "@/lib/marketing/public-catalog";
+import { TalentPortrait } from "./talent-card";
 import { campaignAssets } from "@/lib/marketing/campaign-assets";
 
-export function WorkspaceLanding() {
+export async function WorkspaceLanding() {
+  const talent = await publicCatalog();
   return (
     <div className="ws-landing">
       <section className="ws-hero" aria-labelledby="workspace-heading">
@@ -97,26 +99,15 @@ export function WorkspaceLanding() {
               href={`/models/${model.slug}`}
               className="ws-talent-tile"
             >
-              <div
-                className="ws-talent-monogram"
-                style={{ background: model.color }}
-              >
-                <span>DROP 001 / {model.number}</span>
-                <strong>
-                  {model.name.charAt(0)}
-                  <i>.</i>
-                </strong>
-                <small>PORTRAIT IN PREPARATION</small>
-                <ArrowUpRight size={18} />
-              </div>
+              <TalentPortrait model={model} />
               <h3>{model.name}</h3>
               <p>{model.styles[0]}</p>
             </Link>
           ))}
         </div>
         <p className="ws-disclosure">
-          Launch preview · Approved portraits and paid character access are in
-          preparation.
+          Reviewed portraits appear here when their character is ready. Demo
+          access uses credits; payments remain closed.
         </p>
       </section>
       <section

@@ -48,7 +48,7 @@ const workflows = [
 
 export function WorkflowShowcase() {
   const [selected, setSelected] = useState(0);
-  const item = workflows[selected];
+  const [immediate, setImmediate] = useState(false);
   return (
     <section
       className="ws-section ws-workflows"
@@ -83,7 +83,10 @@ export function WorkflowShowcase() {
               key={workflow.id}
               aria-pressed={selected === i}
               aria-controls="workflow-preview"
-              onClick={() => setSelected(i)}
+              onClick={(event) => {
+                setImmediate(event.detail === 0);
+                setSelected(i);
+              }}
             >
               <Icon size={16} />
               {workflow.label}
@@ -92,57 +95,84 @@ export function WorkflowShowcase() {
           );
         })}
       </div>
-      <div className="ws-workflow-panel" id="workflow-preview">
-        <div className="ws-workflow-art" key={item.id}>
-          {selected === 1 ? (
-            <CinematicMedia
-              asset={item.asset}
-              sizes="(max-width: 760px) 90vw, 55vw"
-            />
-          ) : (
-            <Image
-              src={`/assets/campaigns/${item.asset.slug}.webp`}
-              alt={item.asset.alt}
-              fill
-              sizes="(max-width: 760px) 90vw, 55vw"
-            />
-          )}
-          <span className="ws-art-label">
-            {selected === 1
-              ? "GENERATED MOTION STUDY"
-              : "GENERATED CAMPAIGN ENVIRONMENT"}
-          </span>
-          {selected === 2 && (
-            <div className="ws-collection-stack" aria-hidden="true">
-              <span>
-                <ImageIcon size={15} /> City after dark
+      <div
+        className="ws-workflow-panel"
+        id="workflow-preview"
+        data-immediate={immediate}
+      >
+        <div className="ws-workflow-art">
+          {workflows.map((item, i) => (
+            <div
+              className="ws-workflow-layer"
+              key={item.id}
+              data-active={selected === i}
+              aria-hidden={selected !== i}
+              inert={selected !== i}
+            >
+              <Image
+                src={`/assets/campaigns/${item.asset.slug}.webp`}
+                alt={item.asset.alt}
+                aria-hidden={selected === 1 && i === 1}
+                fill
+                sizes="(max-width: 700px) 90vw, 55vw"
+              />
+              {i === 1 && selected === 1 && (
+                <CinematicMedia
+                  asset={item.asset}
+                  sizes="(max-width: 700px) 90vw, 55vw"
+                />
+              )}
+              <span className="ws-art-label">
+                {i === 1
+                  ? "GENERATED MOTION STUDY"
+                  : "GENERATED CAMPAIGN ENVIRONMENT"}
               </span>
-              <span>
-                <Film size={15} /> Coastal dusk
-              </span>
-              <span>
-                <FolderIcon /> Studio studies
-              </span>
+              {i === 2 && (
+                <div className="ws-collection-stack" aria-hidden="true">
+                  <span>
+                    <ImageIcon size={15} /> City after dark
+                  </span>
+                  <span>
+                    <Film size={15} /> Coastal dusk
+                  </span>
+                  <span>
+                    <FolderIcon /> Studio studies
+                  </span>
+                </div>
+              )}
             </div>
-          )}
+          ))}
         </div>
-        <div className="ws-workflow-copy" aria-live="polite">
-          <span className="ws-eyebrow">
-            0{selected + 1} / {item.label}
-          </span>
-          <h3>{item.title}</h3>
-          <p>{item.description}</p>
-          <div className="ws-tags">
-            {item.tags.map((tag) => (
-              <span key={tag}>{tag}</span>
-            ))}
-          </div>
-          <Link className="ws-inline-link" href={item.link}>
-            {item.cta}
-            <ArrowUpRight size={17} />
-          </Link>
+        <div className="ws-workflow-content">
+          {workflows.map((item, i) => (
+            <div
+              className="ws-workflow-copy"
+              key={item.id}
+              data-active={selected === i}
+              aria-hidden={selected !== i}
+              inert={selected !== i}
+            >
+              <span className="ws-eyebrow">
+                0{i + 1} / {item.label}
+              </span>
+              <h3>{item.title}</h3>
+              <p>{item.description}</p>
+              <div className="ws-tags">
+                {item.tags.map((tag) => (
+                  <span key={tag}>{tag}</span>
+                ))}
+              </div>
+              <Link className="ws-inline-link" href={item.link}>
+                {item.cta}
+                <ArrowUpRight size={17} />
+              </Link>
+            </div>
+          ))}
         </div>
       </div>
+      <p className="sr-only" role="status">
+        {workflows[selected].label} preview selected.
+      </p>
       <p className="ws-disclosure">
         Campaign studies show creative settings, not likeness results for the
         launch characters.

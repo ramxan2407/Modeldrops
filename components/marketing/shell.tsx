@@ -1,7 +1,13 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import { ArrowUpRight, Menu, X } from "lucide-react";
 import { ModelDropsBrand } from "@/components/model-drops-brand";
 import { ThemeToggle } from "@/components/theme-provider";
@@ -18,8 +24,11 @@ const links = [
 ];
 export function MarketingShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [menuImmediate, setMenuImmediate] = useState(false);
   const pathname = usePathname();
   const menuButton = useRef<HTMLButtonElement>(null);
+  const mobileNav = useRef<HTMLElement>(null);
+  const desktopNav = useRef<HTMLElement>(null);
   const reduced = useReducedStoryMotion();
   const systemReduced = useSystemReducedStoryMotion();
   const header = useRef<HTMLElement>(null);
@@ -29,7 +38,10 @@ export function MarketingShell({ children }: { children: ReactNode }) {
       frame = 0;
       const y = window.scrollY;
       if (header.current) {
-        header.current.dataset.compact = String(y > 24);
+        const compact = String(y > 24);
+        if (header.current.dataset.compact !== compact) {
+          header.current.dataset.compact = compact;
+        }
       }
     };
     const scroll = () => {
@@ -37,6 +49,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
     };
     const key = (event: KeyboardEvent) => {
       if (event.key === "Escape" && open) {
+        setMenuImmediate(true);
         setOpen(false);
         menuButton.current?.focus();
       }
@@ -50,8 +63,61 @@ export function MarketingShell({ children }: { children: ReactNode }) {
       cancelAnimationFrame(frame);
     };
   }, [open]);
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 960px)");
+    const closeOnDesktop = () => {
+      if (!desktop.matches) return;
+      if (mobileNav.current?.contains(document.activeElement)) {
+        desktopNav.current?.querySelector("a")?.focus();
+      }
+      setMenuImmediate(true);
+      setOpen(false);
+    };
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => desktop.removeEventListener("change", closeOnDesktop);
+  }, []);
+  const closeMenu = (event: MouseEvent<HTMLAnchorElement>) => {
+    setMenuImmediate(event.detail === 0);
+    setOpen(false);
+  };
+  const handleAnchor = (event: MouseEvent<HTMLDivElement>) => {
+    if (
+      !reduced ||
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    )
+      return;
+    const anchor = (event.target as Element).closest<HTMLAnchorElement>(
+      "a[href]",
+    );
+    if (!anchor || anchor.target || anchor.hasAttribute("download")) return;
+    const destination = new URL(anchor.href);
+    if (
+      destination.origin !== location.origin ||
+      destination.pathname !== location.pathname ||
+      destination.search !== location.search ||
+      !destination.hash
+    )
+      return;
+    const target = document.getElementById(
+      decodeURIComponent(destination.hash.slice(1)),
+    );
+    if (!target) return;
+    event.preventDefault();
+    history.pushState(null, "", destination.hash);
+    target.scrollIntoView({ behavior: "instant" });
+    if (target.id === "main-content") target.focus({ preventScroll: true });
+  };
   return (
-    <div className="md-public md-workspace-site" data-reduced-motion={reduced}>
+    <div
+      className="md-public md-workspace-site"
+      data-reduced-motion={reduced}
+      onClickCapture={handleAnchor}
+    >
       <a className="md-skip" href="#main-content">
         Skip to content
       </a>
@@ -59,7 +125,11 @@ export function MarketingShell({ children }: { children: ReactNode }) {
         <Link href="/welcome" aria-label="ModelDrops home">
           <ModelDropsBrand />
         </Link>
-        <nav className="md-desktop-nav" aria-label="Main navigation">
+        <nav
+          className="md-desktop-nav"
+          aria-label="Main navigation"
+          ref={desktopNav}
+        >
           {links.map(([label, href]) => (
             <Link
               key={href}
@@ -83,53 +153,58 @@ export function MarketingShell({ children }: { children: ReactNode }) {
             Start creating <ArrowUpRight size={15} />
           </Link>
           <button
+            type="button"
             className="md-menu-button"
             ref={menuButton}
             aria-expanded={open}
             aria-controls="md-mobile-nav"
             aria-label={open ? "Close menu" : "Open menu"}
-            onClick={() => setOpen(!open)}
+            onClick={(event) => {
+              setMenuImmediate(event.detail === 0);
+              setOpen(!open);
+            }}
           >
             {open ? <X /> : <Menu />}
           </button>
         </div>
-        {open && (
-          <nav
-            id="md-mobile-nav"
-            className="md-mobile-nav"
-            aria-label="Mobile navigation"
-          >
-            {links.map(([label, href]) => (
-              <Link
-                onClick={() => setOpen(false)}
-                key={href}
-                href={href}
-                aria-current={
-                  pathname === href || pathname.startsWith(`${href}/`)
-                    ? "page"
-                    : undefined
-                }
-              >
-                {label}
-                <ArrowUpRight size={18} />
-              </Link>
-            ))}
-            <div className="md-mobile-account">
-              <Link onClick={() => setOpen(false)} href="/login">
-                Sign in
-              </Link>
-              <Link
-                onClick={() => setOpen(false)}
-                href="/create"
-                className="md-button"
-              >
-                Start creating <ArrowUpRight size={16} />
-              </Link>
-            </div>
-          </nav>
-        )}
+        <nav
+          ref={mobileNav}
+          id="md-mobile-nav"
+          className="md-mobile-nav"
+          aria-label="Mobile navigation"
+          data-open={open}
+          data-immediate={menuImmediate}
+          aria-hidden={!open}
+          inert={!open}
+        >
+          {links.map(([label, href]) => (
+            <Link
+              onClick={closeMenu}
+              key={href}
+              href={href}
+              aria-current={
+                pathname === href || pathname.startsWith(`${href}/`)
+                  ? "page"
+                  : undefined
+              }
+            >
+              {label}
+              <ArrowUpRight size={18} />
+            </Link>
+          ))}
+          <div className="md-mobile-account">
+            <Link onClick={closeMenu} href="/login">
+              Sign in
+            </Link>
+            <Link onClick={closeMenu} href="/create" className="md-button">
+              Start creating <ArrowUpRight size={16} />
+            </Link>
+          </div>
+        </nav>
       </header>
-      <main id="main-content">{children}</main>
+      <main id="main-content" tabIndex={-1}>
+        {children}
+      </main>
       <footer className="md-footer">
         <div>
           <Link href="/welcome">
@@ -170,7 +245,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
             title={
               systemReduced
                 ? "Motion is reduced by your device accessibility settings."
-                : "Turn off scroll animations and interface transitions."
+                : "Reduce movement while keeping gentle visual feedback."
             }
             onClick={toggleStoryMotion}
           >

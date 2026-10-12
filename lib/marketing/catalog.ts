@@ -1,7 +1,7 @@
-import { characters } from "../catalog";
+import { characters, type Character } from "../catalog";
 
 /** Public launch copy. Private approved reference assets never enter this payload. */
-export const talent = characters.map((character, index) => ({
+export const toTalent = (character: Character, index: number) => ({
   ...character,
   slug: character.id,
   number: String(index + 1).padStart(2, "0"),
@@ -14,13 +14,14 @@ export const talent = characters.map((character, index) => ({
       ),
     ]),
   ],
-  accessType: "Launch preview" as const,
+  accessType: "Launch preview",
   gallery: [] as { src: string; alt: string; scene: string }[],
   featured: index === 0,
   isNew: true,
   popular: false,
-}));
-export type Talent = (typeof talent)[number];
+});
+export const talent = characters.map(toTalent);
+export type Talent = ReturnType<typeof toTalent>;
 export const modelFilters = [
   "All",
   "Women",

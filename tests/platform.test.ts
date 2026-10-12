@@ -1,3 +1,4 @@
+import { seedReviewedCharacter } from "./helpers/character-fixture";
 import type { TestUser } from "./helpers/platform-runtime";
 import { postgresFixture } from "./helpers/postgres-fixture";
 import test from "node:test";
@@ -175,6 +176,7 @@ for (const backend of ["sqlite", "postgres"]) {
           idempotencyKey: crypto.randomUUID(),
           characterId: "valentina",
           modelId: "forma-image",
+          expectedCredits: 12,
           prompt: "QA portrait",
           settings: {
             ratio: "1:1",
@@ -188,6 +190,19 @@ for (const backend of ["sqlite", "postgres"]) {
         who("bob");
         assert.equal((await post("generate", payload)).status, 403);
         who("alice");
+        assert.equal(
+          (await post("generate", payload)).status,
+          403,
+          "Free preview claims do not grant generation",
+        );
+        await f.env.DB.batch([
+          f.env.DB.prepare(
+            "INSERT INTO character_orders(id,user_id,character_id,amount_cents,currency,mode,status,license_snapshot,idempotency_key) VALUES('paid-fixture','alice','valentina',2900,'usd','payment','paid','Fixture license','paid-fixture')",
+          ),
+          f.env.DB.prepare(
+            "INSERT INTO character_entitlements(user_id,character_id,order_id) VALUES('alice','valentina','paid-fixture')",
+          ),
+        ]);
         const r = await post("generate", payload);
         assert.equal(r.status, 202);
         const job = await r.json();
@@ -437,6 +452,7 @@ for (const backend of ["sqlite", "postgres"]) {
               idempotencyKey: crypto.randomUUID(),
               characterId: "valentina",
               modelId: "forma-image",
+              expectedCredits: 12,
               prompt: "Permission check",
               settings: {
                 ratio: "1:1",
@@ -533,6 +549,7 @@ for (const backend of ["sqlite", "postgres"]) {
             price: 29,
             enabled: true,
             featured: false,
+            fictionalAdultConfirmed: true,
             profile,
             reason: "Approve reference portrait",
           }),
@@ -543,6 +560,7 @@ for (const backend of ["sqlite", "postgres"]) {
             price: 29,
             enabled: true,
             featured: false,
+            fictionalAdultConfirmed: true,
             profile: { ...profile, referenceAssetId: crypto.randomUUID() },
             reason: "Reject foreign asset",
           }),
@@ -552,9 +570,11 @@ for (const backend of ["sqlite", "postgres"]) {
           price: 29,
           enabled: true,
           featured: false,
+          fictionalAdultConfirmed: true,
           profile,
           reason: "Approve reference portrait",
         });
+        await seedReviewedCharacter(f.env.DB, { id: characterId, ...profile });
         const testEnv = {
           CHARACTER_TEST_CHECKOUT: "true",
           VERCEL_ENV: "preview",
@@ -562,6 +582,7 @@ for (const backend of ["sqlite", "postgres"]) {
         const service = new CharacterCheckout(f.env.DB, "alice", testEnv);
         const order = {
           characterId,
+          expectedVersionId: `${characterId}@asset:${referenceId}`,
           expectedAmountCents: 2900,
           acceptedLicense: true,
           idempotencyKey: crypto.randomUUID(),
@@ -632,7 +653,7 @@ for (const backend of ["sqlite", "postgres"]) {
         );
         assert.equal(
           (await f.env.DB.prepare(
-            "SELECT COUNT(*) n FROM character_orders",
+            "SELECT COUNT(*) n FROM character_orders WHERE character_id='sora'",
           ).first<{ n: number }>())!.n,
           1,
         );
@@ -664,7 +685,7 @@ for (const backend of ["sqlite", "postgres"]) {
         }
         assert.equal(
           (await f.env.DB.prepare(
-            "SELECT COUNT(*) n FROM character_orders",
+            "SELECT COUNT(*) n FROM character_orders WHERE character_id='sora'",
           ).first<{ n: number }>())!.n,
           1,
         );

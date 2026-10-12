@@ -21,6 +21,9 @@ export const generationModels = [
 export const generationModel = (id: string) =>
   generationModels.find((model) => model.id === id);
 export type GenerationEnvironment = {
+  GENERATION_REQUESTS_PER_MINUTE?: string;
+  GENERATION_USER_DAILY_LIMIT_USD?: string;
+  DEMO_TOTAL_LIMIT_USD?: string;
   WAVESPEED_API_KEY?: string;
   WAVESPEED_ENABLED?: string;
   WAVESPEED_DAILY_LIMIT_USD?: string;

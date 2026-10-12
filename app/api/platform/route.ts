@@ -1,3 +1,5 @@
+import { reserveProviderStatement } from "@/lib/generation/budget";
+import { purchasedVersion, versionCharacter } from "@/lib/characters/versions";
 import { activeWallet, demoEnabled } from "@/lib/credits";
 import { characterAccess, testCheckoutEnabled } from "@/lib/characters/access";
 import {
@@ -33,7 +35,6 @@ import {
   generationModel,
   generationInput,
   providerReserve,
-  dailyLimit,
 } from "@/lib/generation/models";
 import { refundJob } from "@/lib/demo-worker";
 export const dynamic = "force-dynamic";
@@ -192,6 +193,37 @@ export async function GET(request: Request) {
           : null,
       ),
     );
+    const currentCatalog = await visibleCharacters(
+      DB,
+      user.userId,
+      await catalogFor(DB),
+    );
+    const workspaceCatalog = await Promise.all(
+      currentCatalog.map(async (c) => {
+        if (isSuperAdmin(user.userId) && c.referenceAssetId)
+          return {
+            ...c,
+            referenceImage: `/api/characters/reference?id=${encodeURIComponent(c.id)}&asset=${encodeURIComponent(c.referenceAssetId)}`,
+            image: `/api/characters/reference?id=${encodeURIComponent(c.id)}&asset=${encodeURIComponent(c.referenceAssetId)}`,
+          };
+        const version = await purchasedVersion(DB, user.userId, c.id);
+        return version?.approved && usable.includes(c.id)
+          ? {
+              ...c,
+              ...versionCharacter(version),
+              canGenerate: c.canGenerate,
+              latestVersionId:
+                c.approvalStatus === "approved" && c.referenceAssetId
+                  ? `${c.id}@asset:${c.referenceAssetId}`
+                  : null,
+            }
+          : c;
+      }),
+    );
+    if (isSuperAdmin(user.userId))
+      usable.push(
+        ...currentCatalog.filter((c) => c.referenceAssetId).map((c) => c.id),
+      );
     const assets = await DB.prepare(
       "SELECT id,generation_id,mime FROM generation_assets WHERE user_id=? AND generation_id IN (SELECT id FROM generations WHERE user_id=? AND status='completed' ORDER BY created_at DESC LIMIT 100) ORDER BY id",
     )
@@ -282,11 +314,7 @@ export async function GET(request: Request) {
             enabled: !!m.enabled && (m.provider !== "WaveSpeed" || liveEnabled),
           })),
         packages: packages.results,
-        characters: await visibleCharacters(
-          DB,
-          user.userId,
-          await catalogFor(DB),
-        ),
+        characters: workspaceCatalog,
       },
       { headers: { "Cache-Control": "private, no-store" } },
     );
@@ -424,6 +452,8 @@ export async function POST(request: Request) {
           throw new ApiError(503, "Choose an available generation model.");
         let providerInput: unknown;
         let characterReference: string | null = null;
+        let characterVersionId: string | null = null;
+        const qa = isSuperAdmin(id);
         if (live) {
           try {
             const resolved = await resolveCharacterReferenceInputs(
@@ -433,9 +463,11 @@ export async function POST(request: Request) {
               m.id,
               d.settings.providerInputs || {},
               new URL(request.url).origin,
+              { qa },
             );
             const identity = resolved.inputs;
             characterReference = resolved.reference;
+            characterVersionId = resolved.versionId;
             providerInput = generationInput(
               m.id,
               d.prompt,
@@ -484,13 +516,7 @@ export async function POST(request: Request) {
           )
             throw new ApiError(400, "Character unavailable");
           const owned =
-            live || (await characterAccess(DB, id, d.characterId, bindings()))
-              ? true
-              : await DB.prepare(
-                  "SELECT id FROM character_purchases WHERE user_id=? AND character_id=? AND status='active'",
-                )
-                  .bind(id, d.characterId)
-                  .first();
+            live || (await characterAccess(DB, id, d.characterId, bindings()));
           if (!owned)
             throw new ApiError(
               403,
@@ -521,12 +547,12 @@ export async function POST(request: Request) {
           : "";
         let reserve = live ? providerReserve(m.id, d.settings) : 0;
         let cost = calculateCredits(m.credits, m.type, d.settings);
+        if (!d.expectedCredits)
+          throw new ApiError(
+            400,
+            "Review the current generation price before generating.",
+          );
         if (live && m.type === "image") {
-          if (!d.expectedCredits)
-            throw new ApiError(
-              400,
-              "Get a current image price before generating.",
-            );
           providerInput = await resolveImageReferences(
             providerInput as Record<string, unknown>,
             id,
@@ -536,12 +562,13 @@ export async function POST(request: Request) {
               m.id,
               providerInput as Record<string, unknown>,
             );
-            const quote = await quoteImage(bindings(), endpoint, providerInput);
-            if (quote.credits > d.expectedCredits)
-              throw new ApiError(
-                409,
-                "The price changed. Review the updated quote before generating.",
-              );
+            const quote = await quoteImage(
+              bindings(),
+              endpoint,
+              providerInput,
+              fetch,
+              m.credits,
+            );
             cost = quote.credits;
             reserve = quote.providerMicrousd;
           } catch (e) {
@@ -552,6 +579,11 @@ export async function POST(request: Request) {
             );
           }
         }
+        if (cost > d.expectedCredits)
+          throw new ApiError(
+            409,
+            "The price changed. Review the updated price before generating.",
+          );
         const balance = await DB.prepare(
           "SELECT COALESCE(SUM(amount),0) AS balance FROM credit_transactions WHERE user_id=? AND wallet=?",
         )
@@ -563,7 +595,7 @@ export async function POST(request: Request) {
         try {
           await DB.batch([
             DB.prepare(
-              "INSERT INTO generations(id,user_id,character_id,model_id,prompt,settings,type,cost,idempotency_key,reference_id,updated_at,credit_wallet) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+              "INSERT INTO generations(id,user_id,character_id,model_id,prompt,settings,type,cost,idempotency_key,reference_id,updated_at,credit_wallet,character_version_id,purpose) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             ).bind(
               gen,
               id,
@@ -577,6 +609,8 @@ export async function POST(request: Request) {
               d.reference || null,
               new Date().toISOString(),
               activeWallet(bindings()),
+              characterVersionId,
+              qa ? "character_qa" : "customer",
             ),
             ledgerStatement(
               id,
@@ -590,21 +624,14 @@ export async function POST(request: Request) {
             ),
             ...(live
               ? [
-                  DB.prepare(
-                    "INSERT INTO provider_requests(generation_id,endpoint,input_json,character_reference,reserved_microusd,created_at,updated_at) SELECT ?,?,?,?,CASE WHEN COALESCE(SUM(reserved_microusd),0)+?<=? AND (SELECT COUNT(*) FROM generations WHERE user_id=? AND status IN ('queued','processing'))<=3 THEN CAST(? AS bigint) ELSE NULL END,?,? FROM provider_requests WHERE created_at>=? AND generation_id IN (SELECT g.id FROM generations g JOIN ai_models m ON m.id=g.model_id WHERE m.provider='WaveSpeed')",
-                  ).bind(
-                    gen,
+                  reserveProviderStatement(DB, bindings(), {
+                    id: gen,
+                    userId: id,
                     endpoint,
-                    JSON.stringify(providerInput),
-                    characterReference,
+                    input: JSON.stringify(providerInput),
+                    reference: characterReference,
                     reserve,
-                    dailyLimit(bindings()),
-                    id,
-                    reserve,
-                    new Date().toISOString(),
-                    new Date().toISOString(),
-                    new Date().toISOString().slice(0, 10) + "T00:00:00.000Z",
-                  ),
+                  }),
                 ]
               : []),
             DB.prepare(

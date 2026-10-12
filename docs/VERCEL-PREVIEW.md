@@ -1,6 +1,6 @@
 # Vercel preview
 
-This app supports two hosting targets. The existing Sites build still uses Vinext, D1 and R2. `npm run build:vercel` builds native Next.js for Vercel with Supabase Postgres and private S3-compatible Supabase Storage. Authentication continues to use the same verified Supabase identities. AI generation and purchases remain demonstrations.
+This app supports two hosting targets. The existing Sites build still uses Vinext, D1 and R2. `npm run build:vercel` builds native Next.js for Vercel with Supabase Postgres and private S3-compatible Supabase Storage. Authentication continues to use the same verified Supabase identities. Hosted generation can use real paid provider APIs. Character purchases use demo credits; payment processing remains deferred.
 
 ## GitHub import
 
@@ -28,8 +28,12 @@ The database adapter validates TLS with Supabase's published root CA. Workspace 
 
 Vercel request payload limits are avoided by staging uploads directly into private storage with short-lived signed PUT URLs. The server binds reservations to the authenticated user and exact target endpoint, verifies uploaded size and content, and consumes each reservation once before accepting it into the workspace. Expired staging objects are cleaned during later uploads by the same owner; a scheduled cleanup should be added before broad public use.
 
-LoRA weights retain resumable S3 multipart delivery and server-side safetensors validation. Download and dataset ZIP responses stream through authenticated endpoints. The demo job uses Next's `after()` and a bundled sample asset; it is not an external AI worker or real video rendering.
+LoRA weights retain resumable S3 multipart delivery and server-side safetensors validation. Download and dataset ZIP responses stream through authenticated endpoints. Live jobs use Next's `after()` and the authenticated `/api/jobs` cron. That cron also retries training email and drains the durable storage cleanup queue. Only the isolated local QA harness replaces provider output with bundled samples.
 
 ## Verification
 
 Use Node 24 for tests on this machine; Node 23 hangs during embedded PGlite startup. Run `node --import tsx --test tests/*.test.ts` with that runtime, `npm run build:vercel`, and `node --env-file=.env.vercel.local --import tsx scripts/verify-vercel-storage.ts` for the temporary-object storage check. Tests exercise both SQLite and Postgres API flows, ownership, credits, training transitions, and upload reservations.
+
+## Demo readiness upgrade
+
+After migrations 001–006, apply `node --env-file=.env.demo.local scripts/migrate-demo-readiness.mjs` to the selected database before deploying these routes. It applies migration 007 transactionally and refuses a second application. No environment file is loaded implicitly. Existing demo users must be invited through Super admin → Users; existing balances are preserved. See [DEMO_TESTING.md](DEMO_TESTING.md) for portrait QA and version migration behavior.

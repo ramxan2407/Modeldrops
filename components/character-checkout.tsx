@@ -9,6 +9,8 @@ import {
 import { Button } from "@/components/ui/button";
 import type { Character } from "@/lib/catalog";
 type Quote = {
+  versionId: string | null;
+  canGenerate: boolean;
   characterId: string;
   name: string;
   amountCents: number;
@@ -86,6 +88,7 @@ function CheckoutSession({
         body: JSON.stringify({
           characterId: quote.characterId,
           acceptedLicense: accepted,
+          expectedVersionId: quote.versionId,
           expectedAmountCents: quote.amountCents,
           idempotencyKey: key,
           expectedCredits:
@@ -127,7 +130,13 @@ function CheckoutSession({
               · Character access
             </p>
             <p>{quote.license}</p>
-            {!quote.ready && (
+            {!quote.canGenerate && (
+              <p role="alert">
+                Generation access is restricted for your account. No credits
+                will be charged.
+              </p>
+            )}
+            {!quote.ready && quote.canGenerate && (
               <p role="status">
                 The approved reference is being prepared. This model cannot be
                 unlocked yet.

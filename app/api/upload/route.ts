@@ -39,12 +39,21 @@ export async function POST(request: Request) {
     if (!mime) throw new ApiError(400, "Unsupported image format");
     const { DB, BUCKET } = bindings();
     const n = await DB.prepare(
-      "SELECT COUNT(*) AS n FROM generation_assets WHERE user_id=? AND generation_id IS NULL",
+      "SELECT COUNT(*) AS n FROM generation_assets WHERE user_id=? AND generation_id IS NULL AND replace(substr(created_at,1,19),'T',' ')>=?",
     )
-      .bind(user.userId)
+      .bind(
+        user.userId,
+        new Date(Date.now() - 86400000)
+          .toISOString()
+          .slice(0, 19)
+          .replace("T", " "),
+      )
       .first<{ n: number }>();
     if ((n?.n ?? 0) >= 50)
-      throw new ApiError(429, "Preview reference limit reached");
+      throw new ApiError(
+        429,
+        "You have uploaded 50 reference images in the last 24 hours. Please try again as earlier uploads leave this daily window.",
+      );
     const id = uid(),
       storageKey = `private/${user.userId}/references/${id}`;
     await BUCKET.put(storageKey, bytes, {

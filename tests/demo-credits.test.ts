@@ -1,3 +1,4 @@
+import { seedReviewedCharacter } from "./helpers/character-fixture";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "vite";
@@ -22,6 +23,8 @@ for (const backend of ["sqlite", "postgres"]) {
         WAVESPEED_API_KEY: "mock-key",
         WAVESPEED_ENABLED: "true",
         WAVESPEED_DAILY_LIMIT_USD: "5",
+        GENERATION_USER_DAILY_LIMIT_USD: "1000",
+        GENERATION_REQUESTS_PER_MINUTE: "1000",
       },
       user: { userId: "alice", email: "alice@example.test" },
       jobs: [],
@@ -142,6 +145,7 @@ for (const backend of ["sqlite", "postgres"]) {
         request("/api/characters/checkout", {
           characterId,
           expectedCredits,
+          expectedVersionId: `${characterId}@asset:${assetId}`,
           idempotencyKey,
           acceptedLicense: true,
         }),
@@ -161,15 +165,25 @@ for (const backend of ["sqlite", "postgres"]) {
       description: "Fictional adult demo character",
       demoCreditPrice: 300,
       referenceAssetId: assetId,
-      approvalStatus: "pending",
+      approvalStatus: "pending" as const,
     };
-    const approve = (
+    const approve = async (
       approvalStatus: string,
       id = "valentina",
       demoCreditPrice = 300,
       portrait: string | null = assetId,
-    ) =>
-      admin.POST(
+    ) => {
+      if (
+        approvalStatus === "approved" &&
+        portrait &&
+        runtime.user?.userId === "admin"
+      )
+        await seedReviewedCharacter(db, {
+          id,
+          ...profile,
+          referenceAssetId: portrait,
+        });
+      return admin.POST(
         request("/api/admin", {
           action: "character",
           data: {
@@ -178,6 +192,7 @@ for (const backend of ["sqlite", "postgres"]) {
             enabled: true,
             featured: false,
             reason: "Demo testing character approval",
+            fictionalAdultConfirmed: true,
             profile: {
               ...profile,
               approvalStatus,
@@ -187,6 +202,7 @@ for (const backend of ["sqlite", "postgres"]) {
           },
         }),
       );
+    };
     const tick = async (id: string) => {
       await db
         .prepare(
@@ -206,7 +222,7 @@ for (const backend of ["sqlite", "postgres"]) {
             prompt:
               "Editorial portrait of the adult character in soft daylight",
             idempotencyKey: crypto.randomUUID(),
-            expectedCredits: 12,
+            expectedCredits: video ? 120 : 12,
             settings: video
               ? {
                   ratio: "16:9",
@@ -227,6 +243,56 @@ for (const backend of ["sqlite", "postgres"]) {
         }),
       );
     try {
+      assert.equal(
+        (
+          await api.GET(
+            new Request("http://test.local/api/platform?action=state"),
+          )
+        ).status,
+        403,
+        "Uninvited demo identities are blocked",
+      );
+      who("admin");
+      for (const email of ["alice@example.test", "bob@example.test"])
+        assert.equal(
+          (
+            await admin.POST(
+              request("/api/admin", {
+                action: "tester",
+                data: {
+                  id: email,
+                  enabled: true,
+                  reason: "Approve test participant",
+                },
+              }),
+            )
+          ).status,
+          200,
+        );
+      who("alice");
+      assert.equal(
+        (await state()).account.balance,
+        0,
+        "Invited users receive no automatic generation credits",
+      );
+      who("admin");
+      assert.equal(
+        (
+          await admin.POST(
+            request("/api/admin", {
+              action: "credits",
+              data: {
+                id: "alice",
+                amount: 2000,
+                key: crypto.randomUUID(),
+                reason: "Assign controlled testing budget",
+              },
+            }),
+          )
+        ).status,
+        200,
+      );
+      who("alice");
       assert.equal((await state()).account.balance, 2000);
       assert.equal(
         (await state()).account.balance,
@@ -361,12 +427,12 @@ for (const backend of ["sqlite", "postgres"]) {
       who("bob");
       assert.equal(
         (await state()).account.balance,
-        2050,
+        50,
         "First demo visit preserves prior admin top-up",
       );
       assert.equal(
         (await state()).account.balance,
-        2050,
+        50,
         "Welcome grant never repeats",
       );
       assert.deepEqual((await state()).account.usableCharacters, []);

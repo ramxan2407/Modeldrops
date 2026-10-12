@@ -9,6 +9,7 @@ export function StudioCharacterSelector({
   loading,
   error,
   replacedSelection,
+  qa = false,
   onChange,
   onBrowse,
 }: {
@@ -17,6 +18,7 @@ export function StudioCharacterSelector({
   loading: boolean;
   error: boolean;
   replacedSelection: boolean;
+  qa?: boolean;
   onChange: (id: string) => void;
   onBrowse: () => void;
 }) {
@@ -42,8 +44,9 @@ export function StudioCharacterSelector({
         </button>
       </div>
       <p id="studio-character-help">
-        Choose from your purchased characters. The same character is used for
-        images and videos.
+        {qa
+          ? "Choose a character candidate to test its saved portrait with images and videos."
+          : "Choose from your purchased characters. The same character is used for images and videos."}
       </p>
       <select
         id="studio-character"
@@ -58,7 +61,9 @@ export function StudioCharacterSelector({
               ? "Loading your characters…"
               : error
                 ? "Could not load your characters"
-                : "No purchased characters available"}
+                : qa
+                  ? "No character candidates available"
+                  : "No purchased characters available"}
           </option>
         )}
         {characters.map((c) => (
@@ -99,8 +104,9 @@ export function StudioCharacterSelector({
             <>
               <Users size={22} />
               <span>
-                Purchase a character to start creating. Preview claims do not
-                unlock Studio.
+                {qa
+                  ? "Save a reference portrait in the character editor to start testing."
+                  : "Purchase a character to start creating. Preview claims do not unlock Studio."}
               </span>
               <button type="button" onClick={onBrowse}>
                 Explore characters <ArrowUpRight size={13} />
@@ -111,7 +117,9 @@ export function StudioCharacterSelector({
       )}
       {replacedSelection && (
         <p role="status">
-          The previous character is unavailable in your purchased library.
+          {qa
+            ? "The previous character candidate is unavailable."
+            : "The previous character is unavailable in your purchased library."}
           {character
             ? ` ${character.name} is selected instead.`
             : " Your earlier creations are preserved."}
@@ -119,8 +127,9 @@ export function StudioCharacterSelector({
       )}
       {character && (
         <small>
-          The approved reference is attached automatically. You only need to
-          describe the scene.
+          {qa
+            ? "The saved candidate portrait is attached automatically for this QA generation."
+            : "The approved reference is attached automatically. You only need to describe the scene."}
         </small>
       )}
     </section>

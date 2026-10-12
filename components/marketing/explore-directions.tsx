@@ -1,17 +1,21 @@
 "use client";
+import { usePublicTalent } from "./use-public-talent";
 import { useState } from "react";
-import { creativeScenes, talent } from "@/lib/marketing/catalog";
+import { creativeScenes } from "@/lib/marketing/catalog";
 import { ModelAccess } from "./model-access";
 export function ExploreDirections({
   initialScene = "editorial",
 }: {
   initialScene?: string;
 }) {
+  const talent = usePublicTalent();
   const [scene, setScene] = useState(
       creativeScenes.find((s) => s.id === initialScene) || creativeScenes[0],
     ),
-    [id, setId] = useState(talent[0].id);
-  const model = talent.find((m) => m.id === id)!;
+    [id, setId] = useState("");
+  const model = talent.find((m) => m.id === id) || talent[0];
+  if (!model)
+    return <p>Reviewed characters will appear here when available.</p>;
   return (
     <section className="md-section md-explore">
       <span className="md-kicker">THE CREATIVE NOTEBOOK</span>

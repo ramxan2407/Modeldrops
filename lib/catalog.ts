@@ -1,4 +1,7 @@
 export type Character = {
+  versionId?: string;
+  latestVersionId?: string | null;
+  offeredModelIds?: string[];
   demoCreditPrice?: number;
   approvalStatus?: "pending" | "approved" | "rejected";
   id: string;

@@ -33,21 +33,10 @@ export async function POST(request: Request) {
       size > 25 * 1048576
     )
       throw new ApiError(400, "Invalid upload.");
-    const expired = await DB.prepare(
-      "SELECT id,storage_key FROM upload_transfers WHERE user_id=? AND expires_at<? LIMIT 100",
-    )
-      .bind(user.userId, Date.now())
-      .all<{ id: string; storage_key: string }>();
-    for (const old of expired.results) {
-      await bucket.delete(old.storage_key);
-      await DB.prepare("DELETE FROM upload_transfers WHERE id=?")
-        .bind(old.id)
-        .run();
-    }
     const id = uid(),
       key = `transfers/${user.userId}/${id}`;
     const result = await DB.prepare(
-      "INSERT INTO upload_transfers(id,user_id,storage_key,target,size,expires_at) SELECT ?,?,?,?,?,? WHERE (SELECT COUNT(*) FROM upload_transfers WHERE user_id=? AND claimed=0)<20",
+      "INSERT INTO upload_transfers(id,user_id,storage_key,target,size,expires_at) SELECT ?,?,?,?,?,? WHERE (SELECT COUNT(*) FROM upload_transfers WHERE user_id=? AND claimed=0 AND expires_at>?)<20",
     )
       .bind(
         id,
@@ -57,6 +46,7 @@ export async function POST(request: Request) {
         size,
         Date.now() + 300000,
         user.userId,
+        Date.now(),
       )
       .run();
     if (!result.meta.changes)

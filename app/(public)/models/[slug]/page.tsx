@@ -1,19 +1,18 @@
+export const dynamic = "force-dynamic";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { talent } from "@/lib/marketing/catalog";
+import { publicCatalog } from "@/lib/marketing/public-catalog";
 import { pageMetadata, siteUrl } from "@/lib/marketing/metadata";
 import { TalentPortrait } from "@/components/marketing/talent-card";
 import { ModelAccess } from "@/components/marketing/model-access";
-export function generateStaticParams() {
-  return talent.map((m) => ({ slug: m.slug }));
-}
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const talent = await publicCatalog();
   const m = talent.find((m) => m.slug === slug);
   return m
     ? pageMetadata(
@@ -29,6 +28,7 @@ export default async function ModelPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const talent = await publicCatalog();
   const m = talent.find((m) => m.slug === slug);
   if (!m) notFound();
   return (
@@ -69,7 +69,9 @@ export default async function ModelPage({
             </div>
             <div>
               <dt>Planned access</dt>
-              <dd>${m.price} · Generation credits separate</dd>
+              <dd>
+                {m.demoCreditPrice} demo credits · Generation credits separate
+              </dd>
             </div>
           </dl>
           <ModelAccess model={m} />

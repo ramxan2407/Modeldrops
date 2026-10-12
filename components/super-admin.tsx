@@ -1,4 +1,5 @@
 "use client";
+import { TesterAccess, JobRecovery } from "./admin-operations";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   type LucideIcon,
@@ -69,6 +70,14 @@ type AdminRecord = {
 };
 type AdminState = {
   _section?: string;
+  testers?: { email: string; enabled: number }[];
+  qualityExamples?: {
+    id: string;
+    character_id: string;
+    model_id: string;
+    type: string;
+    character_reference: string;
+  }[];
   demoMode: boolean;
   rows: AdminRecord[];
   hasMore?: boolean;
@@ -91,6 +100,8 @@ type AdminState = {
     state: string;
     error: string | null;
     status: string;
+    updated_at: string;
+    job_status: string;
   }[];
   integrations: { name: string; status: string; detail: string }[];
 };
@@ -178,8 +189,18 @@ export default function SuperAdmin({
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!edit || saving.current || uploading) return;
+    const testPortrait =
+      edit.action === "character" &&
+      (event.nativeEvent as SubmitEvent).submitter?.getAttribute("value") ===
+        "test-portrait";
     const f = new FormData(event.currentTarget),
       value = (k: string) => String(f.get(k) || "");
+    if (testPortrait && !f.has("enabled")) {
+      toast.error(
+        "Enable this character before testing it in Studio. You can still save it while disabled.",
+      );
+      return;
+    }
     const d: Record<string, unknown> = {
       id: edit.record.id,
       reason: value("reason"),
@@ -201,6 +222,8 @@ export default function SuperAdmin({
       d.price = Number(value("price"));
       d.enabled = f.has("enabled");
       d.featured = f.has("featured");
+      d.fictionalAdultConfirmed = f.has("fictionalAdultConfirmed");
+      d.reviewedGenerationIds = f.getAll("reviewedGenerationId");
       d.profile = {
         name: value("name"),
         description: value("description"),
@@ -208,7 +231,7 @@ export default function SuperAdmin({
         category: value("category"),
         referenceAssetId: edit.record.referenceAssetId || null,
         demoCreditPrice: Number(value("demoCreditPrice")),
-        approvalStatus: value("approvalStatus"),
+        approvalStatus: testPortrait ? "pending" : value("approvalStatus"),
       };
     }
     if (edit.action === "character_permission") {
@@ -225,6 +248,10 @@ export default function SuperAdmin({
       setEdit(null);
       toast.success("Change saved and recorded in the activity log.");
       await Promise.all([load(), onUpdated()]);
+      if (testPortrait)
+        window.location.assign(
+          `/studio?character=${encodeURIComponent(edit.record.id)}`,
+        );
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -625,8 +652,10 @@ export default function SuperAdmin({
               {section === "models" && (
                 <>
                   <p className="admin-muted">
-                    Model availability and base credit costs apply to new
-                    generation requests.
+                    Image credits are a minimum per request; settings can raise
+                    the quote. Video credits are the base rate, scaled by
+                    duration, resolution and audio. Changes apply to new
+                    requests.
                   </p>
                   {table(
                     ["Model", "Provider", "Type", "Base credits", "Status", ""],
@@ -669,7 +698,10 @@ export default function SuperAdmin({
                       <tr key={c.id}>
                         <td>
                           <div className="admin-character">
-                            <img src={c.image} alt="" />
+                            <img
+                              src={c.referencePreview || c.image}
+                              alt={`${c.name} portrait`}
+                            />
                             <div>
                               <strong>{c.name}</strong>
                               <small>{c.creator}</small>
@@ -692,7 +724,11 @@ export default function SuperAdmin({
                             size="sm"
                             variant="outline"
                             onClick={() =>
-                              open("character", c, "Edit character listing")
+                              open(
+                                "character",
+                                c,
+                                `Edit ${c.name || "character"}`,
+                              )
                             }
                           >
                             Edit
@@ -784,6 +820,9 @@ export default function SuperAdmin({
                       )),
                     )
                   : empty("No administrative changes match this filter."))}
+              {section === "users" && data.demoMode && (
+                <TesterAccess testers={data.testers || []} onUpdated={load} />
+              )}
               {section === "integrations" && (
                 <section>
                   <h2>Recent generation jobs</h2>
@@ -805,6 +844,7 @@ export default function SuperAdmin({
                             <td>{job.state}</td>
                             <td>
                               {generationMessage(job.error || job.status)}
+                              <JobRecovery job={job} onUpdated={load} />
                             </td>
                           </tr>
                         )),
@@ -960,35 +1000,13 @@ export default function SuperAdmin({
               )}
               {edit.action === "character" && (
                 <>
-                  <label>
-                    Approval status
-                    <select
-                      name="approvalStatus"
-                      key={edit.record.referenceAssetId || "empty"}
-                      defaultValue={edit.record.approvalStatus ?? "pending"}
-                      required
-                    >
-                      <option value="pending">Pending review</option>
-                      <option
-                        value="approved"
-                        disabled={!edit.record.referenceAssetId}
-                      >
-                        Approved — available to buy and generate
-                      </option>
-                      <option value="rejected">Rejected</option>
-                    </select>
-                  </label>
-                  <label>
-                    Demo character price (credits)
-                    <Input
-                      name="demoCreditPrice"
-                      type="number"
-                      min={1}
-                      max={100000}
-                      defaultValue={edit.record.demoCreditPrice ?? 300}
-                      required
-                    />
-                  </label>
+                  <p>
+                    Upload a portrait and save it as Pending review. Test the
+                    saved portrait in Studio, then review the results before
+                    approval. Existing buyers keep their purchased portrait
+                    until they choose to update it. Test generations use credits
+                    and the provider budget.
+                  </p>
                   <label>
                     Reference portrait
                     <input
@@ -1022,7 +1040,7 @@ export default function SuperAdmin({
                               : current,
                           );
                           toast.success(
-                            "Portrait uploaded. Review it, select Approved, and save to open access.",
+                            "Portrait uploaded. Save it as Pending review, then test it in Studio before approval.",
                           );
                         } catch (error) {
                           toast.error((error as Error).message);
@@ -1042,7 +1060,7 @@ export default function SuperAdmin({
                         edit.record.referenceImage ||
                         `/api/characters/reference?id=${encodeURIComponent(edit.record.id)}`
                       }
-                      alt="Character reference awaiting profile save"
+                      alt={`${edit.record.name || "Character"} reference portrait`}
                       style={{ maxHeight: 180, objectFit: "contain" }}
                     />
                   )}
@@ -1068,7 +1086,7 @@ export default function SuperAdmin({
                         )
                       }
                     >
-                      Remove approved reference
+                      Remove portrait from listing
                     </Button>
                   )}
                   <small>
@@ -1076,6 +1094,76 @@ export default function SuperAdmin({
                     up to 8 MB. This becomes the identity reference for all
                     supported generations.
                   </small>
+                  <label>
+                    <input
+                      type="checkbox"
+                      name="fictionalAdultConfirmed"
+                      required
+                    />{" "}
+                    I confirm this is an original fictional adult character.
+                    Approval publishes its portrait preview.
+                  </label>
+                  <fieldset>
+                    <legend>Reviewed generation examples</legend>
+                    <p>
+                      Select an output you have inspected from every enabled
+                      image model and video model.
+                    </p>
+                    {(data?.qualityExamples || [])
+                      .filter(
+                        (g) =>
+                          g.character_id === edit.record.id &&
+                          g.character_reference ===
+                            `asset:${edit.record.referenceAssetId}`,
+                      )
+                      .map((g) => (
+                        <label key={g.id}>
+                          <input
+                            name="reviewedGenerationId"
+                            value={g.id}
+                            type="checkbox"
+                          />{" "}
+                          {generationModelLabel(g.model_id)} ·{" "}
+                          <a
+                            href={`/api/media?id=${g.id}`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            View {g.type} example
+                          </a>
+                        </label>
+                      ))}
+                  </fieldset>
+
+                  <label>
+                    Approval status
+                    <select
+                      name="approvalStatus"
+                      key={edit.record.referenceAssetId || "empty"}
+                      defaultValue={edit.record.approvalStatus ?? "pending"}
+                      required
+                    >
+                      <option value="pending">Pending review</option>
+                      <option
+                        value="approved"
+                        disabled={!edit.record.referenceAssetId}
+                      >
+                        Approved — available to buy and generate
+                      </option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </label>
+                  <label>
+                    Demo character price (credits)
+                    <Input
+                      name="demoCreditPrice"
+                      type="number"
+                      min={1}
+                      max={100000}
+                      defaultValue={edit.record.demoCreditPrice ?? 300}
+                      required
+                    />
+                  </label>
                   <label>
                     Character name
                     <Input
@@ -1150,7 +1238,9 @@ export default function SuperAdmin({
               {["model", "package"].includes(edit.action) && (
                 <label>
                   {edit.action === "model"
-                    ? "Base generation credits"
+                    ? edit.record.type === "image"
+                      ? "Minimum image credits per request"
+                      : "Base video credits"
                     : "Package credits"}
                   <Input
                     name="credits"
@@ -1219,8 +1309,24 @@ export default function SuperAdmin({
                 >
                   Cancel
                 </Button>
+                {edit.action === "character" &&
+                  edit.record.referenceAssetId && (
+                    <Button
+                      type="submit"
+                      name="intent"
+                      value="test-portrait"
+                      variant="outline"
+                      disabled={busy || uploading}
+                    >
+                      Save pending & test in Studio
+                    </Button>
+                  )}
                 <Button disabled={busy || uploading}>
-                  {busy ? "Saving…" : "Confirm change"}
+                  {busy
+                    ? "Saving…"
+                    : edit.action === "character"
+                      ? "Save character"
+                      : "Confirm change"}
                 </Button>
               </div>
             </form>

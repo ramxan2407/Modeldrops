@@ -1,3 +1,9 @@
+import { qualityApprovalStatements } from "../characters/quality";
+import {
+  draftVersionStatement,
+  portraitVersionId,
+  readVersion,
+} from "../characters/versions";
 import { activeWallet, defaultCharacterCredits } from "../credits";
 import { z } from "zod";
 import { characters } from "../catalog";
@@ -22,6 +28,7 @@ const profile = z.object({
   referenceAssetId: z.string().uuid().nullable().optional(),
 });
 const schemas = {
+  tester: z.object({ id: z.string().email(), enabled: z.boolean(), reason }),
   character_permission: z.object({
     id: text,
     characterId: text,
@@ -58,6 +65,8 @@ const schemas = {
   character: z.object({
     id: text,
     profile: profile.optional(),
+    reviewedGenerationIds: z.array(z.string().uuid()).max(20).default([]),
+    fictionalAdultConfirmed: z.literal(true).optional(),
     price: z.number().int().min(0).max(100000),
     enabled: z.boolean(),
     featured: z.boolean(),
@@ -209,7 +218,18 @@ export class AdminService {
           ),
         };
       case "characters":
-        return { rows: await catalogFor(this.db) };
+        return {
+          rows: (await catalogFor(this.db)).map((character) => ({
+            ...character,
+            referencePreview: character.referenceAssetId
+              ? `/api/characters/reference?id=${encodeURIComponent(character.id)}&asset=${encodeURIComponent(character.referenceAssetId)}`
+              : undefined,
+          })),
+          qualityExamples: await list(
+            "SELECT g.id,g.character_id,g.model_id,g.type,p.character_reference FROM generations g JOIN provider_requests p ON p.generation_id=g.id WHERE g.user_id=? AND g.status='completed' AND p.state='completed' ORDER BY g.created_at DESC LIMIT 100",
+            [this.actor],
+          ),
+        };
       case "moderation":
         return {
           ...(await paged(
@@ -272,6 +292,24 @@ export class AdminService {
       return row;
     };
     switch (action) {
+      case "tester": {
+        const d = schemas.tester.parse(input);
+        await this.db.batch([
+          this.db
+            .prepare(
+              "INSERT INTO demo_testers(email,enabled,approved_by,reason,updated_at) VALUES(?,?,?,?,?) ON CONFLICT(email) DO UPDATE SET enabled=excluded.enabled,approved_by=excluded.approved_by,reason=excluded.reason,updated_at=excluded.updated_at",
+            )
+            .bind(
+              d.id.toLowerCase(),
+              +d.enabled,
+              this.actor,
+              d.reason,
+              new Date().toISOString(),
+            ),
+          audit(),
+        ]);
+        break;
+      }
       case "user": {
         const d = schemas.user.parse(input);
         await find("users");
@@ -434,7 +472,59 @@ export class AdminService {
         }
         if (!characters.some((c) => c.id === d.id))
           throw new AdminError(404, "Character not found.");
+        if (d.profile && !d.fictionalAdultConfirmed)
+          throw new AdminError(
+            400,
+            "Confirm this is a fictional adult character.",
+          );
+        const candidate = {
+          ...characters.find((c) => c.id === d.id)!,
+          ...d.profile,
+        };
+        const version = portraitVersionId(candidate);
+        const existingVersion = version
+          ? await readVersion(this.db, version)
+          : null;
+        const changes: D1PreparedStatement[] = candidate.referenceAssetId
+          ? [draftVersionStatement(this.db, candidate)]
+          : [];
+        if (
+          d.profile?.approvalStatus === "approved" &&
+          (!existingVersion?.approved ||
+            JSON.parse(existingVersion.reviewed_models).length === 0 ||
+            d.reviewedGenerationIds.length)
+        ) {
+          try {
+            const priorReviews = await this.db
+              .prepare(
+                "SELECT generation_id FROM character_quality_reviews WHERE version_id=?",
+              )
+              .bind(version)
+              .all<{ generation_id: string }>();
+            changes.push(
+              ...(await qualityApprovalStatements(
+                this.db,
+                candidate,
+                this.actor,
+                d.reviewedGenerationIds.length
+                  ? d.reviewedGenerationIds
+                  : priorReviews.results.map((r) => r.generation_id),
+                d.reason,
+              )),
+            );
+          } catch (error) {
+            throw new AdminError(409, (error as Error).message);
+          }
+        }
+
+        if (d.profile?.approvalStatus === "rejected" && version)
+          changes.push(
+            this.db
+              .prepare("UPDATE character_versions SET approved=0 WHERE id=?")
+              .bind(version),
+          );
         await this.db.batch([
+          ...changes,
           this.db
             .prepare(
               "INSERT INTO character_controls(id,price,enabled,featured,profile) VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET price=excluded.price,enabled=excluded.enabled,featured=excluded.featured,profile=COALESCE(excluded.profile,character_controls.profile)",

@@ -14,7 +14,7 @@ export async function deliverTrainingEmails(
     .bind(now - 23 * 3600000, now)
     .run();
   const rows = await env.DB.prepare(
-    "SELECT * FROM training_emails WHERE status IN ('pending','sending') AND lease_until<? ORDER BY created_at LIMIT 10",
+    "SELECT * FROM training_emails WHERE status IN ('pending','sending') AND lease_until<? ORDER BY created_at LIMIT 2",
   )
     .bind(now)
     .all<{
@@ -26,6 +26,7 @@ export async function deliverTrainingEmails(
     }>();
   let sent = 0;
   for (const row of rows.results) {
+    if (Date.now() - now > 35000) break;
     const claim = await env.DB.prepare(
       "UPDATE training_emails SET status='sending',lease_until=?,attempts=attempts+1,first_attempt_at=COALESCE(first_attempt_at,?) WHERE id=? AND status IN ('pending','sending') AND lease_until<?",
     )

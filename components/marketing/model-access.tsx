@@ -86,7 +86,7 @@ export function ModelAccess({
       <small>
         {owned
           ? "Your character stays selected. Generation uses credits separately."
-          : "Payments are not connected. Review the planned license and access status in your workspace."}
+          : "Review the current character version and credit price in your workspace."}
       </small>
     </div>
   );

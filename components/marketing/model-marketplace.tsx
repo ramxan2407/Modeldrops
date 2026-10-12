@@ -1,9 +1,11 @@
 "use client";
+import { usePublicTalent } from "./use-public-talent";
 import { useState } from "react";
 import { Search } from "lucide-react";
-import { talent, filterTalent, modelFilters } from "@/lib/marketing/catalog";
+import { filterTalent, modelFilters } from "@/lib/marketing/catalog";
 import { TalentCard } from "./talent-card";
 export function ModelMarketplace({ compact = false }: { compact?: boolean }) {
+  const talent = usePublicTalent();
   const [query, setQuery] = useState(""),
     [category, setCategory] = useState("All");
   const models = filterTalent(talent, query, category);

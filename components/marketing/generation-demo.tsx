@@ -1,8 +1,9 @@
 "use client";
+import { usePublicTalent } from "./use-public-talent";
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Check, Sparkles } from "lucide-react";
-import { talent } from "@/lib/marketing/catalog";
+
 import { TalentPortrait } from "./talent-card";
 import {
   useStoryMotion,
@@ -58,8 +59,11 @@ function animateDemo(
 export function GenerationDemo() {
   const root = useRef<HTMLElement>(null);
   useStoryMotion(root, animateDemo);
-  const [selected, setSelected] = useState(talent[0].id);
-  const model = talent.find((m) => m.id === selected)!;
+  const talent = usePublicTalent();
+  const [selected, setSelected] = useState("");
+  const model = talent.find((m) => m.id === selected) || talent[0];
+  if (!model)
+    return <p>Reviewed characters will appear here when available.</p>;
   return (
     <section
       className="md-generation-story md-section"

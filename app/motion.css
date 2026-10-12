@@ -1,0 +1,371 @@
+/* Final motion layer: shared tokens live in design-system.css. */
+.md-workspace-site .md-button {
+  transition:
+    transform var(--md-fast) var(--md-ease),
+    scale var(--md-response) var(--md-ease),
+    background-color var(--md-fast) ease,
+    border-color var(--md-fast) ease;
+}
+.md-workspace-site .md-button:active {
+  transform: none;
+  scale: 0.97;
+  transition-duration: var(--md-fast);
+}
+
+/* A trigger-connected menu stays mounted so rapid reversals retarget. */
+.md-workspace-site .ws-nav .md-mobile-nav {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-6px) scale(0.98);
+  transform-origin: top right;
+  transition:
+    opacity 180ms var(--md-ease),
+    transform 200ms var(--md-ease),
+    visibility 0s 200ms;
+}
+.md-workspace-site .ws-nav .md-mobile-nav[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  transition-delay: 0s;
+}
+.md-workspace-site .ws-nav .md-mobile-nav[data-immediate="true"] {
+  transition: none;
+}
+@media (min-width: 960px) {
+  .md-workspace-site .ws-nav .md-mobile-nav {
+    display: none;
+  }
+}
+
+/* Neutral keyframes retain Radix exit presence; only transitions move the sheet. */
+@keyframes md-presence-enter {
+  from,
+  to {
+    visibility: visible;
+  }
+}
+@keyframes md-presence-exit {
+  from,
+  to {
+    visibility: visible;
+  }
+}
+.md-sheet-content {
+  transform: none;
+  transition: transform var(--md-medium) var(--md-ease-drawer);
+  animation: md-presence-enter var(--md-medium) linear;
+}
+.md-sheet-content[data-state="closed"] {
+  animation-name: md-presence-exit;
+}
+.md-sheet-content[data-side="left"][data-state="closed"] {
+  transform: translateX(-100%);
+}
+.md-sheet-content[data-side="right"][data-state="closed"] {
+  transform: translateX(100%);
+}
+.md-sheet-content[data-side="top"][data-state="closed"] {
+  transform: translateY(-100%);
+}
+.md-sheet-content[data-side="bottom"][data-state="closed"] {
+  transform: translateY(100%);
+}
+.md-sheet-overlay {
+  opacity: 1;
+  transition: opacity 180ms var(--md-ease);
+  animation: md-presence-enter 180ms linear;
+}
+.md-sheet-overlay[data-state="closed"] {
+  opacity: 0;
+  animation-name: md-presence-exit;
+}
+@starting-style {
+  .md-sheet-content[data-side="left"][data-state="open"] {
+    transform: translateX(-100%);
+  }
+  .md-sheet-content[data-side="right"][data-state="open"] {
+    transform: translateX(100%);
+  }
+  .md-sheet-content[data-side="top"][data-state="open"] {
+    transform: translateY(-100%);
+  }
+  .md-sheet-content[data-side="bottom"][data-state="open"] {
+    transform: translateY(100%);
+  }
+  .md-sheet-overlay[data-state="open"] {
+    opacity: 0;
+  }
+}
+
+/* Stable panels preserve images and layout across rapid workflow changes. */
+.ws-workflow-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 200ms var(--md-ease),
+    visibility 0s 200ms;
+}
+.ws-workflow-layer > img {
+  object-fit: cover;
+}
+.ws-workflow-layer[data-active="true"] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+.ws-workflow-content {
+  display: grid;
+  min-width: 0;
+}
+.ws-workflow-copy {
+  grid-area: 1 / 1;
+  min-width: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  translate: 0 6px;
+  transition:
+    opacity var(--md-fast) var(--md-ease),
+    translate 200ms var(--md-ease),
+    visibility 0s 200ms;
+}
+.ws-workflow-copy[data-active="true"] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  translate: none;
+  transition-delay: 0s;
+}
+.ws-workflow-panel[data-immediate="true"]
+  :is(.ws-workflow-layer, .ws-workflow-copy),
+.ws-flow[data-immediate="true"]
+  :is(.ws-node, .ws-connector-stage, .ws-flow-caption) {
+  transition: none !important;
+}
+
+/* Give the hero an explicit, comfortably tappable three-step control. */
+.ws-flow-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  margin: 14px 0 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--ws-panel);
+}
+.ws-flow-controls button {
+  justify-content: center;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 6px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 11px;
+  transition:
+    color var(--md-fast) ease,
+    background-color var(--md-fast) ease,
+    border-color var(--md-fast) ease,
+    scale var(--md-response) var(--md-ease);
+}
+.ws-flow-controls button[aria-pressed="true"] {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--accent) 25%, var(--line));
+  background: var(--ws-panel-raised);
+}
+.ws-flow-controls button span {
+  color: var(--accent);
+  font-size: 9px;
+}
+.light .ws-flow-controls button span {
+  color: #527c36;
+}
+.ws-flow-captions {
+  display: grid;
+}
+.ws-flow-caption {
+  grid-area: 1 / 1;
+  opacity: 0;
+  font-size: 11px;
+  line-height: 1.6;
+  margin: 12px 6px 0;
+  max-width: none;
+  transition: opacity var(--md-fast) var(--md-ease);
+}
+.ws-flow-caption[data-active="true"] {
+  opacity: 1;
+}
+@media (max-width: 959px) and (min-width: 701px) {
+  .ws-flow-controls button {
+    flex-direction: column;
+    font-size: 10px;
+    gap: 4px;
+  }
+}
+@media (max-width: 359px) {
+  .ws-flow-controls button {
+    font-size: 10px;
+    gap: 4px;
+  }
+  .ws-workflow-copy {
+    padding: 24px 20px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .md-workspace-site .md-button:hover {
+    transform: translateY(-2px);
+  }
+  .ws-inline-link:hover svg {
+    transform: translate(2px, -2px);
+  }
+  .ws-talent-tile:hover .ws-talent-monogram {
+    transform: translateY(-3px);
+  }
+  .character-card:hover .character-image > img {
+    transform: scale(1.03);
+  }
+}
+@media (hover: none), (pointer: coarse) {
+  :is(.lime-button, .login-primary, .google-login):hover,
+  .md-workspace-site .md-button:hover,
+  .ws-inline-link:hover svg,
+  .ws-talent-tile:hover .ws-talent-monogram,
+  .character-card:hover .character-image > img,
+  .lora-model-card:hover > img {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .md-workspace-site[data-reduced-motion="false"] .ws-hero-copy,
+  .md-workspace-site[data-reduced-motion="false"] .ws-hero > .ws-flow {
+    animation: md-hero-arrive 400ms var(--md-ease) both;
+  }
+  .md-workspace-site[data-reduced-motion="false"] .ws-hero > .ws-flow {
+    animation-delay: 60ms;
+  }
+  @keyframes md-hero-arrive {
+    from {
+      opacity: 0;
+      translate: 0 8px;
+    }
+    to {
+      opacity: 1;
+      translate: none;
+    }
+  }
+}
+
+/* Local and device preferences remove movement, retaining quiet state feedback. */
+.md-workspace-site[data-reduced-motion="true"]
+  :is(
+    button,
+    a,
+    .ws-node,
+    .ws-workflow-layer,
+    .ws-workflow-copy,
+    .ws-flow-caption,
+    .ws-connector-stage
+  ) {
+  transition:
+    color 125ms ease,
+    background-color 125ms ease,
+    border-color 125ms ease,
+    opacity 125ms ease !important;
+}
+.md-workspace-site[data-reduced-motion="true"]
+  :is(.ws-node, .ws-workflow-copy, .ws-hero-copy, .ws-flow) {
+  translate: none !important;
+}
+.md-workspace-site[data-reduced-motion="true"]
+  :is(
+    .md-button,
+    .md-mobile-nav,
+    .ws-inline-link svg,
+    .ws-talent-monogram,
+    .md-talent-portrait img
+  ) {
+  transform: none !important;
+}
+.md-workspace-site[data-reduced-motion="true"] :is(button, a):active {
+  scale: none !important;
+}
+.md-workspace-site[data-reduced-motion="true"] .theme-toggle > svg {
+  rotate: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(
+    button,
+    a,
+    input,
+    textarea,
+    select,
+    summary,
+    .ws-node,
+    .ws-workflow-layer,
+    .ws-workflow-copy,
+    .ws-flow-caption,
+    .ws-connector-stage
+  ),
+  .md-public
+    :is(
+      button,
+      a,
+      .ws-node,
+      .ws-workflow-layer,
+      .ws-workflow-copy,
+      .ws-flow-caption,
+      .ws-connector-stage
+    ) {
+    transition:
+      color 125ms ease,
+      background-color 125ms ease,
+      border-color 125ms ease,
+      opacity 125ms ease !important;
+  }
+  :is(
+    .ws-node,
+    .ws-workflow-copy,
+    .ws-hero-copy,
+    .ws-flow,
+    .dashboard-action-card,
+    .dashboard-stats > button,
+    .project-card,
+    .owned-model-card,
+    .character-card,
+    .lora-model-card
+  ) {
+    translate: none !important;
+  }
+  :is(
+    .lime-button,
+    .login-primary,
+    .google-login,
+    .ws-inline-link svg,
+    .ws-talent-monogram,
+    .character-image > img,
+    .lora-model-card > img
+  ),
+  .md-public :is(.md-button, .md-mobile-nav, .md-talent-portrait img) {
+    transform: none !important;
+  }
+  .theme-toggle > svg {
+    rotate: none !important;
+  }
+  :is(button, a):active {
+    scale: none !important;
+  }
+  .md-sheet-content,
+  .md-sheet-overlay {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -313,6 +313,7 @@ test("character profiles and per-user permissions are super-admin only", async (
     price: 29,
     enabled: true,
     featured: false,
+    fictionalAdultConfirmed: true,
     profile: {
       name: "Valentina Rose",
       age: 28,
@@ -337,6 +338,7 @@ test("character profiles and per-user permissions are super-admin only", async (
   await rejected(
     f.superadmin.mutate("character", {
       ...change,
+      fictionalAdultConfirmed: true,
       profile: { ...change.profile, age: 17 },
     }),
     400,

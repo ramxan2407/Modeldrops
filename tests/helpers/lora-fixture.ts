@@ -56,6 +56,7 @@ export function fixture() {
   };
   const objects = new Map<string, Uint8Array>(),
     uploads = new Map<string, Map<number, Uint8Array>>();
+  const metadata = new Map<string, R2HTTPMetadata>();
   const resume = (key: string, uploadId: string) => ({
     uploadId,
     key,
@@ -77,8 +78,10 @@ export function fixture() {
     },
   });
   const bucket = {
-    put: async (key: string, bytes: Uint8Array) => {
+    put: async (key: string, bytes: Uint8Array, options?: R2PutOptions) => {
       objects.set(key, bytes);
+      if (options?.httpMetadata && !(options.httpMetadata instanceof Headers))
+        metadata.set(key, options.httpMetadata);
       return { key };
     },
     head: async (key: string) =>
@@ -87,12 +90,15 @@ export function fixture() {
       objects.has(key)
         ? {
             size: objects.get(key)!.length,
+            httpMetadata: metadata.get(key),
             body: new Blob([new Uint8Array(objects.get(key)!)]).stream(),
           }
         : null,
     delete: async (keys: string | string[]) => {
-      for (const key of Array.isArray(keys) ? keys : [keys])
+      for (const key of Array.isArray(keys) ? keys : [keys]) {
         objects.delete(key);
+        metadata.delete(key);
+      }
     },
     createMultipartUpload: async (key: string) => {
       const uploadId = crypto.randomUUID();

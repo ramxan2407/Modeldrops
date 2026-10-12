@@ -45,7 +45,6 @@
 }
 .md-workspace-site .md-button:hover {
   background: #e3f8bb;
-  transform: translateY(-2px);
 }
 .md-workspace-site .md-button-outline {
   background: transparent;
@@ -274,16 +273,13 @@
   stroke: var(--line);
   stroke-width: 1.5;
 }
-.ws-connectors path.ws-connector-pulse {
+.ws-connectors path.ws-connector-stage {
   stroke: #a6cc77;
-  stroke-dasharray: 18 580;
-  animation: ws-flow-dash 9s linear infinite;
-  opacity: 0.7;
+  opacity: 0;
+  transition: opacity 200ms var(--md-ease);
 }
-@keyframes ws-flow-dash {
-  to {
-    stroke-dashoffset: -1196;
-  }
+.ws-connectors path.ws-connector-stage[data-active="true"] {
+  opacity: 0.7;
 }
 .ws-node {
   background: var(--ws-panel);
@@ -292,9 +288,9 @@
   box-shadow: 0 16px 40px #0004;
   overflow: hidden;
   transition:
-    border-color 0.25s,
-    box-shadow 0.25s,
-    transform 0.25s;
+    border-color var(--md-fast) ease,
+    box-shadow var(--md-fast) ease,
+    translate 200ms var(--md-ease-move);
 }
 .light .ws-node {
   border-color: var(--line);
@@ -305,7 +301,7 @@
   box-shadow:
     0 0 0 4px #a6cc7708,
     0 16px 40px #0003;
-  transform: translateY(-4px);
+  translate: 0 -4px;
 }
 .ws-node-title {
   height: 38px;
@@ -664,10 +660,7 @@
   color: var(--ink);
 }
 .ws-inline-link svg {
-  transition: transform 0.2s;
-}
-.ws-inline-link:hover svg {
-  transform: translate(2px, -2px);
+  transition: transform var(--md-fast) var(--md-ease);
 }
 .ws-workflow-copy > .ws-inline-link {
   margin-top: auto;
@@ -722,10 +715,7 @@
   border: 1px solid #ffffff12;
   overflow: hidden;
   color: #f6f1e9;
-  transition: transform 0.25s;
-}
-.ws-talent-tile:hover .ws-talent-monogram {
-  transform: translateY(-5px);
+  transition: transform 200ms var(--md-ease);
 }
 .ws-talent-monogram > span {
   position: absolute;

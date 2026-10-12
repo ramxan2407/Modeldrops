@@ -1,16 +1,16 @@
 # Character access → native reference Studio
 
-The character is an identity reference, not a separately trained generation model. Buyers choose an unlocked character and then a supported generation engine. Qwen Image Edit and the two GPT Image 2.5 variants receive the approved portrait as their edit input. Kling 3.0 Standard uses its image-to-video endpoint with that portrait as the first frame. Video framing comes from the portrait. Outputs can vary; reference conditioning does not guarantee exact likeness or provide a trained LoRA.
+The character is an identity reference, not a separately trained generation model. Purchases pin an immutable portrait version. Buyers choose an unlocked character and then a supported generation engine. Qwen Image Edit and the two GPT Image 2.5 variants receive the approved portrait as their edit input. Kling 3.0 Standard uses its image-to-video endpoint with that portrait as the first frame. Video framing comes from the portrait. Outputs can vary; reference conditioning does not guarantee exact likeness or provide a trained LoRA.
 
 ## Admin preparation
 
-Super Admin → Characters → Edit → Approved reference portrait. Upload an approved fictional adult JPG, PNG or WebP (up to 8 MB), review the preview and save the profile. The server only accepts the admin's own uploaded image or the character's existing approved asset. The file remains in private storage. Authenticated users with catalog viewing permission can see the portrait through the character reference route; generation receives a signed storage URL after access checks.
+Super Admin → Characters → Edit. Upload an original fictional adult JPG, PNG or WebP (up to 8 MB) and save Pending. Super-admin Studio requests are candidate QA and still consume credits/provider budget. Complete and inspect examples using every offered image/video engine, select them in the editor, and approve. Evidence must be completed provider output using the exact portrait. Approval publishes a public portrait preview from private storage; private datasets and user generations are never published with it.
 
 ## Checkout and ownership
 
 Character details → Review character access → license and price review → checkout → Studio with the character selected. Generation credits are separate from the character license. Character orders and entitlements are separate from the old `demo-1` preview claims. Those old claims cannot unlock live generation. Approved references are required before checkout.
 
-Payments are intentionally disconnected. The checkout reports this without taking payment or granting paid access. For a **separate local/test database**, set `CHARACTER_TEST_CHECKOUT=true`. This enables clearly labeled test checkout, stores `test_completed` orders and test entitlements, and never charges money. Test checkout and test entitlements are rejected when `VERCEL_ENV=production`. Do not connect preview credentials to production; the user selected isolated preview environments. If a test environment explicitly has live generation configured, its generation still uses real API balance and user credits.
+Payments are intentionally disconnected. With `DEMO_MODE=true`, approved testers purchase characters using assigned demo credits. New accounts receive zero credits. Checkout verifies generation permission, exact portrait version, price and license acceptance before charging atomically. Legacy free preview claims grant no generation access. See [demo setup](DEMO_TESTING.md).
 
 A future payment adapter must create payment-mode orders and entitlements only after validating provider payment status, ownership, amount, currency and unique provider event IDs. No public API currently creates paid orders or trusts a browser success redirect.
 

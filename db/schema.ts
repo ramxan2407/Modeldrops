@@ -128,6 +128,10 @@ export const generations = sqliteTable(
     type: text("type").notNull(),
     status: text("status").notNull().default("queued"),
     cost: integer("cost").notNull(),
+    characterVersionId: text("character_version_id").references(
+      () => characterVersions.id,
+    ),
+    purpose: text("purpose").notNull().default("customer"),
     creditWallet: text("credit_wallet", { enum: ["standard", "demo"] })
       .notNull()
       .default("standard"),
@@ -170,6 +174,24 @@ export const assets = sqliteTable(
     createdAt: time(),
   },
   (t) => [index("assets_user").on(t.userId)],
+);
+export const uploadTransfers = sqliteTable(
+  "upload_transfers",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    storageKey: text("storage_key").notNull().unique(),
+    target: text("target").notNull(),
+    size: integer("size").notNull(),
+    expiresAt: integer("expires_at").notNull(),
+    claimed: integer("claimed").notNull().default(0),
+  },
+  (t) => [
+    index("upload_transfers_owner").on(t.userId, t.expiresAt),
+    index("upload_transfers_expiry").on(t.expiresAt, t.id),
+  ],
 );
 export const notifications = sqliteTable(
   "notifications",
@@ -393,6 +415,7 @@ export const characterOrders = sqliteTable(
   "character_orders",
   {
     id: text("id").primaryKey(),
+    versionId: text("version_id").references(() => characterVersions.id),
     userId: text("user_id")
       .notNull()
       .references(() => users.id),
@@ -415,6 +438,7 @@ export const characterOrders = sqliteTable(
 export const characterEntitlements = sqliteTable(
   "character_entitlements",
   {
+    versionId: text("version_id").references(() => characterVersions.id),
     userId: text("user_id")
       .notNull()
       .references(() => users.id),
@@ -425,4 +449,53 @@ export const characterEntitlements = sqliteTable(
     status: text("status").notNull().default("active"),
   },
   (t) => [primaryKey({ columns: [t.userId, t.characterId] })],
+);
+
+export const demoTesters = sqliteTable("demo_testers", {
+  email: text("email").primaryKey().notNull(),
+  enabled: integer("enabled").notNull().default(1),
+  approvedBy: text("approved_by").notNull(),
+  reason: text("reason").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+export const characterVersions = sqliteTable(
+  "character_versions",
+  {
+    id: text("id").primaryKey().notNull(),
+    characterId: text("character_id").notNull(),
+    profile: text("profile").notNull(),
+    approved: integer("approved").notNull().default(0),
+    reviewedModels: text("reviewed_models").notNull().default("[]"),
+    reviewedBy: text("reviewed_by"),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [index("character_version_lookup").on(t.characterId, t.approved)],
+);
+export const characterQualityReviews = sqliteTable(
+  "character_quality_reviews",
+  {
+    versionId: text("version_id")
+      .notNull()
+      .references(() => characterVersions.id),
+    modelId: text("model_id").notNull(),
+    generationId: text("generation_id")
+      .notNull()
+      .references(() => generations.id),
+    reviewedBy: text("reviewed_by").notNull(),
+    notes: text("notes").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.versionId, t.modelId] })],
+);
+export const storageCleanup = sqliteTable(
+  "storage_cleanup",
+  {
+    storageKey: text("storage_key").primaryKey().notNull(),
+    uploadId: text("upload_id"),
+    attempts: integer("attempts").notNull().default(0),
+    leaseUntil: text("lease_until").notNull().default(""),
+    lastError: text("last_error"),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [index("cleanup_due").on(t.leaseUntil, t.createdAt)],
 );

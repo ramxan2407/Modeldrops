@@ -1,3 +1,5 @@
+import { deliverTrainingEmails } from "@/lib/lora/email";
+import { drainStorageCleanup } from "@/lib/storage-cleanup";
 import { env as runtimeEnv, waitUntil } from "cloudflare:workers";
 import { bindings, ApiError, fail } from "@/lib/server";
 import { runGenerationJob } from "@/lib/generation/worker";
@@ -18,7 +20,18 @@ export async function POST(request: Request) {
         )
     )
       throw new ApiError(401, "Unauthorized");
-    const { DB } = bindings();
+    const environment = bindings();
+    const { DB } = environment;
+    waitUntil(
+      deliverTrainingEmails(environment).catch(() =>
+        console.error("Scheduled email delivery needs retry."),
+      ),
+    );
+    waitUntil(
+      drainStorageCleanup(environment).catch(() =>
+        console.error("Scheduled storage cleanup needs retry."),
+      ),
+    );
     const jobs = await DB.prepare(
       "SELECT generation_id FROM generation_jobs WHERE status='queued' OR (status='processing' AND lease_until<?) ORDER BY created_at LIMIT 3",
     )

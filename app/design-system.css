@@ -17,7 +17,10 @@
   --md-radius-control: 12px;
   --md-radius-card: 24px;
   --md-radius-window: 28px;
-  --md-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --md-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --md-ease-move: cubic-bezier(0.77, 0, 0.175, 1);
+  --md-ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --md-response: 100ms;
   --md-fast: 160ms;
   --md-medium: 280ms;
   --font-sans: var(--md-font);
@@ -299,7 +302,7 @@ summary {
     color var(--md-fast) ease,
     box-shadow var(--md-fast) ease,
     opacity var(--md-fast) ease,
-    scale var(--md-fast) var(--md-ease);
+    scale var(--md-response) var(--md-ease);
 }
 :is(
   [data-slot="button"],
@@ -332,7 +335,8 @@ summary {
 }
 button:not(:disabled):not([role="switch"]):active,
 a[data-slot="button"]:active {
-  scale: 0.975;
+  scale: 0.97;
+  transition-duration: var(--md-fast);
 }
 :is(button, a, summary):focus-visible {
   outline: 2px solid var(--md-focus);
@@ -536,14 +540,6 @@ input[type="range"] {
   }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .page-content
-    > :is(
-      section,
-      .studio-heading,
-      .user-dashboard,
-      .lora-workspace,
-      .super-admin
-    ),
   .login-card {
     animation: md-arrive 350ms var(--md-ease) both;
   }

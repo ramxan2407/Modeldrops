@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { MarketingShell } from "@/components/marketing/shell";
 import { WorkspaceLanding } from "@/components/marketing/workspace-landing";
 import { pageMetadata } from "@/lib/marketing/metadata";

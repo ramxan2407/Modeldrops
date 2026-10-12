@@ -224,7 +224,8 @@ test("outbox retains unconfigured mail, leases concurrency, retries failures wit
     deliverTrainingEmails(f.env, fetcher),
     deliverTrainingEmails(f.env, fetcher),
   ]);
-  assert.equal(sent.length, 3);
+  assert.equal(sent.length, 2, "Each scheduled batch is bounded");
+  await deliverTrainingEmails(f.env, fetcher);
   assert.equal(new Set(sent).size, 3);
   await deliverTrainingEmails(f.env, fetcher);
   assert.equal(sent.length, 3);

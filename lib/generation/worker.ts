@@ -1,3 +1,6 @@
+import { demoAccessAllowed } from "../demo-access";
+import { readVersion, versionCharacter } from "../characters/versions";
+import { roleFor } from "../admin/policy";
 import { characterReferenceVersion } from "../characters/reference-version";
 import { resolveCharacterReferenceInputs } from "./characters";
 import { characterAccess } from "../characters/access";
@@ -26,6 +29,8 @@ export async function runGenerationJob(id: string, origin: string) {
       character_id: string;
       type: "image" | "video";
       settings: string;
+      character_version_id: string | null;
+      purpose: string;
     }>();
   if (!g || !["queued", "processing"].includes(g.status)) return;
   if (g.provider === "Demo") return runDemoJob(id, origin);
@@ -80,24 +85,44 @@ export async function runGenerationJob(id: string, origin: string) {
       return;
     }
     if (p.state === "ready") {
-      const account = await DB.prepare("SELECT suspended FROM users WHERE id=?")
+      const account = await DB.prepare(
+        "SELECT suspended,email FROM users WHERE id=?",
+      )
         .bind(g.user_id)
-        .first<{ suspended: number }>();
+        .first<{ suspended: number; email: string }>();
       const model = await DB.prepare("SELECT enabled FROM ai_models WHERE id=?")
         .bind(g.model_id)
         .first<{ enabled: number }>();
-      const availableCharacter =
-        g.character_id &&
-        (await catalogFor(DB)).find(
-          (c) => c.id === g.character_id && c.enabled,
+      const catalogCharacter = (await catalogFor(DB)).find(
+        (c) => c.id === g.character_id && c.enabled,
+      );
+      const version = g.character_version_id
+        ? await readVersion(DB, g.character_version_id)
+        : null;
+      const availableCharacter = version ? versionCharacter(version) : null;
+      const qa =
+        g.purpose === "character_qa" &&
+        roleFor(env, g.user_id) === "super_admin";
+      if (!version) {
+        await review(
+          id,
+          "The original portrait version could not be recovered. Administrator review is required; this job has not been submitted or charged again.",
         );
+        return;
+      }
       if (
         !account ||
         account.suspended ||
         !model?.enabled ||
+        !catalogCharacter ||
         !availableCharacter ||
+        (!qa && !version?.approved) ||
+        !(await demoAccessAllowed(DB, env, {
+          userId: g.user_id,
+          email: account?.email,
+        })) ||
         !availableCharacter.referenceImage ||
-        !(await characterAccess(DB, g.user_id, g.character_id, env)) ||
+        (!qa && !(await characterAccess(DB, g.user_id, g.character_id, env))) ||
         !(await characterAllowed(DB, g.user_id, g.character_id, "generate"))
       ) {
         await terminal(
@@ -126,6 +151,7 @@ export async function runGenerationJob(id: string, origin: string) {
         g.model_id,
         JSON.parse(p.input_json),
         origin,
+        { versionId: g.character_version_id, qa },
       );
       if (resolved.reference !== p.character_reference) {
         await terminal(

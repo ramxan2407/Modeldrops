@@ -6,6 +6,7 @@ import {
   defaultStudioCharacter,
   studioCharacterLibrary,
 } from "@/lib/characters/studio-selection";
+import { CharacterUpgrade } from "@/components/character-upgrade";
 import { CharacterCheckout } from "@/components/character-checkout";
 import { GenerationControls } from "@/components/generation-controls";
 import { defaultGenerationOptions, optionsFor } from "@/lib/generation/options";
@@ -16,6 +17,7 @@ import {
   type ImageQuote,
 } from "@/components/image-model-controls";
 import { calculateCredits, generationSettings } from "@/lib/pricing";
+import { characterPrice } from "@/lib/credits";
 import { uploadFile } from "@/lib/upload-client";
 import React, {
   useEffect,
@@ -470,12 +472,21 @@ export default function ModelDropsApp({
   const setDetail = (value: Character | null) => chooseDetail(value);
   const profileName = profileDraft ?? account.name;
   const privateDefault = privateDraft ?? account.defaultPrivate;
+  const reviewedModels = characters.find(
+    (c) => c.id === selected,
+  )?.offeredModelIds;
+  const studioRegistry = registry.filter(
+    (m) =>
+      account.isSuperAdmin ||
+      !reviewedModels?.length ||
+      reviewedModels.includes(m.id),
+  );
   const model =
-    registry.find(
+    studioRegistry.find(
       (m) => m.id === modelChoice && m.type === mode && m.enabled,
     ) ||
-    registry.find((m) => m.type === mode && m.enabled) ||
-    registry[0] ||
+    studioRegistry.find((m) => m.type === mode && m.enabled) ||
+    studioRegistry[0] ||
     defaultModels[0];
   const modelId = model.id;
   const ratio = model.ratios.includes(ratioChoice)
@@ -496,6 +507,7 @@ export default function ModelDropsApp({
     Record<string, Record<string, unknown>>
   >({});
   const [imageQuote, setImageQuote] = useState<ImageQuote>({ key: "" });
+  const [quoteRevision, setQuoteRevision] = useState(0);
   const idempotency = useRef<string | null>(null),
     searchRef = useRef<HTMLInputElement>(null);
   const draftLoaded = useRef(false);
@@ -611,7 +623,7 @@ export default function ModelDropsApp({
       setQuery("");
       setActiveProject(null);
       history.pushState({}, "", "/" + p);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: "instant" });
     },
     [router],
   );
@@ -769,35 +781,39 @@ export default function ModelDropsApp({
         : {}),
   };
   const parsedSettings = generationSettings.safeParse(requestedSettings);
-  const settingsError = !selected
-    ? "Choose an unlocked model from your library to start."
-    : !(account.usableCharacters || []).includes(selected)
-      ? "Unlock this model before creating images or videos."
-      : selected &&
-          characters.find((c) => c.id === selected)?.canGenerate === false
-        ? "Generation with this model is restricted for your account."
-        : liveModel &&
-            selected &&
-            !characters.find((c) => c.id === selected)?.referenceImage
-          ? "This model’s portrait is being prepared. Generation opens with her drop."
-          : !parsedSettings.success
-            ? ["width", "height"].includes(
-                String(parsedSettings.error.issues[0].path[0]),
-              )
-              ? "Image width and height must be whole numbers from 256 to 1536 pixels."
-              : parsedSettings.error.issues[0].path[0] === "shots"
-                ? "Give every shot a prompt and a duration from 1 to 15 seconds."
-                : "Check your advanced settings. All values must be within the displayed limits."
-            : liveModel &&
-                mode === "video" &&
-                generationOptions.shotType === "customize" &&
-                generationOptions.shots.length > 0 &&
-                generationOptions.shots.reduce(
-                  (sum, shot) => sum + shot.duration,
-                  0,
-                ) !== Number(duration)
-              ? "Shot durations must add up to the total video duration."
-              : "";
+  const settingsError = !studioRegistry.some(
+    (m) => m.id === model.id && m.type === mode && m.enabled,
+  )
+    ? "No reviewed generation model is available for this character and content type."
+    : !selected
+      ? "Choose an unlocked model from your library to start."
+      : !(account.usableCharacters || []).includes(selected)
+        ? "Unlock this model before creating images or videos."
+        : selected &&
+            characters.find((c) => c.id === selected)?.canGenerate === false
+          ? "Generation with this model is restricted for your account."
+          : liveModel &&
+              selected &&
+              !characters.find((c) => c.id === selected)?.referenceImage
+            ? "This model’s portrait is being prepared. Generation opens with her drop."
+            : !parsedSettings.success
+              ? ["width", "height"].includes(
+                  String(parsedSettings.error.issues[0].path[0]),
+                )
+                ? "Image width and height must be whole numbers from 256 to 1536 pixels."
+                : parsedSettings.error.issues[0].path[0] === "shots"
+                  ? "Give every shot a prompt and a duration from 1 to 15 seconds."
+                  : "Check your advanced settings. All values must be within the displayed limits."
+              : liveModel &&
+                  mode === "video" &&
+                  generationOptions.shotType === "customize" &&
+                  generationOptions.shots.length > 0 &&
+                  generationOptions.shots.reduce(
+                    (sum, shot) => sum + shot.duration,
+                    0,
+                  ) !== Number(duration)
+                ? "Shot durations must add up to the total video duration."
+                : "";
   const cost = liveImage
     ? quoteReady
       ? imageQuote.credits!
@@ -831,15 +847,24 @@ export default function ModelDropsApp({
   const generate = () =>
     action(async () => {
       idempotency.current ??= crypto.randomUUID();
-      await api("generate", {
-        idempotencyKey: idempotency.current,
-        characterId: selected || null,
-        modelId,
-        prompt,
-        settings: requestedSettings,
-        ...(liveImage ? { expectedCredits: imageQuote.credits } : {}),
-        reference,
-      });
+      try {
+        await api("generate", {
+          idempotencyKey: idempotency.current,
+          characterId: selected || null,
+          modelId,
+          prompt,
+          settings: requestedSettings,
+          expectedCredits: cost,
+          reference,
+        });
+      } catch (error) {
+        if ((error as Error & { status?: number }).status === 409) {
+          await refresh();
+          setImageQuote({ key: "" });
+          setQuoteRevision((value) => value + 1);
+        }
+        throw error;
+      }
       idempotency.current = null;
       await refresh();
       toast.success("Generation queued. You can leave this page.");
@@ -893,13 +918,14 @@ export default function ModelDropsApp({
           (c.name + " " + c.creator + " " + c.category + " " + c.tags.join(" "))
             .toLowerCase()
             .includes(query.toLowerCase())) &&
-        (!freeOnly || c.price === 0) &&
+        (!freeOnly || characterPrice(c, account.demoMode) === 0) &&
         (page !== "characters" || unlocked.includes(c.id)) &&
         (page !== "favorites" || account.favorites.includes(c.id)),
     )
     .sort((a, b) =>
       sort === "price"
-        ? a.price - b.price
+        ? characterPrice(a, account.demoMode) -
+          characterPrice(b, account.demoMode)
         : sort === "name"
           ? a.name.localeCompare(b.name)
           : Number(b.badge === "FEATURED") - Number(a.badge === "FEATURED"),
@@ -984,7 +1010,7 @@ export default function ModelDropsApp({
         ) : (
           <div className="character-price">
             {account.demoMode
-              ? `${c.demoCreditPrice ?? 300} credits`
+              ? `${characterPrice(c, true)} credits`
               : `$${c.price}`}
             <small>
               {c.referenceImage ? "Character access" : "Awaiting approval"}
@@ -1245,11 +1271,19 @@ export default function ModelDropsApp({
                 </span>
               </div>
               <section className="hero">
-                <img
-                  className="hero-image"
-                  src={characters[0].image}
-                  alt="Drop 001 model preview"
-                />
+                {characters[0] ? (
+                  <img
+                    className="hero-image"
+                    src={characters[0].image}
+                    alt="Drop 001 model preview"
+                  />
+                ) : (
+                  <div className="hero-image catalog-placeholder" role="status">
+                    {loading
+                      ? "Loading characters…"
+                      : "New characters coming soon"}
+                  </div>
+                )}
                 <div className="hero-scrim" />
                 <div className="hero-content">
                   <span className="hero-kicker">
@@ -1491,10 +1525,12 @@ export default function ModelDropsApp({
                     navigate("studio");
                   }}
                 >
-                  <img
-                    src={characters[0].image}
-                    alt="Cinematic world building inspiration"
-                  />
+                  {characters[0] && (
+                    <img
+                      src={characters[0].image}
+                      alt="Cinematic world building inspiration"
+                    />
+                  )}
                   <span className="inspiration-tag">
                     <Film size={12} /> CINEMATIC WORLDS
                   </span>
@@ -1569,19 +1605,27 @@ export default function ModelDropsApp({
                     loading={loading}
                     error={!!loadError}
                     replacedSelection={unavailableModel}
+                    qa={account.isSuperAdmin}
                     onChange={(id) => {
                       setSelected(id);
                       setReference(null);
                     }}
                     onBrowse={() => navigate("marketplace")}
                   />
+                  {account.isSuperAdmin && (
+                    <p role="status">
+                      Character QA · Your selected candidate portrait is used
+                      for review examples. Generation spends credits and
+                      provider budget.
+                    </p>
+                  )}
                   <div className="control-group studio-model-group">
                     <label>
                       <span>02</span> Generation model
                     </label>
                     {liveImage ? (
                       <ImageModelPicker
-                        models={registry.filter(
+                        models={studioRegistry.filter(
                           (m) => m.type === "image" && m.enabled,
                         )}
                         value={modelId}
@@ -1593,7 +1637,7 @@ export default function ModelDropsApp({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {registry
+                          {studioRegistry
                             .filter((m) => m.type === mode && m.enabled)
                             .map((m) => (
                               <SelectItem key={m.id} value={m.id}>
@@ -1646,7 +1690,7 @@ export default function ModelDropsApp({
                   )}
                   {liveImage ? (
                     <ImageModelControls
-                      key={modelId}
+                      key={`${modelId}:${quoteRevision}`}
                       characterId={selected || undefined}
                       modelId={modelId}
                       prompt={prompt}
@@ -2090,10 +2134,18 @@ export default function ModelDropsApp({
                 "Ideas, characters, and worlds worth getting lost in.",
               )}
               <div className="explore-hero">
-                <img
-                  src={characters[0].image}
-                  alt="Valentina · Drop 001 preview"
-                />
+                {characters[0] ? (
+                  <img
+                    src={characters[0].image}
+                    alt={`${characters[0].name} · Character preview`}
+                  />
+                ) : (
+                  <div className="catalog-placeholder" role="status">
+                    {loading
+                      ? "Loading characters…"
+                      : "New characters coming soon"}
+                  </div>
+                )}
                 <div>
                   <p className="eyebrow">THE CHARACTER STUDY · 001</p>
                   <h1>
@@ -2101,9 +2153,12 @@ export default function ModelDropsApp({
                     <br />
                     Unfamiliar worlds.
                   </h1>
-                  <p>Meet Valentina. Build a recognizable creator identity.</p>
+                  <p>
+                    Find your character. Build a recognizable creator identity.
+                  </p>
                   <Button
                     className="lime-button"
+                    disabled={!characters[0]}
                     onClick={() => setDetail(characters[0])}
                   >
                     Use this character <ArrowUpRight size={16} />
@@ -2455,11 +2510,18 @@ export default function ModelDropsApp({
                     </button>
                   </div>
                 </div>
+                <CharacterUpgrade
+                  character={detail}
+                  onUpdated={async () => {
+                    await refresh();
+                    setDetail(null);
+                  }}
+                />
                 <div className="detail-purchase">
                   <span>
                     <strong>
                       {account.demoMode
-                        ? `${detail.demoCreditPrice ?? 300} demo credits`
+                        ? `${characterPrice(detail, true)} demo credits`
                         : `$${detail.price}`}
                     </strong>
                     <small>
@@ -2996,6 +3058,7 @@ function GenerationCard({
             ? " returned"
             : ""}
         </span>
+        <small>Request ID: {g.id}</small>
         {g.error && <small role="status">{generationMessage(g.error)}</small>}
         {!g.live && ["queued", "processing"].includes(g.status) && (
           <button onClick={onCancel}>Cancel</button>

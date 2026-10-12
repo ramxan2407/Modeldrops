@@ -28,15 +28,15 @@ Open http://localhost:5173. Configure Supabase using [the activation guide](docs
 - Supabase email/password signup and sign-in, Google OAuth, email confirmation, password reset, HttpOnly session refresh, sign-out, protected routes and a personal dashboard. Provider setup is required before live use.
 - Dashboard with owned characters, saved license receipts, credits, projects, recent creations, and one-click continuation in the image/video studio.
 - Discover, searchable/filterable marketplace, character details, favorites, persistent ownership, immutable demo license snapshots.
-- Image and video workflow controls, prompt enhancement, references, server-calculated credits, queued background **simulations**, protected R2 output, refunds, retries, cancellation, and remix.
+- Real image/video generation through server-side provider adapters, native character references, server-calculated credits, durable jobs, private outputs, refunds, and administrator recovery. Local QA explicitly mocks provider calls.
 - Projects and media assignment, history, notifications, profile/privacy preferences.
 - Creator concept submissions, rights attestation, reporting, role-gated model pricing and moderation tools.
-- Credit package preview and append-only credit ledger. Checkout deliberately returns unavailable; **no money is charged**.
+- Credit package preview, an append-only ledger, and demo-credit character purchases for invited testers. Real payment processing remains deferred; **no money is charged**.
 - Responsive shadcn/Radix interface and a validated WebMCP character search tool.
 
-Demo output uses the Nova sample image regardless of prompt, selected character, resolution, or output count. Video mode returns a labeled storyboard preview, not an actual video. References are stored privately but are not submitted to any AI provider. The interface displays these workflows as simulations.
+Hosted demos can spend real generation API balance. The isolated `npm run demo:local` harness uses bundled sample media and never contacts a provider. Character generation attaches the purchased portrait version through a temporary signed URL. Uploading a new portrait does not replace an existing buyer's version.
 
-For administration, configure the server-side `ADMIN_USER_IDS` allowlist with verified `supabase:<UUID>` application user IDs. No user can promote themselves through the browser. `POST /api/jobs` accepts only the configured `JOB_RUNNER_SECRET`; a scheduler can use it to recover interrupted demo jobs.
+Configure `SUPER_ADMIN_USER_IDS` with verified application user IDs. Super administrators approve tester emails, allocate demo credits, review character image/video examples, and recover uncertain generation requests. New demo accounts receive zero automatic credits. The checked-in `/api/jobs` cron accepts `CRON_SECRET` or `JOB_RUNNER_SECRET` and processes generation recovery, training-email retries, and storage cleanup. See [demo setup and migration](docs/DEMO_TESTING.md).
 
 ## Production foundation
 

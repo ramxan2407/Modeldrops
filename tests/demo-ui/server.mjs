@@ -1,3 +1,7 @@
+import {
+  seedReviewedCharacter,
+  inviteFixture,
+} from "../helpers/character-fixture.ts";
 import { createServer } from "vite";
 import react from "@vitejs/plugin-react";
 import { readFile } from "node:fs/promises";
@@ -48,7 +52,13 @@ for (const p of [
   "image-models",
   "media",
   "upload",
+  "transfers",
   "lora",
+  "lora/file",
+  "lora/zip",
+  "characters/upgrade",
+  "catalog",
+  "catalog/portrait",
 ])
   routes.set(
     "/" + p,
@@ -89,6 +99,35 @@ for (const [i, id] of ["valentina", "isla"].entries()) {
         demoCreditPrice: 300,
       }),
     )
+    .run();
+}
+for (const id of ["alice", "bob", "admin"]) {
+  await inviteFixture(f.env.DB, `${id}@example.test`);
+  await f.env.DB.prepare(
+    "INSERT INTO credit_transactions(id,user_id,amount,type,description,balance_before,balance_after,idempotency_key,wallet) VALUES(?,?,2000,'promotion','Assigned local QA credits',0,2000,?,'demo')",
+  )
+    .bind(`fixture-credit-${id}`, id, `fixture-credit-${id}`)
+    .run();
+}
+const reviewedCharacter = await seedReviewedCharacter(f.env.DB, {
+  id: "valentina",
+  referenceAssetId: "00000000-0000-4000-8000-000000000001",
+});
+// Review links in the admin editor must serve actual local fixture files.
+for (const id of reviewedCharacter.ids) {
+  const asset = await f.env.DB.prepare(
+    "SELECT storage_key,mime FROM generation_assets WHERE generation_id=?",
+  )
+    .bind(id)
+    .first();
+  const bytes = asset.mime === "video/mp4" ? video : portrait;
+  await f.env.BUCKET.put(asset.storage_key, bytes, {
+    httpMetadata: { contentType: asset.mime },
+  });
+  await f.env.DB.prepare(
+    "UPDATE generation_assets SET size=? WHERE generation_id=?",
+  )
+    .bind(bytes.length, id)
     .run();
 }
 f.env.BUCKET.signedRead = async (key) =>
@@ -183,8 +222,12 @@ const server = await createServer({
             };
             const route = routes.get(url.pathname);
             if (!route?.[req.method]) {
-              res.writeHead(404);
-              res.end();
+              res.writeHead(404, { "Content-Type": "application/json" });
+              res.end(
+                JSON.stringify({
+                  error: "This API route is unavailable in the local demo.",
+                }),
+              );
               return;
             }
             let bytes = [];

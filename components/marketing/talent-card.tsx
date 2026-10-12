@@ -13,7 +13,8 @@ export function TalentPortrait({
     <div className="md-talent-portrait" style={{ background: model.color }}>
       <Image
         src={model.image}
-        alt={`${model.name} — portrait coming soon`}
+        alt={`${model.name} — approved character portrait`}
+        unoptimized={model.image.startsWith("/api/")}
         fill
         sizes="(max-width: 700px) 90vw, 40vw"
         fetchPriority={priority ? "high" : undefined}
@@ -41,7 +42,7 @@ export function TalentCard({
         </div>
         <div className="md-card-meta">
           <span>{model.styles.slice(0, 2).join(" / ")}</span>
-          <span>${model.price} planned</span>
+          <span>{model.demoCreditPrice} demo credits</span>
         </div>
         <div className="md-card-extra">
           <span>

@@ -53,7 +53,9 @@ export async function stagedUpload(
     }
     return bytes;
   } finally {
-    await BUCKET.delete(r.storage_key);
+    // A failed best-effort delete must not discard an otherwise successful upload.
+    // The retained reservation is swept by the scheduled durable cleanup after expiry.
+    await BUCKET.delete(r.storage_key).catch(() => {});
     // Retain the claimed reservation until URL expiry to prevent immediate replay.
   }
 }
