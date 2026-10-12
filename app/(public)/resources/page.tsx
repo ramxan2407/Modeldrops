@@ -203,7 +203,8 @@ export default function Resources() {
           <h3>About the artwork</h3>
           <p>
             Public artwork and creator videos are original AI-generated
-            marketing concepts. The fictional adult creators illustrate product
+            marketing concepts, including the photorealistic reference portraits
+            in the Studio tour. The fictional adult creators illustrate product
             demos, lifestyle vlogs and fashion reels. They are not purchasable
             marketplace characters or customer results, and do not demonstrate
             likeness quality for the launch characters. Approved character

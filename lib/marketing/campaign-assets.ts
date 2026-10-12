@@ -69,3 +69,40 @@ export const creatorVideoAssets = [
     mobileVideo: "/assets/creators/fashion-reel-v1-mobile.mp4",
   },
 ] as const;
+
+/** Photorealistic fictional demo references, separate from the marketplace catalog. */
+export const creatorProfiles = [
+  {
+    id: "maya",
+    name: "Maya",
+    role: "Beauty & UGC",
+    portrait: "/assets/creator-portraits/maya-v1.webp",
+    alt: "Photorealistic AI portrait of Maya with dark wavy hair and an ivory cotton top",
+    description: "Warm, natural, camera-ready.",
+    imagePrompt:
+      "Soft window light. Natural skin texture. An ivory cotton top and a warm, quiet backdrop.",
+    videoIndex: 0,
+  },
+  {
+    id: "zoe",
+    name: "Zoe",
+    role: "Everyday & lifestyle",
+    portrait: "/assets/creator-portraits/zoe-v1.webp",
+    alt: "Photorealistic AI portrait of Zoe with short natural curls and a sage shirt in a sunlit cafe",
+    description: "Everyday moments, full of personality.",
+    imagePrompt:
+      "Morning light at a neighborhood cafe. A sage linen shirt, soft greenery, and an easy smile.",
+    videoIndex: 1,
+  },
+  {
+    id: "lena",
+    name: "Lena",
+    role: "Fashion & editorial",
+    portrait: "/assets/creator-portraits/lena-v1.webp",
+    alt: "Photorealistic AI portrait of Lena with a dark bob and cream blazer against a warm studio backdrop",
+    description: "Considered style. Effortless presence.",
+    imagePrompt:
+      "An understated editorial portrait. A cream blazer, soft side light, and a warm plaster backdrop.",
+    videoIndex: 2,
+  },
+] as const;

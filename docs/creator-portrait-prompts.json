@@ -1,0 +1,44 @@
+{
+  "mode": "Built-in image_gen tool",
+  "purpose": "Photorealistic fictional adult creator reference portraits for the illustrative marketing widget.",
+  "prompts": [
+    {
+      "name": "maya",
+      "prompt": "Use case: identity-preserve, photorealistic-natural. Asset type: premium AI creator studio reference portrait for a website. Create ONE new high-resolution photographic portrait of the fictional adult woman in the supplied AI-generated reference frame. Preserve her facial identity, ethnicity, hair and adult age, but create a clean newly composed portrait without props. A fictional 28-year-old woman with warm olive skin and shoulder-length dark wavy hair. Ivory crew-neck cotton shirt. Warm stone studio background and soft window light. Vertical 3:4 portrait, head and upper torso with complete hair and shoulders visible, eye-level 85mm lens, subtle relaxed smile looking at camera, natural asymmetric details and realistic skin pores, minimal makeup. Photographic authenticity with beautiful but believable skin texture, no airbrushing, no plastic skin, no excessive fashion retouching. Fully clothed. Keep hands out of crop. No text, collage, label, logo or watermark. This is a fictional AI person, not a photograph of a real public figure."
+    },
+    {
+      "name": "zoe",
+      "prompt": "Use case: identity-preserve, photorealistic-natural. Asset type: premium AI creator studio reference portrait for a website. Create ONE new high-resolution photographic portrait of the fictional adult woman in the supplied AI-generated reference frame. Preserve her facial identity, ethnicity, hair and adult age, but create a clean newly composed portrait without props. A fictional 30-year-old woman with deep brown skin and short natural curls. Sage linen shirt over a white crew-neck top. A bright airy cafe background with green foliage and gentle window light. Vertical 3:4 portrait, head and upper torso with complete hair and shoulders visible, eye-level 85mm lens, subtle relaxed smile looking at camera, natural asymmetric details and realistic skin pores, minimal makeup. Photographic authenticity with beautiful but believable skin texture, no airbrushing, no plastic skin, no excessive fashion retouching. Fully clothed. Keep hands out of crop. No text, collage, label, logo or watermark. This is a fictional AI person, not a photograph of a real public figure."
+    },
+    {
+      "name": "lena",
+      "prompt": "Use case: identity-preserve, photorealistic-natural. Asset type: premium AI creator studio reference portrait for a website. Create ONE new high-resolution photographic portrait of the fictional adult woman in the supplied AI-generated reference frame. Preserve her facial identity, ethnicity, hair and adult age, but create a clean newly composed portrait without props. A fictional 27-year-old East Asian woman with a sleek dark bob. Cream blazer over a black crew-neck shirt. A warm gray plaster studio backdrop and soft side daylight. Vertical 3:4 portrait, head and upper torso with complete hair and shoulders visible, eye-level 85mm lens, subtle relaxed smile looking at camera, natural asymmetric details and realistic skin pores, minimal makeup. Photographic authenticity with beautiful but believable skin texture, no airbrushing, no plastic skin, no excessive fashion retouching. Fully clothed. Keep hands out of crop. No text, collage, label, logo or watermark. This is a fictional AI person, not a photograph of a real public figure."
+    }
+  ],
+  "assets": [
+    {
+      "name": "maya",
+      "path": "public/assets/creator-portraits/maya-v1.webp",
+      "width": 900,
+      "height": 1200,
+      "bytes": 110740,
+      "sha256": "267b4a9731d0cf42085e6f443df1ecdda5ca853286d2ebb96cbc6a3659c58889"
+    },
+    {
+      "name": "zoe",
+      "path": "public/assets/creator-portraits/zoe-v1.webp",
+      "width": 900,
+      "height": 1200,
+      "bytes": 171342,
+      "sha256": "2ff76eea7cd9c97c2e9ab1096ae8f844113ec4f401ed48a2e66a3f9e10620ccc"
+    },
+    {
+      "name": "lena",
+      "path": "public/assets/creator-portraits/lena-v1.webp",
+      "width": 900,
+      "height": 1200,
+      "bytes": 71684,
+      "sha256": "20627604d8c2ce24d07752ce32d453d3f03bd079275cf96162e98065e705d4ae"
+    }
+  ]
+}
