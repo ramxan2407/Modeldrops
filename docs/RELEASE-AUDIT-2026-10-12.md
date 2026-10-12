@@ -11,7 +11,8 @@ This is a demo release with real generation, not a paid marketplace launch. The 
 - Separate persistent local live-testing workspace; its local admin identity and test database are not production authentication.
 - Production migration 007 was applied transactionally. It preserves operator-funded demo accounts and existing demo buyers, as well as purchased/queued portrait identities. Automatic welcome grants alone do not add a tester invitation.
 - Deployment uncovered a Vercel Hobby limitation: once-per-minute Vercel cron jobs are rejected. Background scheduling now uses Supabase Cron, pg_net and a Vault-held request secret instead of a Vercel cron declaration.
-- 98 automated tests passed across SQLite and isolated PostgreSQL/PGlite. TypeScript and the optimized Next.js build passed. Lint has zero errors and 24 existing native-image optimization warnings.
+- Live testing exposed misleading admin readiness labels for historically approved portraits. The character table now distinguishes reviewed characters open for new purchases from existing-buyer-only versions awaiting review, and disabled characters explicitly show that generation is blocked.
+- 98 automated tests passed across SQLite and isolated PostgreSQL/PGlite. TypeScript and the optimized Next.js build passed. The admin/demo-flow subset (10 tests) and TypeScript passed again after the readiness-label fix. Lint has zero errors and 24 existing image/navigation optimization warnings.
 - Security patches: sharp 0.35.5 and source-map-js 1.2.2. The production npm audit reports zero known vulnerabilities after patching. References: [sharp advisory](https://github.com/advisories/GHSA-wq5f-xc86-pv6w), [source-map-js advisory](https://github.com/advisories/GHSA-68fv-2mgg-jv7q).
 - Real local generation on 6 October completed with the exact uploaded Nika portrait: Qwen Image Edit (768×1024) and Kling 3.0 (five seconds, 720×1280). Both outputs were saved privately, retrieved and inspected. Total provider spend was $0.44; 132 demo credits were deducted once. Request replay, budget rejection, and restart persistence passed. These were local live-service checks, not new paid tests of this hosted release.
 
@@ -28,7 +29,18 @@ This is a demo release with real generation, not a paid marketplace launch. The 
 | Medium | Using delivered LoRA weights in Studio | Manual training requests, delivery and downloads exist. Loading delivered `.safetensors` into Qwen/GPT/Kling inference is not implemented. | Add a compatible inference backend and validated weight-loading workflow. |
 | Medium | Supabase signup/reset email and Google OAuth | These flows have automated coverage but a real inbox/OAuth completion was not exercised for this release. The random demo email has no inbox. | Test with controlled real email addresses; an administrator must reset the synthetic demo account if needed. |
 | Medium | Automated training, seller payouts, social/community features, media editing | These are not fully implemented production services. Manual training and curated character generation are the supported demo scope. | Implement separately; do not describe them as live capabilities. |
-| Low | Image performance | 24 `next/no-img-element` warnings remain; no lint errors. | Optimize suitable public images while preserving authenticated media access. |
+| Low | Image/navigation performance | 24 lint warnings remain for native image elements and one internal full-page navigation; no lint errors. | Optimize suitable public images while preserving authenticated media access, and use client navigation where appropriate. |
+
+## Hosted verification
+
+- The production release is published at https://model-drops-ten.vercel.app. GitHub branch: `codex/drop-001-models`.
+- `/welcome`, `/login`, `/pricing`, `/models` and `/api/catalog` returned HTTP 200. The catalog contains zero reviewed, sale-ready characters at this point; that is the critical remaining demo-onboarding blocker above.
+- Existing demo email/password sign-in succeeded. Its balance remains 5,000 credits. Twelve ordinary workspace/training pages returned 200. Admin pages returned 404 and every admin API section returned 403 for this non-admin account, as intended.
+- Unauthenticated workspace pages redirected to login. Workspace, admin, LoRA, private media and scheduler APIs returned 401. Missing-origin writes and generation without a character returned 403 without debiting credits. All three image definitions loaded; the unowned-character price requests were denied before reaching generation.
+- The existing owner browser session loaded the live dashboard with both purchased characters, five completed creations and 1,400 credits. Super admin Overview, Characters, portrait editor and Integrations loaded successfully. No portrait, user permission or credit balance was changed by those UI checks.
+- Private storage passed signed upload, byte/size round trip, browser CORS and anonymous denial with one temporary test object, which was removed afterwards. Both hosted character-reference image routes delivered their stored PNG files to the signed-in demo account.
+- Supabase Cron completed repeated once-per-minute runs with HTTP 200 from the job endpoint, including after the production deployment. There were no pending jobs to force a new paid submission.
+- Landing-page workflow selection and mobile navigation responded in the browser. Complete physical-device coverage and load testing were not performed.
 
 ## Evidence boundaries
 

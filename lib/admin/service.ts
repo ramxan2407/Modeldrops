@@ -219,12 +219,26 @@ export class AdminService {
         };
       case "characters":
         return {
-          rows: (await catalogFor(this.db)).map((character) => ({
-            ...character,
-            referencePreview: character.referenceAssetId
-              ? `/api/characters/reference?id=${encodeURIComponent(character.id)}&asset=${encodeURIComponent(character.referenceAssetId)}`
-              : undefined,
-          })),
+          rows: await Promise.all(
+            (await catalogFor(this.db)).map(async (character) => {
+              const versionId = portraitVersionId(character);
+              const version = versionId
+                ? await readVersion(this.db, versionId)
+                : null;
+              return {
+                ...character,
+                purchaseReady: Boolean(
+                  character.enabled &&
+                  character.approvalStatus === "approved" &&
+                  version?.approved &&
+                  JSON.parse(version.reviewed_models).length,
+                ),
+                referencePreview: character.referenceAssetId
+                  ? `/api/characters/reference?id=${encodeURIComponent(character.id)}&asset=${encodeURIComponent(character.referenceAssetId)}`
+                  : undefined,
+              };
+            }),
+          ),
           qualityExamples: await list(
             "SELECT g.id,g.character_id,g.model_id,g.type,p.character_reference FROM generations g JOIN provider_requests p ON p.generation_id=g.id WHERE g.user_id=? AND g.status='completed' AND p.state='completed' ORDER BY g.created_at DESC LIMIT 100",
             [this.actor],

@@ -61,6 +61,7 @@ type AdminRecord = {
   category?: string;
   demoCreditPrice?: number;
   approvalStatus?: string;
+  purchaseReady?: boolean;
   referenceAssetId?: string | null;
   referenceImage?: string;
   referencePreview?: string;
@@ -711,11 +712,15 @@ export default function SuperAdmin({
                         <td>{c.category}</td>
                         <td>{c.demoCreditPrice ?? 300}</td>
                         <td>
-                          {c.enabled ? "Visible" : "Disabled"}
+                          {c.enabled ? "Enabled" : "Disabled"}
                           <small>
-                            {c.approvalStatus === "approved"
-                              ? "Approved · ready for Studio"
-                              : `${c.approvalStatus ?? "pending"} · generation blocked`}
+                            {!c.enabled
+                              ? "New access and generation blocked"
+                              : c.purchaseReady
+                                ? "Reviewed · available to buy and generate"
+                                : c.approvalStatus === "approved"
+                                  ? "Existing buyers only · review required for new sales"
+                                  : `${c.approvalStatus ?? "pending"} · generation blocked`}
                           </small>
                           {c.featured && <small>Featured</small>}
                         </td>
@@ -1148,7 +1153,7 @@ export default function SuperAdmin({
                         value="approved"
                         disabled={!edit.record.referenceAssetId}
                       >
-                        Approved — available to buy and generate
+                        Approve — requires reviewed generation examples
                       </option>
                       <option value="rejected">Rejected</option>
                     </select>
