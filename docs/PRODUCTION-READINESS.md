@@ -13,7 +13,7 @@ Updated 12 October 2026. This release hardens the hosted **invited demo with rea
 - Admin Overview and Integrations show scheduler heartbeats, review/stalled job counts, email backlog/failures and pending file cleanup. Overlapping runs cannot overwrite a newer result. Heartbeat health only means the task ran; it does not prove email was delivered or external generation succeeded.
 - The character editor lists all enabled model checks with human-readable names, existing approval evidence and missing examples. Save pending & test opens Studio with that exact character selected. Approval still requires real completed reference-conditioned results; historical approval is not fabricated into QA evidence.
 - Node 24 is pinned. GitHub Actions runs lint, TypeScript, tests, a production dependency audit and the Next.js production build without production secrets. Repository branch protection is not configured by this workflow.
-- Automated suite: 103 passing tests, including SQLite and PostgreSQL/PGlite; credit isolation, retries/refunds, private uploads, manual LoRA workflows, auth limits, streamed payload limits, stale/overlapping scheduler runs and portrait migration. The npm production audit reports zero known vulnerabilities. Lint has zero errors and 23 native-image optimization warnings.
+- Automated suite: 104 passing tests, including SQLite and PostgreSQL/PGlite; credit isolation, retries/refunds, private uploads, manual LoRA workflows, auth limits, streamed payload limits, stale/overlapping scheduler runs, portrait migration and the restricted OAuth form policy. The npm production audit reports zero known vulnerabilities. Lint has zero errors and 23 native-image optimization warnings.
 - The isolated browser test verified the admin health panel, model checklist and save-pending-to-Studio selection. Simulated local output is not counted as a real provider acceptance test.
 
 ## Release and rollback
@@ -46,8 +46,8 @@ Manual LoRA request collection, datasets, approval, delivery and download are su
 
 ## Hosted verification
 
-- Published application commit `f15f5ac` at [Model Drops](https://model-drops-ten.vercel.app). Production deployment: `dpl_92uUnaqSdcp8rNQrnD3Y4t7AePPN`, `https://model-drops-edeeey2wt-model-drops-ramxan87.vercel.app`.
-- [GitHub release checks](https://github.com/ramxan2407/Modeldrops/actions/runs/38236597876) passed from a clean Linux install: lint, TypeScript, all 103 tests, production dependency audit and production build.
+- Published application commit `4a3f3d4` at [Model Drops](https://model-drops-ten.vercel.app). Production deployment: `dpl_EVDsL4f7NsURR1x5PFxAQ6BmuKhi`, `https://model-drops-pdpw7k79e-model-drops-ramxan87.vercel.app`.
+- [GitHub release checks](https://github.com/ramxan2407/Modeldrops/actions/runs/38237591143) passed from a clean Linux install: lint, TypeScript, all 104 tests, production dependency audit and production build. The final narrow OAuth allowlist was deployed afterwards and the canonical login still returns 200 with self-only form destinations while Google login is disabled.
 - Production migration 008 completed. The hardened pool successfully queried the real Supabase transaction pooler. Both new tables deny SELECT to anonymous/authenticated browser roles.
 - Canonical welcome returned 200, the branded missing page returned 404, and the configured security headers were present with no framework disclosure header.
 - Demo email/password login returned 200. The account still has 5,000 credits and no super-admin role. Anonymous admin/scheduler/workspace API calls returned 401; signed-in demo admin access returned 403.
