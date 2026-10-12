@@ -1,268 +1,373 @@
 import Link from "next/link";
-import Image from "next/image";
 import {
-  ArrowDown,
   ArrowRight,
   ArrowUpRight,
   Check,
-  Download,
-  Folder,
+  CircleUserRound,
+  Fingerprint,
+  FolderClosed,
+  ImagePlus,
   LockKeyhole,
-  Plus,
+  MoveUpRight,
+  SlidersHorizontal,
+  Video,
 } from "lucide-react";
-import { WorkspaceFlow } from "./workspace-flow";
-import { WorkflowShowcase } from "./workflow-showcase";
 import { publicCatalog } from "@/lib/marketing/public-catalog";
 import { TalentPortrait } from "./talent-card";
-import { campaignAssets } from "@/lib/marketing/campaign-assets";
+import { StudioPreview } from "./studio-preview";
+
+const features = [
+  {
+    icon: Fingerprint,
+    title: "Your reference, at the ready.",
+    text: "Your unlocked character’s approved portrait is attached as the reference for supported image and video models.",
+    label: "CHARACTER REFERENCE",
+  },
+  {
+    icon: SlidersHorizontal,
+    title: "The details are yours.",
+    text: "Choose your generation model, frame, resolution, and duration from the options that model supports.",
+    label: "CREATIVE CONTROL",
+  },
+  {
+    icon: FolderClosed,
+    title: "Keep the whole story.",
+    text: "Bring finished images and videos into projects. Revisit your ideas and download the work you want to keep.",
+    label: "PRIVATE LIBRARY",
+  },
+];
 
 export async function WorkspaceLanding() {
   const talent = await publicCatalog();
   return (
-    <div className="ws-landing">
-      <section className="ws-hero" aria-labelledby="workspace-heading">
-        <div className="ws-hero-copy">
-          <Link href="/models" className="ws-release">
-            <span className="ws-status-dot" /> MEET DROP 001{" "}
-            <span>
-              Five original identities <ArrowUpRight size={12} />
-            </span>
+    <div className="min-landing">
+      <section className="min-hero" aria-labelledby="welcome-heading">
+        <Link href="/resources#launch" className="min-beta">
+          <span /> Built for creators{" "}
+          <span className="min-beta-separator">/</span> Invited beta{" "}
+          <ArrowUpRight size={13} />
+        </Link>
+        <h1 id="welcome-heading">
+          Your character.
+          <br />
+          <span>A world of possibilities.</span>
+        </h1>
+        <p>
+          Find your AI character. Create images and videos.
+          <br className="min-desktop-break" /> Build a body of work that feels
+          unmistakably yours.
+        </p>
+        <div className="min-hero-actions">
+          <Link href="/models" className="md-button">
+            Explore the characters <ArrowRight size={17} />
           </Link>
-          <h1 id="workspace-heading">
-            Your model.
-            <br />
-            Your ideas.
-            <br />
-            <span>All in one place.</span>
-          </h1>
-          <p>
-            A creative home for your AI character. Make images and videos,
-            explore new directions, and keep your best work together.
-          </p>
-          <div className="ws-actions">
-            <Link href="/create" className="md-button">
-              Start creating <ArrowRight size={17} />
-            </Link>
-            <a href="#workflows" className="ws-secondary">
-              Explore the workflow <ArrowDown size={16} />
-            </a>
-          </div>
-          <span className="ws-hero-note">
-            <LockKeyhole size={12} /> Your character. Your private workspace.
+          <a href="#studio" className="min-text-link">
+            Meet your new studio <ArrowUpRight size={16} />
+          </a>
+        </div>
+        <StudioPreview />
+        <div className="min-capabilities" aria-label="Platform features">
+          <span>
+            <CircleUserRound /> Original characters
+          </span>
+          <span>
+            <ImagePlus /> Image generation
+          </span>
+          <span>
+            <Video /> Video generation
+          </span>
+          <span>
+            <Fingerprint /> Custom LoRA training
+          </span>
+          <span>
+            <LockKeyhole /> Private workspace
           </span>
         </div>
-        <WorkspaceFlow />
       </section>
-      <div
-        className="ws-capability-strip"
-        aria-label="The Model Drops workflow"
-      >
-        <span>LESS SETUP. MORE CREATING.</span>
-        <div>
-          <span>Choose a model</span>
-          <ArrowRight />
-          <span>Create images & video</span>
-          <ArrowRight />
-          <span>Organize & download</span>
-        </div>
-      </div>
-      <WorkflowShowcase />
       <section
-        className="ws-section ws-talent-section"
-        id="the-drop"
-        aria-labelledby="talent-heading"
+        className="min-section min-workflow"
+        id="studio"
+        aria-labelledby="workflow-heading"
       >
-        <div className="ws-section-heading">
+        <div className="min-section-heading">
+          <span className="min-kicker">01 / THE CREATIVE WORKFLOW</span>
+          <h2 id="workflow-heading">
+            Less setup.
+            <br />
+            <span>More making.</span>
+          </h2>
+          <p>
+            From your first character to your next campaign.
+            <br />
+            One connected workspace for every step.
+          </p>
+        </div>
+        <div className="min-steps">
+          <Link href="/models">
+            <span className="min-step-number">
+              01 <MoveUpRight size={20} />
+            </span>
+            <h3>Find your character.</h3>
+            <p>
+              Explore the drops. Unlock a reviewed character with demo credits
+              and add it to your collection.
+            </p>
+            <span className="min-step-link">
+              Browse the marketplace <ArrowRight size={15} />
+            </span>
+          </Link>
+          <Link href="/studio">
+            <span className="min-step-number">
+              02 <MoveUpRight size={20} />
+            </span>
+            <h3>Give it a direction.</h3>
+            <p>
+              Select your character in Studio. Describe the scene, fine-tune the
+              settings, and see the credit cost before creating.
+            </p>
+            <span className="min-step-link">
+              Open Creator Studio <ArrowRight size={15} />
+            </span>
+          </Link>
+          <Link href="/library">
+            <span className="min-step-number">
+              03 <MoveUpRight size={20} />
+            </span>
+            <h3>Make it a collection.</h3>
+            <p>
+              Follow each generation, organize finished work into projects, and
+              download your images and videos.
+            </p>
+            <span className="min-step-link">
+              Explore your workspace <ArrowRight size={15} />
+            </span>
+          </Link>
+        </div>
+      </section>
+      <section
+        className="min-section min-collection"
+        id="characters"
+        aria-labelledby="collection-heading"
+      >
+        <div className="min-section-heading min-heading-split">
           <div>
-            <span className="ws-eyebrow">THE FIRST COLLECTION</span>
-            <h2 id="talent-heading">
-              A familiar face.
+            <span className="min-kicker">02 / MODEL DROPS</span>
+            <h2 id="collection-heading">
+              It starts with
               <br />
-              An original point of view.
+              <span>a character.</span>
             </h2>
           </div>
           <div>
             <p>
-              Five distinct identities for five different worlds.
+              Distinct identities. A new creative starting point.
               <br />
-              Find the one that feels like your next chapter.
+              Discover the characters ready for your studio.
             </p>
-            <Link href="/models" className="ws-inline-link">
-              Meet the collection <ArrowUpRight size={16} />
+            <Link className="min-text-link" href="/models">
+              View the collection <ArrowUpRight size={16} />
             </Link>
           </div>
         </div>
-        <div className="ws-talent-row">
-          {talent.map((model) => (
-            <Link
-              key={model.id}
-              href={`/models/${model.slug}`}
-              className="ws-talent-tile"
-            >
-              <TalentPortrait model={model} />
-              <h3>{model.name}</h3>
-              <p>{model.styles[0]}</p>
-            </Link>
-          ))}
-        </div>
-        <p className="ws-disclosure">
-          Reviewed portraits appear here when their character is ready. Demo
-          access uses credits; payments remain closed.
+        {talent.length > 0 ? (
+          <div className="min-character-grid">
+            {talent.slice(0, 5).map((model) => (
+              <Link
+                href={`/models/${model.slug}`}
+                className="min-character"
+                key={model.id}
+              >
+                <TalentPortrait model={model} />
+                <div>
+                  <h3>{model.name}</h3>
+                  <ArrowUpRight size={21} />
+                </div>
+                <p>
+                  {model.styles.slice(0, 2).join(" · ")}
+                  <span>{model.demoCreditPrice} credits</span>
+                </p>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="min-collection-preview">
+            <div className="min-character-symbol" aria-hidden="true">
+              <Fingerprint strokeWidth={0.65} />
+            </div>
+            <div>
+              <span className="min-kicker">THE NEXT DROP IS TAKING SHAPE</span>
+              <h3>
+                Good characters
+                <br />
+                are worth the wait.
+              </h3>
+              <p>
+                Each character is reviewed before joining the collection.
+                Approved portraits and available access will appear here.
+              </p>
+              <Link className="min-text-link" href="/models">
+                Explore Model Drops <ArrowUpRight size={16} />
+              </Link>
+            </div>
+            <span className="min-drop-stamp">MD / 001</span>
+          </div>
+        )}
+        <p className="min-disclosure">
+          Character access uses demo credits during the invited beta.
+          Availability depends on review and approval.
         </p>
       </section>
       <section
-        className="ws-section ws-library-section"
+        className="min-section min-feature-section"
         id="workspace"
-        aria-labelledby="library-heading"
+        aria-labelledby="features-heading"
       >
-        <div className="ws-section-heading">
-          <div>
-            <span className="ws-eyebrow">KEEP YOUR CREATIVE MOMENTUM</span>
-            <h2 id="library-heading">
-              From a new idea
-              <br />
-              to your next favorite.
-            </h2>
-          </div>
-          <p>
-            Your work has a home.
+        <div className="min-section-heading">
+          <span className="min-kicker">03 / YOUR WORKSPACE, CONSIDERED</span>
+          <h2 id="features-heading">
+            Everything you need.
             <br />
-            Come back to it whenever inspiration hits.
-          </p>
+            <span>Room to create.</span>
+          </h2>
         </div>
-        <div className="ws-library-grid">
-          <div className="ws-library-card">
-            <div className="ws-library-top">
-              <span>
-                <Folder size={15} /> Campaign studies
-              </span>
-              <span>EXAMPLE PROJECT</span>
-            </div>
-            <div className="ws-library-images">
-              {Object.values(campaignAssets).map((asset, i) => (
-                <div key={asset.slug}>
-                  <Image
-                    src={`/assets/campaigns/${asset.slug}.webp`}
-                    alt={asset.alt}
-                    fill
-                    sizes="(max-width: 760px) 28vw, 220px"
-                  />
-                  <span>{i === 1 ? "IMAGE" : "CAMPAIGN"}</span>
-                </div>
-              ))}
-            </div>
-            <div className="ws-library-bottom">
-              <span>
-                <LockKeyhole size={13} /> Private by default
-              </span>
-              <Link href="/library">
-                Open your library <ArrowUpRight size={14} />
-              </Link>
-            </div>
-          </div>
-          <div className="ws-library-copy">
-            <div>
-              <span className="ws-feature-icon">
-                <Folder size={20} />
-              </span>
-              <h3>Give every idea a home.</h3>
-              <p>
-                Group completed generations into projects. Keep each campaign
-                together, without losing the details behind it.
-              </p>
-            </div>
-            <div>
-              <span className="ws-feature-icon">
-                <Download size={20} />
-              </span>
-              <h3>Yours to take from here.</h3>
-              <p>
-                Download your finished images and videos. Share them through
-                your own channels, on your own schedule.
-              </p>
-            </div>
-            <Link href="/projects" className="ws-inline-link">
-              Explore your workspace <ArrowUpRight size={17} />
-            </Link>
-          </div>
+        <div className="min-feature-grid">
+          {features.map(({ icon: Icon, title, text, label }) => (
+            <article key={label}>
+              <Icon size={28} strokeWidth={1.3} />
+              <span className="min-kicker">{label}</span>
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </article>
+          ))}
         </div>
       </section>
       <section
-        className="ws-section ws-cost-section"
-        aria-labelledby="cost-heading"
+        className="min-section min-training"
+        id="training"
+        aria-labelledby="training-heading"
       >
-        <div>
-          <span className="ws-eyebrow">CREATE AT YOUR PACE</span>
-          <h2 id="cost-heading">
-            Your direction.
+        <div className="min-training-copy">
+          <span className="min-kicker">04 / CUSTOM LORA TRAINING</span>
+          <h2 id="training-heading">
+            Your own character.
             <br />
-            <span>A clear next step.</span>
+            <span>Made for your world.</span>
           </h2>
           <p>
-            Character access and generation credits do different jobs. Know what
-            you’re using before you create.
+            Have an original character in mind? Submit your image dataset and
+            creative notes. Our team reviews your request, trains it externally,
+            and delivers the completed LoRA to your account.
           </p>
-          <Link className="ws-inline-link" href="/pricing">
-            Understand access & credits <ArrowUpRight size={17} />
-          </Link>
-        </div>
-        <div className="ws-access-card">
-          <div className="ws-access-title">
-            <span>THE MODEL DROPS WORKSPACE</span>
-            <span>Launch preview</span>
-          </div>
-          <div className="ws-access-row">
-            <span>01</span>
-            <div>
-              <h3>Choose your character</h3>
-              <p>Access an identity from the collection.</p>
-            </div>
-            <ArrowUpRight size={18} />
-          </div>
-          <div className="ws-access-row">
-            <span>02</span>
-            <div>
-              <h3>Make it your own</h3>
-              <p>Use credits for images and videos.</p>
-            </div>
-            <Plus size={18} />
-          </div>
           <ul>
             <li>
-              <Check size={15} /> Review generation cost before submitting
+              <Check size={16} /> Upload and preview your dataset
             </li>
             <li>
-              <Check size={15} /> Follow each request in your workspace
+              <Check size={16} /> Follow review, training, and quality checks
             </li>
             <li>
-              <Check size={15} /> Keep completed media in your private library
+              <Check size={16} /> Download your LoRA and trigger word
             </li>
           </ul>
-          <Link href="/pricing" className="md-button">
-            See access & credits <ArrowRight size={16} />
+          <Link href="/train-lora" className="md-button">
+            Start a training request <ArrowUpRight size={17} />
           </Link>
-          <p className="ws-disclosure">
-            Payments are not open yet. No subscription is required to explore.
-          </p>
+        </div>
+        <div
+          className="min-training-diagram"
+          aria-label="Training process: upload a dataset, human review and training, LoRA delivery"
+        >
+          <div className="min-dataset-stack" aria-hidden="true">
+            <div>
+              <ImagePlus />
+            </div>
+            <div>
+              <ImagePlus />
+            </div>
+            <div>
+              <Fingerprint />
+            </div>
+          </div>
+          <div className="min-training-stage">
+            <span>01</span>
+            <div>
+              <strong>Your dataset</strong>
+              <p>15+ images and a creative direction</p>
+            </div>
+          </div>
+          <div className="min-training-stage">
+            <span>02</span>
+            <div>
+              <strong>A human touch</strong>
+              <p>Review → training → quality check</p>
+            </div>
+          </div>
+          <div className="min-training-stage">
+            <span>03</span>
+            <div>
+              <strong>Your custom LoRA</strong>
+              <p>File, trigger word, and recommended prompt</p>
+            </div>
+            <Check size={18} />
+          </div>
+          <span className="min-diagram-note">
+            A team-managed training service
+          </span>
         </div>
       </section>
-      <section className="ws-final">
-        <span className="ws-eyebrow">A NEW WAY TO CREATE</span>
-        <h2>
-          Your next idea
-          <br />
-          looks good on you.
-        </h2>
-        <p>Find your model. Make something that feels like you.</p>
-        <div className="ws-actions">
-          <Link href="/create" className="md-button">
-            Start creating <ArrowRight size={17} />
-          </Link>
-          <Link href="/models" className="ws-secondary">
-            Meet the models <ArrowUpRight size={16} />
+      <section
+        className="min-section min-credit-section"
+        aria-labelledby="credit-heading"
+      >
+        <div>
+          <span className="min-kicker">CREATE WITH CLARITY</span>
+          <h2 id="credit-heading">
+            Your next idea.
+            <br />
+            <span>No guesswork.</span>
+          </h2>
+          <p>
+            Character access unlocks your reference. Generation credits power
+            the images and videos you create with it. Review the cost before
+            every request.
+          </p>
+          <Link href="/pricing" className="min-text-link">
+            How access & credits work <ArrowUpRight size={16} />
           </Link>
         </div>
-        <div className="ws-final-grid" aria-hidden="true" />
+        <div className="min-credit-ledger">
+          <div>
+            <span>IN YOUR WORKSPACE</span>
+            <LockKeyhole size={15} />
+          </div>
+          <p>
+            <span>Character access</span>
+            <strong>Your creative starting point</strong>
+          </p>
+          <p>
+            <span>Generation cost</span>
+            <strong>Shown before you create</strong>
+          </p>
+          <p>
+            <span>Your balance</span>
+            <strong>Always in view</strong>
+          </p>
+          <footer>Invited beta · Demo credits · Payments not yet open</footer>
+        </div>
+      </section>
+      <section className="min-final" aria-labelledby="final-heading">
+        <span className="min-kicker">A SPACE FOR YOUR NEXT CHAPTER</span>
+        <h2 id="final-heading">
+          Make something
+          <br />
+          <span>that feels like you.</span>
+        </h2>
+        <Link href="/create" className="md-button">
+          Enter your workspace <ArrowUpRight size={18} />
+        </Link>
+        <p>
+          Already invited? <Link href="/login">Sign in to Model Drops</Link>
+        </p>
       </section>
     </div>
   );

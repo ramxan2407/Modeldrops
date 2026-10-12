@@ -7,15 +7,15 @@ import "./welcome.css";
 import "./cinematic.css";
 import "./workspace-marketing.css";
 import "./motion.css";
+import "./minimal-public.css";
+import "./minimal-supporting.css";
+import "./minimal-workspace.css";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
   title: "Model Drops — Your signature AI model.",
   description:
     "Discover Drop 001: five fictional adult AI models for your creator brand. Explore model drops and a private content creation studio.",
-  other: {
-    "codex-preview": "development",
-  },
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

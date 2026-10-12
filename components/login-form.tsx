@@ -73,10 +73,12 @@ export function LoginForm({
     <div className="auth-options">
       {!recovery && (
         <div className="auth-heading">
-          <span className="eyebrow">MODEL DROPS STUDIO</span>
+          <span className="eyebrow">YOUR CREATIVE WORKSPACE</span>
           <h2>
             {mode === "signup"
-              ? "Create your account"
+              ? invitedBeta
+                ? "Your invitation awaits"
+                : "Create your account"
               : mode === "reset"
                 ? "Reset your password"
                 : "Welcome back"}
@@ -243,7 +245,9 @@ export function LoginForm({
             <Mail size={18} />
           ) : null}
           {mode === "signup"
-            ? "Create account"
+            ? invitedBeta
+              ? "Accept invitation"
+              : "Create account"
             : mode === "reset"
               ? "Send reset link"
               : mode === "password"

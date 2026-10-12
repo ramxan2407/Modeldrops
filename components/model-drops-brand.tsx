@@ -9,7 +9,7 @@ export function ModelDropsBrand({ compact = false }: { compact?: boolean }) {
           />
           <path
             d="M9 26V18l7 6 7-6v8"
-            stroke="#17200e"
+            stroke="var(--md-brand-cutout, #faf9f6)"
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"

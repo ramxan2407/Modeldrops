@@ -76,13 +76,13 @@ export function UserDashboard(p: Props) {
     <div className="user-dashboard" aria-busy={p.loading}>
       <div className="dashboard-title">
         <div>
-          <span className="eyebrow">YOUR WORKSPACE</span>
+          <span className="eyebrow">THE CREATOR WORKSPACE</span>
           <h1>
             {p.loading
               ? "Your dashboard."
               : `Welcome back, ${p.name.split(" ")[0]}.`}
           </h1>
-          <p>Create something new or continue a recent project.</p>
+          <p>Your characters, ideas, and everything you make with them.</p>
         </div>
         <span className="workspace-private">
           <ShieldCheck size={15} />
@@ -90,6 +90,21 @@ export function UserDashboard(p: Props) {
         </span>
       </div>
       <div className="dashboard-start-actions">
+        <button onClick={p.onBrowse} className="dashboard-action-card">
+          <span className="action-icon">
+            <Users size={23} />
+          </span>
+          <div>
+            <small>01 / FIND YOUR CHARACTER</small>
+            <h2>A face for your ideas.</h2>
+            <p>
+              Explore the drops and add a reference character to your library.
+            </p>
+            <strong>
+              Browse characters <ArrowRight size={16} />
+            </strong>
+          </div>
+        </button>
         <button
           onClick={p.onStudio}
           className="dashboard-action-card primary-action"
@@ -98,10 +113,10 @@ export function UserDashboard(p: Props) {
             <Sparkles size={23} />
           </span>
           <div>
-            <small>CREATE CONTENT</small>
-            <h2>Bring an idea to life</h2>
+            <small>02 / MAKE IT YOURS</small>
+            <h2>One character. New stories.</h2>
             <p>
-              Choose a character, write a prompt, and create an image or video.
+              Create images and videos with your character as the reference.
             </p>
             <strong>
               Open studio <ArrowRight size={16} />
@@ -113,13 +128,13 @@ export function UserDashboard(p: Props) {
             <Users size={23} />
           </span>
           <div>
-            <small>CUSTOM CHARACTER</small>
-            <h2>Train your own LoRA</h2>
+            <small>03 / CREATE YOUR OWN</small>
+            <h2>Something only you have.</h2>
             <p>
-              Upload your references. Our team trains and delivers your model.
+              Submit a private dataset for our team to train a custom LoRA.
             </p>
             <strong>
-              Start training request <ArrowRight size={16} />
+              Request LoRA training <ArrowRight size={16} />
             </strong>
           </div>
         </button>

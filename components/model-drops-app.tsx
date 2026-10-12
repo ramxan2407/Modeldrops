@@ -1086,11 +1086,6 @@ export default function ModelDropsApp({
               </span>
               <strong>{loading ? "—" : count(account.balance)}</strong>
             </div>
-            <div className="credit-track">
-              <span
-                style={{ width: Math.min(100, account.balance / 18.4) + "%" }}
-              />
-            </div>
             <button onClick={() => setModal("credits")}>
               <Plus size={14} />{" "}
               {account.demoMode ? "Demo credits" : "Buy credits"}

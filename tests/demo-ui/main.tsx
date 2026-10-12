@@ -9,6 +9,7 @@ import "../../app/lora.css";
 import "../../app/theme.css";
 import "../../app/design-system.css";
 import "../../app/motion.css";
+import "../../app/minimal-workspace.css";
 const path = window.location.pathname.slice(1) || "marketplace";
 const live =
   (import.meta.env as { VITE_LOCAL_LIVE?: boolean }).VITE_LOCAL_LIVE === true;

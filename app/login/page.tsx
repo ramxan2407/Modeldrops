@@ -1,6 +1,11 @@
 import Link from "next/link";
-import { characters } from "@/lib/catalog";
-import { ShieldCheck } from "lucide-react";
+import {
+  ArrowUpRight,
+  Film,
+  Image as ImageIcon,
+  Layers3,
+  ShieldCheck,
+} from "lucide-react";
 import { redirect } from "next/navigation";
 import { getAppUser } from "@/lib/app-auth";
 import { supabaseConfig } from "@/lib/supabase/config";
@@ -34,31 +39,38 @@ async function LoginContent({
   return (
     <main className="login-page">
       <section className="login-story">
-        <img
-          src={characters[0].image}
-          alt="Valentina · Drop 001 portrait coming soon"
-        />
-        <Link
-          className="login-brand"
-          href="/welcome"
-          aria-label="Model Drops home"
-        >
-          <ModelDropsBrand />
+        <Link className="login-story-link" href="/welcome">
+          Discover Model Drops <ArrowUpRight size={16} />
         </Link>
         <div className="login-story-copy">
-          <span className="eyebrow">YOUR CHARACTERS. YOUR CREATIVE WORLD.</span>
+          <span className="eyebrow">YOUR OWN CREATIVE SPACE</span>
           <h1>
-            A familiar face.
-            <br />
-            <em>A fresh possibility.</em>
+            One character. <br />
+            <em>Every next idea.</em>
           </h1>
           <p>
-            Your models, your creations, and your next big idea.
-            <br />
-            All together in your own creative space.
+            Build a creative world around your model, from a still image to a
+            story in motion.
           </p>
+          <div className="login-feature-list">
+            <div>
+              <ImageIcon size={19} strokeWidth={1.5} />
+              <span>Reference-guided images</span>
+              <span>01</span>
+            </div>
+            <div>
+              <Film size={19} strokeWidth={1.5} />
+              <span>Character-led video</span>
+              <span>02</span>
+            </div>
+            <div>
+              <Layers3 size={19} strokeWidth={1.5} />
+              <span>Custom LoRA requests</span>
+              <span>03</span>
+            </div>
+          </div>
           <span className="login-art-credit">
-            Drop 001 · Five fictional adult AI models
+            Your characters. Your creations. Together.
           </span>
         </div>
       </section>

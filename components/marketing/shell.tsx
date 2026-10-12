@@ -17,10 +17,10 @@ import {
   toggleStoryMotion,
 } from "@/components/motion/motion-preference";
 const links = [
-  ["Product", "/welcome#workspace"],
-  ["Workflows", "/welcome#workflows"],
-  ["Models", "/models"],
-  ["Pricing", "/pricing"],
+  ["Studio", "/welcome#studio"],
+  ["Characters", "/models"],
+  ["LoRA training", "/welcome#training"],
+  ["Credits", "/pricing"],
 ];
 export function MarketingShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -114,7 +114,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
   };
   return (
     <div
-      className="md-public md-workspace-site"
+      className="md-public md-workspace-site md-minimal-site"
       data-reduced-motion={reduced}
       onClickCapture={handleAnchor}
     >
@@ -150,7 +150,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
             Sign in
           </Link>
           <Link className="md-button md-button-small" href="/create">
-            Start creating <ArrowUpRight size={15} />
+            Open workspace <ArrowUpRight size={15} />
           </Link>
           <button
             type="button"
@@ -197,7 +197,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
               Sign in
             </Link>
             <Link onClick={closeMenu} href="/create" className="md-button">
-              Start creating <ArrowUpRight size={16} />
+              Open workspace <ArrowUpRight size={16} />
             </Link>
           </div>
         </nav>
@@ -211,9 +211,8 @@ export function MarketingShell({ children }: { children: ReactNode }) {
             <ModelDropsBrand />
           </Link>
           <p>
-            Your model. Your ideas.
-            <br />
-            All in one place.
+            Your character. Your next chapter.
+            <br />A space to make it yours.
           </p>
         </div>
         <div>
@@ -236,7 +235,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
         </div>
         <div className="md-footer-bottom">
           <span>© {new Date().getFullYear()} ModelDrops</span>
-          <span>Drop 001 · Fictional adult identities · Launch preview</span>
+          <span>Original AI characters · Invited beta</span>
           <button
             className="md-motion-toggle"
             type="button"
