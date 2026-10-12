@@ -30,17 +30,20 @@ This is a demo release with real generation, not a paid marketplace launch. The 
 | Medium | Supabase signup/reset email and Google OAuth | These flows have automated coverage but a real inbox/OAuth completion was not exercised for this release. The random demo email has no inbox. | Test with controlled real email addresses; an administrator must reset the synthetic demo account if needed. |
 | Medium | Automated training, seller payouts, social/community features, media editing | These are not fully implemented production services. Manual training and curated character generation are the supported demo scope. | Implement separately; do not describe them as live capabilities. |
 | Low | Image/navigation performance | 24 lint warnings remain for native image elements and one internal full-page navigation; no lint errors. | Optimize suitable public images while preserving authenticated media access, and use client navigation where appropriate. |
+| Low | Admin initial-load message | A direct admin page load briefly renders “Super administrator access required” before the authenticated workspace state finishes loading. It then shows the correct owner dashboard; access enforcement remains server-side. | Render a loading state until the account/role fetch resolves. |
 
 ## Hosted verification
 
-- The production release is published at https://model-drops-ten.vercel.app. GitHub branch: `codex/drop-001-models`.
+- The production release is published at https://model-drops-ten.vercel.app. GitHub branch: `codex/drop-001-models`; deployed application commit: `258a2d7`; deployment: `model-drops-3bhgavvct-model-drops-ramxan87.vercel.app`.
 - `/welcome`, `/login`, `/pricing`, `/models` and `/api/catalog` returned HTTP 200. The catalog contains zero reviewed, sale-ready characters at this point; that is the critical remaining demo-onboarding blocker above.
 - Existing demo email/password sign-in succeeded. Its balance remains 5,000 credits. Twelve ordinary workspace/training pages returned 200. Admin pages returned 404 and every admin API section returned 403 for this non-admin account, as intended.
 - Unauthenticated workspace pages redirected to login. Workspace, admin, LoRA, private media and scheduler APIs returned 401. Missing-origin writes and generation without a character returned 403 without debiting credits. All three image definitions loaded; the unowned-character price requests were denied before reaching generation.
 - The existing owner browser session loaded the live dashboard with both purchased characters, five completed creations and 1,400 credits. Super admin Overview, Characters, portrait editor and Integrations loaded successfully. No portrait, user permission or credit balance was changed by those UI checks.
+- All three image engines returned confirmed live prices for the owner's saved Valentina reference: Qwen 12 credits and GPT Flare/Sunburst 24 credits at the tested defaults. Kling's five-second silent cost was 120 credits and enabling audio changed it to 180. The character remained selected across image/video mode changes. No generation was submitted; test prompt and audio controls were restored.
+- Production ledger aggregate checks found zero negative wallets, zero failed/cancelled jobs with unreturned credits, zero completed-job charge mismatches, and zero pending/review jobs. Existing private image and three video previews loaded in the owner browser without media errors.
 - Private storage passed signed upload, byte/size round trip, browser CORS and anonymous denial with one temporary test object, which was removed afterwards. Both hosted character-reference image routes delivered their stored PNG files to the signed-in demo account.
 - Supabase Cron completed repeated once-per-minute runs with HTTP 200 from the job endpoint, including after the production deployment. There were no pending jobs to force a new paid submission.
-- Landing-page workflow selection and mobile navigation responded in the browser. Complete physical-device coverage and load testing were not performed.
+- Landing-page workflow selection and mobile navigation responded in the browser. Studio had no horizontal overflow at 390-pixel and 1,440-pixel viewport widths, and the tested browser session had no console warnings/errors. Complete physical-device coverage and load testing were not performed.
 
 ## Evidence boundaries
 
