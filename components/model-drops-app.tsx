@@ -509,7 +509,8 @@ export default function ModelDropsApp({
   const [imageQuote, setImageQuote] = useState<ImageQuote>({ key: "" });
   const [quoteRevision, setQuoteRevision] = useState(0);
   const idempotency = useRef<string | null>(null),
-    searchRef = useRef<HTMLInputElement>(null);
+    searchRef = useRef<HTMLInputElement>(null),
+    mobileSearchRef = useRef<HTMLInputElement>(null);
   const draftLoaded = useRef(false);
   const refresh = useCallback(
     () =>
@@ -587,7 +588,10 @@ export default function ModelDropsApp({
     const key = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        searchRef.current?.focus();
+        const visibleSearch = [mobileSearchRef.current, searchRef.current].find(
+          (input) => input && input.getClientRects().length > 0,
+        );
+        visibleSearch?.focus();
       }
     };
     window.addEventListener("keydown", key);
@@ -930,6 +934,36 @@ export default function ModelDropsApp({
           ? a.name.localeCompare(b.name)
           : Number(b.badge === "FEATURED") - Number(a.badge === "FEATURED"),
     );
+  const marketplaceSearch = (
+    <div className="mobile-marketplace-search" role="search">
+      <label htmlFor="mobile-character-search" className="sr-only">
+        Search character collection
+      </label>
+      <Search size={18} aria-hidden="true" />
+      <input
+        id="mobile-character-search"
+        ref={mobileSearchRef}
+        type="search"
+        autoComplete="off"
+        enterKeyHint="search"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder="Search characters…"
+      />
+      {query && (
+        <button
+          type="button"
+          aria-label="Clear character search"
+          onClick={() => {
+            setQuery("");
+            mobileSearchRef.current?.focus();
+          }}
+        >
+          Clear
+        </button>
+      )}
+    </div>
+  );
   const heading = (
     title: string,
     description?: string,
@@ -1413,6 +1447,7 @@ export default function ModelDropsApp({
                   <span className="result-count">{filtered.length} models</span>
                 ),
               )}
+              {marketplaceSearch}
               <div className="filter-bar">
                 <div className="category-pills">
                   {categories.map((c) => (
@@ -1420,6 +1455,7 @@ export default function ModelDropsApp({
                       key={c}
                       onClick={() => setCategory(c)}
                       className={c === category ? "active" : ""}
+                      aria-pressed={c === category}
                     >
                       {c === "All models" && <Layers size={13} />} {c}
                     </button>
@@ -1442,13 +1478,15 @@ export default function ModelDropsApp({
                     }
                     onClick={() => setFilterOpen(!filterOpen)}
                     aria-label="Filters"
+                    aria-expanded={filterOpen}
+                    aria-controls="marketplace-filters"
                   >
                     <SlidersHorizontal size={16} />
                   </button>
                 </div>
               </div>
               {filterOpen && (
-                <div className="filter-panel">
+                <div className="filter-panel" id="marketplace-filters">
                   <Switch
                     id="free-only"
                     checked={freeOnly}
@@ -2164,6 +2202,7 @@ export default function ModelDropsApp({
                 "Discover the collection",
                 "Curated demo artwork. Your private creations stay private.",
               )}
+              {marketplaceSearch}
               <div className="character-grid">{filtered.map(card)}</div>
             </>
           )}

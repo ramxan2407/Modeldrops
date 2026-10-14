@@ -425,11 +425,12 @@ input[type="range"] {
   [data-slot="switch-thumb"][data-state="checked"] {
   transform: translateX(18px);
 }
-[data-slot="switch"][data-size="default"]
-  [data-slot="switch-thumb"][data-state="unchecked"] {
-  transform: translateX(0);
+[data-slot="switch"][data-size="sm"]
+  [data-slot="switch-thumb"][data-state="checked"] {
+  transform: translateX(10px);
 }
 [data-slot="switch-thumb"] {
+  transform: translateX(0);
   transition: transform var(--md-medium) var(--md-ease);
 }
 [data-slot="progress-indicator"],

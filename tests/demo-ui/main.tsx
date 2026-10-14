@@ -8,7 +8,12 @@ import "../../app/admin.css";
 import "../../app/lora.css";
 import "../../app/theme.css";
 import "../../app/design-system.css";
+import "../../app/welcome.css";
+import "../../app/cinematic.css";
+import "../../app/workspace-marketing.css";
 import "../../app/motion.css";
+import "../../app/minimal-public.css";
+import "../../app/minimal-supporting.css";
 import "../../app/minimal-workspace.css";
 const path = window.location.pathname.slice(1) || "marketplace";
 const live =
@@ -21,7 +26,7 @@ createRoot(document.getElementById("root")!).render(
         background: "#e7dbaa",
         color: "#191919",
         position: "relative",
-        zIndex: 100,
+        zIndex: 1,
         textAlign: "center",
         fontSize: 12,
       }}

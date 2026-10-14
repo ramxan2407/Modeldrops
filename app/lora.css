@@ -352,13 +352,18 @@
   top: 5px;
   right: 5px;
   border-radius: 50%;
-  width: 21px;
-  height: 21px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
-  background: light-dark(#f7f9fbcc, #090909cc);
+  background: #171717e6;
+  border: 1px solid #ffffff40;
   cursor: pointer;
   color: #ffffff;
+}
+.lora-image-tile > button > svg {
+  width: 16px;
+  height: 16px;
 }
 .lora-image-label,
 .lora-image-check {
@@ -1803,5 +1808,12 @@
   }
   .lora-table-wrap {
     max-width: 100%;
+  }
+}
+
+@media (max-width: 800px) {
+  .lora-search input,
+  .lora-toolbar .lora-filter {
+    font-size: 16px;
   }
 }

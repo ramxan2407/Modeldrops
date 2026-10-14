@@ -49,6 +49,10 @@ body:has(.app-main) :is(input, textarea, select) {
   accent-color: var(--workspace-ink);
 }
 
+body:has(.app-main) [data-slot="switch"][data-state="checked"] [data-slot="switch-thumb"] {
+  background: var(--workspace-on-primary);
+}
+
 /* Navigation is intentionally quieter than the work it contains. */
 body:has(.app-main) .model-drops-sidebar {
   border-color: var(--workspace-line);
@@ -164,6 +168,24 @@ body:has(.app-main) .sidebar-signout {
 body:has(.app-main) .app-main {
   min-width: 0;
   background: var(--workspace-page);
+}
+
+body:has(.app-main) :is(.section-heading, .filter-bar, .studio-heading) {
+  flex-wrap: wrap;
+}
+
+body:has(.app-main) :is(.section-heading, .studio-heading) > div {
+  min-width: 0;
+}
+
+body:has(.app-main) .generation-card small {
+  display: block;
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+}
+
+.mobile-marketplace-search {
+  display: none;
 }
 
 body:has(.app-main) .topbar {
@@ -299,6 +321,7 @@ body:has(.app-main) .dashboard-action-card {
   background: var(--workspace-surface);
   box-shadow: none;
   min-width: 0;
+  translate: none;
   transition:
     transform 180ms var(--md-ease),
     border-color 160ms ease;
@@ -442,6 +465,7 @@ body:has(.app-main) :is(.continue-card > p, .dashboard-privacy p, .dashboard-lor
 
 /* Studio controls keep all model-specific options, with clear selected states. */
 body:has(.app-main) .studio-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 400px);
   gap: 22px;
 }
 
@@ -454,6 +478,11 @@ body:has(.app-main) :is(.studio-controls, .studio-canvas) {
 
 body:has(.app-main) .studio-controls {
   padding: 25px;
+}
+
+body:has(.app-main) .canvas-top {
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 body:has(.app-main) :is(.studio-character-picker, .studio-model-group, .studio-controls .cost-summary, .standard-quality, .generation-guidance) {
@@ -694,6 +723,7 @@ body:has(.app-main) .page-footer {
     border-color: var(--md-line-strong);
     box-shadow: none;
     transform: translateY(-2px);
+    translate: none;
   }
 
   body:has(.app-main) :is(.nav-button, .theme-toggle, .icon-button, .lora-button, .dashboard-stats > button):hover {
@@ -709,6 +739,29 @@ body:has(.app-main) .page-footer {
 }
 
 @media (max-width: 1200px) {
+  /* Give both panels a usable width beside the persistent desktop sidebar. */
+  body:has(.app-main) .studio-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body:has(.app-main) .studio-controls {
+    order: 1;
+  }
+
+  body:has(.app-main) .studio-canvas {
+    order: 2;
+    position: static;
+    min-height: 0;
+  }
+
+  body:has(.app-main) .canvas-empty {
+    min-height: 340px;
+  }
+
+  body:has(.app-main) .canvas-results {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   body:has(.app-main) .dashboard-action-card {
     padding: 20px;
     gap: 22px;
@@ -747,6 +800,35 @@ body:has(.app-main) .page-footer {
 }
 
 @media (max-width: 600px) {
+  body:has(.app-main) .mobile-marketplace-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    margin-bottom: 18px;
+    padding-inline: 12px;
+    border: 1px solid var(--workspace-line);
+    border-radius: 10px;
+    background: var(--workspace-surface);
+    color: var(--workspace-muted);
+  }
+
+  body:has(.app-main) .mobile-marketplace-search input {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    min-height: 46px;
+    color: var(--workspace-ink);
+    background: transparent;
+    font-size: 16px;
+  }
+
+  body:has(.app-main) .mobile-marketplace-search button {
+    min-height: 44px;
+    min-width: 44px;
+    color: var(--workspace-ink);
+  }
+
   body:has(.app-main) .topbar {
     min-height: 65px;
     padding-inline: 16px;
@@ -763,6 +845,10 @@ body:has(.app-main) .page-footer {
 
   body:has(.app-main) .dashboard-title {
     margin-bottom: 24px;
+  }
+
+  body:has(.app-main) .admin-heading {
+    flex-direction: column;
   }
 
   body:has(.app-main) .workspace-private {
@@ -807,6 +893,10 @@ body:has(.app-main) .page-footer {
     padding: 20px 17px;
   }
 
+  body:has(.app-main) .studio-character-picker {
+    padding: 14px;
+  }
+
   body:has(.app-main) .studio-canvas .canvas-empty {
     min-height: 330px;
   }
@@ -822,6 +912,51 @@ body:has(.app-main) .page-footer {
   body:has(.app-main) .admin-tabs [data-slot] {
     font-size: 12px;
     padding: 9px 10px;
+  }
+}
+
+@media (max-width: 767px) {
+  body:has(.app-main) .filter-controls {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  body:has(.app-main) .filter-controls :is(button, [data-slot="select-trigger"]) {
+    min-height: 44px;
+  }
+
+  body:has(.app-main) .studio-controls :is(input, textarea, select) {
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 540px) {
+  body:has(.app-main) .canvas-results {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  body:has(.app-main) .owned-model-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body:has(.app-main) .section-heading > .lime-button {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 380px) {
+  body:has(.app-main) .character-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-height: 900px) {
+  body:has(.app-main) .studio-canvas {
+    position: static;
   }
 }
 

@@ -292,23 +292,41 @@
   gap: 20px;
 }
 .admin-edit {
-  max-width: 520px !important;
+  max-width: min(520px, calc(100vw - 32px)) !important;
+  grid-template-columns: minmax(0, 1fr);
   max-height: 90svh;
   overflow-y: auto;
   background: light-dark(#ffffff, #111111) !important;
   color: light-dark(#17212d, #f2f2f2) !important;
 }
-.admin-edit form {
+.admin-edit form,
+form.admin-edit {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
+}
+.admin-edit > *,
+.admin-edit :is(form, label, fieldset) {
+  min-width: 0;
+  max-width: 100%;
+}
+.admin-edit fieldset {
+  min-inline-size: 0;
+}
+.admin-edit :is(legend, p, small, strong, [data-slot="dialog-title"]) {
+  overflow-wrap: anywhere;
+}
+.admin-edit [data-slot="dialog-title"] {
+  padding-right: 32px;
 }
 .admin-edit label {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   font-size: 14px;
   font-weight: 500;
 }
-.admin-edit input:not([type="checkbox"]),
+.admin-edit input:not([type="checkbox"]):not([type="radio"]),
 .admin-edit textarea,
 .admin-edit select {
   border: 1px solid light-dark(#d4dce4, #2a2a2a);
@@ -317,6 +335,8 @@
   padding: 10px;
   color: light-dark(#17212d, #f2f2f2);
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 .admin-edit .admin-checkbox {
   display: flex;
@@ -335,6 +355,7 @@
 }
 .admin-edit-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
   margin-top: 5px;
@@ -355,6 +376,20 @@
   }
 }
 @media (max-width: 600px) {
+  .admin-edit [data-slot="button"] {
+    min-width: 0;
+    max-width: 100%;
+    height: auto;
+    min-height: 44px;
+    white-space: normal;
+  }
+  .admin-edit-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .admin-edit-actions > button {
+    width: 100%;
+  }
   .admin-heading {
     align-items: flex-start;
   }
@@ -397,4 +432,14 @@
 .character-checkout-review {
   display: grid;
   gap: 16px;
+}
+
+/* Keep native form controls readable without triggering mobile Safari zoom. */
+@media (max-width: 800px) {
+  .admin-search input,
+  .admin-edit input:not([type="checkbox"]):not([type="radio"]),
+  .admin-edit textarea,
+  .admin-edit select {
+    font-size: 16px;
+  }
 }
